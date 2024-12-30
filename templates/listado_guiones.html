@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Guiones{% endblock %}
+{% block extra_script %}
+<script src="{{ url_for('static', filename='js/listado_guiones.js') }}"></script>
+{% endblock extra_script %}
+{% block body %}
+    <div class="card shadow p-1 m-2 rounded">
+        <div class="card-header">
+            <h2>Guiones</h2>
+        </div>
+        <div class="card-body">
+
+            <table class="table table-hover">
+                <thead class="thead-light">
+                <tr>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for guion in guiones %}
+                    <tr>
+                        <td>{{ guion.nombre }}</td>
+                        <td>{{ guion.descripcion }}</td>
+                        <td>
+                            <a href="{{ url_for('ver_guion', id=guion.id) }}">
+                                <button class="btn btn-outline-primary">Abrir</button>
+                            </a>
+                            <button class="btn btn-outline-danger" onclick="borrarGuion({{ guion.id }})">Borrar</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <a href="/">
+                <button class="btn btn-outline-primary">Volver al Inicio</button>
+            </a>
+        </div>
+    </div>
+
+{% endblock body %}

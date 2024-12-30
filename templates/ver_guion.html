@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Ver guion{% endblock %}
+{% block extra_script %}
+    <script src="{{ url_for('static', filename='js/ver_guion.js') }}"></script>
+{% endblock extra_script %}
+{% block body %}
+    <div class="card shadow p-1 m-2 rounded">
+        <div class="card-header">
+            <h2>{{ guion.nombre }}</h2>
+        </div>
+        <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
+        <div class="card-body">
+
+            <table class="table" id="tablaTextos">
+                <thead class="thead-light">
+                <tr>
+                    <th>Título</th>
+                    <th>Texto</th>
+                    <th>Material</th>
+                    <th>Nota</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Las filas se llenarán dinámicamente con JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <a href="/listado_guiones">
+                <button class="btn btn-outline-primary">Atras</button>
+            </a>
+        </div>
+    </div>
+{% endblock body %}

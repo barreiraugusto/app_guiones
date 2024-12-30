@@ -1,0 +1,76 @@
+
+
+/* Customize container */
+/* @media (min-width: 768px) {
+  .container {
+    max-width: 730px;
+  }
+}
+*/
+
+/*body {
+  background-image: linear-gradient(90deg, #4F364C, #FFFFFF);
+}*/
+ul {
+    list-style: none;
+}
+
+body { padding-top: 70px; 
+}
+
+.timer {
+    float: left;
+    padding: 15px;
+    font-size: 18px;
+    line-height: 20px;
+    height: 50px;
+    color: #00FF00;
+    margin-left: -15px;
+    margin-bottom: 0px;
+}
+
+.txtred {
+    color: #FF0000 !important;
+}
+
+.txtlime {
+    color: #00FF00 !important;
+}
+
+.txtblue {
+    color: #0000FF;
+}
+
+.txtorange {
+    color: #F88017;
+}
+
+.border-lime {
+    border: 1px solid lime;
+}
+
+.table tbody>tr>td.vert-align{
+    vertical-align: middle;
+}
+.table thead>tr>th.vert-align{
+    vertical-align: middle;
+}
+
+.table tbody>tr>td.libbuttons{
+    width: 90px;
+    overflow: hidden;
+
+}
+.table tbody>tr>td.typeicons{
+    width: 30px;
+    overflow: hidden;
+
+}
+.clip-display{
+  display: block;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width:90%;
+}
+

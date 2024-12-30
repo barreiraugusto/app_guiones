@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Siguiente{% endblock %}
+{% block extra_script %}
+<script src="{{ url_for('static', filename='js/siguiente.js') }}"></script>
+{% endblock extra_script %}
+{% block body %}
+    <div class="card shadow p-1 m-2 rounded">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 id="texto-activo-numero-de-nota" class="m-0 text-danger" style="font-size: 4rem;"></h1>
+            <h2 id="texto-activo-titulo" class="m-0"></h2>
+        </div>
+        <div class="card-body">
+            <p><h3 id="texto-activo-contenido"></h3></p>
+        </div>
+    </div>
+    <div class="card shadow p-1 m-2 rounded">
+        <div class="card-body">
+            <p id="texto-activo-material"></p>
+        </div>
+    </div>
+{% endblock body %}
