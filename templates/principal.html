@@ -10,16 +10,17 @@
         <div class="card-body">
             <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
                 <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion" required><br>
-                <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion" required></textarea><br>
+                <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
+                          required></textarea><br>
                 <button class="btn btn-outline-success" type="submit" id="botonGuardarGuion">Crear Guion</button>
             </form>
             <ul id="listaGuiones"></ul>
         </div>
     </div>
-    <div class="card shadow p-1 m-2 rounded">
-        <div class="card-body">
-            <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
-                <input type="hidden" id="contenido-hidden" name="contenido">
+    <!-- Formulario para agregar Notas -->
+    <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
+        <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
+            <div class="card-header">
                 <!-- Fila aparte para el select -->
                 <div class="row">
                     <div class="col">
@@ -28,58 +29,111 @@
                         </select>
                     </div>
                 </div>
+            </div>
+            <div class="card-body">
+                <input type="hidden" id="contenido-hidden" name="contenido">
                 <!-- Tabla para los inputs y textareas -->
                 <table class="table table-responsive">
                     <thead class="thead-light">
-                        <tr>
-                            <th scope="col">Título</th>
-                            <th scope="col">Texto</th>
-                            <th scope="col">Material</th>
-                            <th scope="col">Nota</th>
-                        </tr>
+                    <tr>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Graf/Copete</th>
+                        <th scope="col">Codigo</th>
+                        <th scope="col">Nº de Nota</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <tr style="height: 200px">
-                            <td style="width: 10%; height: 200px" class="p-0 m-0">
-                                <textarea class="text-center w-100 h-100 border-1 p-0 m-0" type="text" id="titulo" required></textarea>
-                            </td>
-                            <td style="width: 50%; height: 200px" class="p-0 m-0">
-                                <div id="contenido" class="w-100 h-100 border-1 p-0 m-0"></div>
-                            </td>
-                            <td style="width: 30%; height: 200px" class="p-0 m-0">
-                                <textarea class="w-100 h-100 border-1 p-0 m-0" id="material"></textarea>
-                            </td>
-                            <td style="width: 10%; height: 200px" class="w-10 p-0 m-0">
-                                <input style="width: 10px" class="text-center w-100 h-100 border-1 p-0 m-0" type="number" id="numero_de_nota">
-                            </td>
-                        </tr>
+                    <tr style="height: 200px">
+                        <td style="width: 10%; height: 200px" class="p-0 m-0">
+                            <textarea class="text-center w-100 h-100 border-1 p-0 m-0" type="text" id="titulo"
+                                      required></textarea>
+                        </td>
+                        <td style="width: 50%; height: 200px" class="p-0 m-0">
+                            <div id="contenido" class="w-100 h-100 border-1 p-0 m-0"></div>
+                        </td>
+                        <td style="width: 30%; height: 200px" class="p-0 m-0">
+                            <textarea class="w-100 h-100 border-1 m-0" id="material"></textarea>
+                        </td>
+                        <td style="width: 10%; height: 200px" class="w-10 p-0 m-0">
+                            <input style="width: 10px" class="text-center w-100 h-100 border-1 p-0 m-0" type="number"
+                                   id="numero_de_nota">
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="card-footer">
                 <!-- Fila para los botones -->
                 <div class="row">
                     <div class="col">
-                        <button class="btn btn-outline-success" type="submit" id="botonGuardarTexto">Agregar Nota</button>
-                        <button class="btn btn-outline-danger" type="button" onclick="cancelarEdicion()" id="botonCancelar" style="display: none;">Cancelar</button>
+                        <button class="btn btn-outline-success" type="submit" id="botonGuardarTexto">Agregar Nota
+                        </button>
+                        <button class="btn btn-outline-danger" type="button" onclick="cancelarEdicion()"
+                                id="botonCancelar" style="display: none;">Cancelar
+                        </button>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
+<!-- Formulario para agregar/editar Graphs -->
+<div class="card shadow p-1 m-2 rounded">
+    <div class="card-body">
+        <form id="formularioGraph" onsubmit="guardarGraph(event)">
+            <!-- Campo oculto para el ID del graph -->
+            <input type="hidden" id="graph_id" value="">
+
+            <!-- Select para asociar a Texto -->
+            <div class="form-group mb-3">
+                <label for="texto_id">Carga de graphs</label>
+                <select class="form-control" id="texto_id" required>
+                    <!-- Las opciones se llenarán dinámicamente con JavaScript -->
+                </select>
+            </div>
+
+            <!-- Fila para Primera Línea y Entrevistado -->
+            <div class="row p-0 m-0">
+                <!-- Primera Línea -->
+                <div class="col-6 p-0 m-0">
+                    <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
+                </div>
+                <!-- Entrevistado -->
+                <div class="col-6 p-0 m-0">
+                    <input type="text" class="form-control m-0" id="entrevistado" placeholder="Entrevistado">
+                </div>
+            </div>
+
+            <!-- Primera Línea -->
+            <div class="form-group p-0 m-0">
+                <input type="text" class="form-control m-0" id="primera_linea" placeholder="Primera línea">
+            </div>
+
+            <!-- Segunda Línea -->
+            <div class="form-group p-0 m-0">
+                <textarea class="form-control m-0" id="segunda_linea" placeholder="Segunda línea"></textarea>
+            </div>
+
+            <!-- Botón para enviar el formulario -->
+            <button type="submit" class="btn btn-outline-success mt-2" id="botonGuardarGraph">Agregar Graph</button>
+            <button type="button" class="btn btn-outline-danger mt-2" onclick="cancelarEdicionGraph()" id="botonCancelarGraph" style="display: none;">Cancelar</button>
+        </form>
+    </div>
+</div>
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
-            <h2></h2>
+            <h2 id="encabezado"></h2>
             <table class="table table-hover" id="tablaTextos">
                 <thead class="thead-light">
-                    <tr>
-                        <th scope="col">Título</th>
-                        <th scope="col">Texto</th>
-                        <th scope="col">Material</th>
-                        <th scope="col">Nota</th>
-                        <th scope="col">Acciones</th>
-                    </tr>
+                <tr>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Graf/Copete</th>
+                    <th scope="col">Codigo</th>
+                    <th scope="col">Nº</th>
+                    <th scope="col">Acciones</th>
+                </tr>
                 </thead>
                 <tbody>
-                    <!-- Las filas se llenarán dinámicamente con JavaScript -->
+                <!-- Las filas se llenarán dinámicamente con JavaScript -->
                 </tbody>
             </table>
         </div>
@@ -102,5 +156,7 @@
             bounds: '#contenido', // Define el contenedor del editor
             height: '200px',
         });
+
+
     </script>
 {% endblock body %}

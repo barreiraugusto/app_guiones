@@ -7,14 +7,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function cargarTextos() {
-        // Obtener el ID del guion desde el atributo data-guion-id
-        const guionData = document.getElementById('guion-data');
-        const guionId = guionData.dataset.guionId;
-
-        const response = await fetch(`/obtener_textos_guion/${guionId}`);
+        const response = await fetch('/textos');
         const textos = await response.json();
+
+        // Ordenar los textos por "numero_de_nota" de menor a mayor
+        textos.sort((a, b) => a.numero_de_nota - b.numero_de_nota);
+
         const tbody = document.querySelector('#tablaTextos tbody');
         tbody.innerHTML = ''; // Limpiar la tabla antes de llenarla
+
         textos.forEach(t => {
             const fila = document.createElement('tr');
             if (t.activo) {
@@ -23,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Convertir URLs en enlaces dentro del material
             const materialContent = convertirUrlsEnEnlaces(t.material || '');
-
             fila.innerHTML = `
                 <td>${t.titulo}</td>
                 <td>${t.contenido}</td>
@@ -31,6 +31,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${t.numero_de_nota}</td>
             `;
             tbody.appendChild(fila);
+
+            // Filas para los Graphs asociados al Texto
+
+            if (t.graphs && t.graphs.length > 0) {
+                t.graphs.forEach(g => {
+                    const filaGraph = document.createElement('tr');
+                    filaGraph.innerHTML = `
+                    <td></td>
+                    <td colspan="3">
+                        <strong>Lugar:</strong> ${g.lugar}<br>
+                        <strong>Entrevistado:</strong> ${g.entrevistado}<br>
+                        <strong>Primera Línea:</strong> ${g.primera_linea}<br>
+                        <strong>Segunda Línea:</strong> ${g.segunda_linea}
+                    </td>
+                `;
+                    tbody.appendChild(filaGraph);
+                });
+            }
         });
     }
 
@@ -39,4 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Cargar los textos al abrir la página
     cargarTextos();
+
 });
+
+

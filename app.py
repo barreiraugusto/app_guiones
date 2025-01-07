@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///textos.db'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 class Guion(db.Model):
@@ -23,6 +25,19 @@ class Texto(db.Model):
     material = db.Column(db.String(500), nullable=True)
     activo = db.Column(db.Boolean, default=False)
     guion_id = db.Column(db.Integer, db.ForeignKey('guion.id'), nullable=False)
+
+    # Relación con Graph con eliminación en cascada
+    graphs = db.relationship('Graph', backref='texto', cascade="all, delete-orphan", lazy=True)
+
+
+class Graph(db.Model):
+    __tablename__ = 'graph'
+    id = db.Column(db.Integer, primary_key=True)
+    primera_linea = db.Column(db.String(200), nullable=False)
+    segunda_linea = db.Column(db.String(500), nullable=False)
+    entrevistado = db.Column(db.String(100), nullable=False)
+    lugar = db.Column(db.String(100), nullable=False)
+    texto_id = db.Column(db.Integer, db.ForeignKey('texto.id'), nullable=False)
 
 
 # Crear las tablas al iniciar la aplicación
@@ -63,7 +78,14 @@ def textos():
             "contenido": t.contenido,
             "material": t.material,
             "activo": t.activo,
-            "guion_id": t.guion_id
+            "guion_id": t.guion_id,
+            "graphs": [{
+                "id": g.id,
+                "primera_linea": g.primera_linea,
+                "segunda_linea": g.segunda_linea,
+                "entrevistado": g.entrevistado,
+                "lugar": g.lugar
+            } for g in t.graphs]
         } for t in textos])
 
 
@@ -90,10 +112,20 @@ def obtener_texto_activo():
     texto_activo = Texto.query.filter_by(activo=True).first()
     if texto_activo:
         return jsonify({
+            "id": texto_activo.id,
             "numero_de_nota": texto_activo.numero_de_nota,
             "titulo": texto_activo.titulo,
             "contenido": texto_activo.contenido,
-            "material": texto_activo.material
+            "material": texto_activo.material,
+            "activo": texto_activo.activo,
+            "guion_id": texto_activo.guion_id,
+            "graphs": [{
+                "id": g.id,
+                "primera_linea": g.primera_linea,
+                "segunda_linea": g.segunda_linea,
+                "entrevistado": g.entrevistado,
+                "lugar": g.lugar
+            } for g in texto_activo.graphs]
         })
     else:
         return jsonify({
@@ -153,13 +185,19 @@ def editar_texto(id):
 
 @app.route('/textos/borrar/<int:id>', methods=['DELETE'])
 def borrar_texto(id):
-    texto = Texto.query.get(id)
-    if texto:
-        db.session.delete(texto)
-        db.session.commit()
-        return jsonify({"mensaje": "Texto eliminado"})
-    else:
-        return jsonify({"mensaje": "Texto no encontrado"}), 404
+    try:
+        texto = Texto.query.get(id)
+        if texto:
+            # No necesitas eliminar manualmente los Graph, la eliminación en cascada lo hará automáticamente
+            db.session.delete(texto)
+            db.session.commit()
+            return jsonify({"mensaje": "Texto eliminado"})
+        else:
+            return jsonify({"mensaje": "Texto no encontrado"}), 404
+    except Exception as e:
+        print(f"Error al borrar el texto: {e}")
+        db.session.rollback()  # Revertir la transacción en caso de error
+        return jsonify({"mensaje": "Error interno del servidor"}), 500
 
 
 @app.route('/guiones', methods=['GET', 'POST'])
@@ -178,44 +216,107 @@ def guiones():
         return jsonify([{"id": g.id, "nombre": g.nombre, "descripcion": g.descripcion} for g in guiones])
 
 
-@app.route('/guiones/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/graphs', methods=['POST'])
+def crear_graph():
+    data = request.json
+    if not data or 'primera_linea' not in data or 'segunda_linea' not in data or 'entrevistado' not in data or 'lugar' not in data or 'texto_id' not in data:
+        return jsonify({"mensaje": "Datos incompletos"}), 400
+
+    nuevo_graph = Graph(
+        primera_linea=data['primera_linea'],
+        segunda_linea=data['segunda_linea'],
+        entrevistado=data['entrevistado'],
+        lugar=data['lugar'],
+        texto_id=data['texto_id']
+    )
+    db.session.add(nuevo_graph)
+    db.session.commit()
+    return jsonify({"mensaje": "Graph creado", "id": nuevo_graph.id}), 201
+
+
+@app.route('/graphs/<int:id>', methods=['PUT'])
+def actualizar_graph(id):
+    data = request.json
+    graph = Graph.query.get(id)
+    if graph:
+        graph.primera_linea = data.get('primera_linea', graph.primera_linea)
+        graph.segunda_linea = data.get('segunda_linea', graph.segunda_linea)
+        graph.entrevistado = data.get('entrevistado', graph.entrevistado)
+        graph.lugar = data.get('lugar', graph.lugar)
+        db.session.commit()
+        return jsonify({"mensaje": "Graph actualizado"})
+    else:
+        return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+
+@app.route('/graphs/<int:id>', methods=['DELETE'])
+def eliminar_graph(id):
+    graph = Graph.query.get(id)
+    if graph:
+        db.session.delete(graph)
+        db.session.commit()
+        return jsonify({"mensaje": "Graph eliminado"})
+    else:
+        return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+
+@app.route('/graphs/<int:id>', methods=['GET'])
+def obtener_graph(id):
+    graph = Graph.query.get(id)
+    if graph:
+        return jsonify({
+            "id": graph.id,
+            "primera_linea": graph.primera_linea,
+            "segunda_linea": graph.segunda_linea,
+            "entrevistado": graph.entrevistado,
+            "lugar": graph.lugar,
+            "texto_id": graph.texto_id
+        })
+    else:
+        return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+
+@app.route('/textos/<int:texto_id>/graphs', methods=['GET'])
+def obtener_graphs_por_texto(texto_id):
+    texto = db.session.get(Texto, texto_id)
+    if not texto:
+        return jsonify({"mensaje": "Texto no encontrado"}), 404
+    graphs = Graph.query.filter_by(texto_id=texto_id).all()
+    return jsonify([{
+        "id": g.id,
+        "primera_linea": g.primera_linea,
+        "segunda_linea": g.segunda_linea,
+        "entrevistado": g.entrevistado,
+        "lugar": g.lugar
+    } for g in graphs])
+
+
+@app.route('/guiones/<int:id>', methods=['GET'])
 def guion(id):
-    if request.method == 'GET':
-        guion = Guion.query.get(id)
-        if guion:
-            return jsonify({
-                "id": guion.id,
-                "nombre": guion.nombre,
-                "descripcion": guion.descripcion,
-                "textos": [{
-                    "id": t.id,
-                    "numero_de_nota": t.numero_de_nota,
-                    "titulo": t.titulo,
-                    "contenido": t.contenido,
-                    "material": t.material,
-                    "activo": t.activo
-                } for t in guion.textos]
-            })
-        else:
-            return jsonify({"mensaje": "Guion no encontrado"}), 404
-    elif request.method == 'PUT':
-        data = request.json
-        guion = Guion.query.get(id)
-        if guion:
-            guion.nombre = data.get('nombre', guion.nombre)
-            guion.descripcion = data.get('descripcion', guion.descripcion)
-            db.session.commit()
-            return jsonify({"mensaje": "Guion actualizado"})
-        else:
-            return jsonify({"mensaje": "Guion no encontrado"}), 404
-    elif request.method == 'DELETE':
-        guion = Guion.query.get(id)
-        if guion:
-            db.session.delete(guion)
-            db.session.commit()
-            return jsonify({"mensaje": "Guion eliminado"})
-        else:
-            return jsonify({"mensaje": "Guion no encontrado"}), 404
+    guion = Guion.query.get(id)
+    if guion:
+        return jsonify({
+            "id": guion.id,
+            "nombre": guion.nombre,
+            "descripcion": guion.descripcion,
+            "textos": [{
+                "id": t.id,
+                "numero_de_nota": t.numero_de_nota,
+                "titulo": t.titulo,
+                "contenido": t.contenido,
+                "material": t.material,
+                "activo": t.activo,
+                "graphs": [{
+                    "id": g.id,
+                    "primera_linea": g.primera_linea,
+                    "segunda_linea": g.segunda_linea,
+                    "entrevistado": g.entrevistado,
+                    "lugar": g.lugar
+                } for g in t.graphs]
+            } for t in guion.textos]
+        })
+    else:
+        return jsonify({"mensaje": "Guion no encontrado"}), 404
 
 
 @app.route('/listado_guiones')
@@ -248,4 +349,4 @@ def borrar_guion(id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
