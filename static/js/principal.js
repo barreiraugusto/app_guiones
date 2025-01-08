@@ -57,7 +57,7 @@ async function cargarGuiones() {
             icon: 'success',
             title: result.mensaje || "Error al cargar los guiones",
             showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 2000, // El mensaje desaparecerá después de 2 segundos
+            timer: 1000, // El mensaje desaparecerá después de 2 segundos
         });
     }
 }
@@ -234,7 +234,7 @@ async function borrarGuion(id) {
                 icon: 'success',
                 title: result.mensaje || "Guion borrado correctamente",
                 showConfirmButton: false, // No mostrar el botón "Aceptar"
-                timer: 2000, // El mensaje desaparecerá después de 2 segundos
+                timer: 1000, // El mensaje desaparecerá después de 2 segundos
             });
 
             // Actualizar la lista de guiones y el <select>
@@ -342,7 +342,7 @@ async function guardarTexto(event) {
             icon: 'success',
             title: result.mensaje || "Texto guardado correctamente",
             showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 2000, // El mensaje desaparecerá después de 2 segundos
+            timer: 1000, // El mensaje desaparecerá después de 2 segundos
         });
 
         // Limpiar el formulario y restablecer el botón
@@ -365,7 +365,7 @@ async function guardarTexto(event) {
             title: 'Error',
             text: error.message || 'Hubo un error al guardar el texto. Por favor, inténtalo de nuevo.',
             showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 2000, // El mensaje desaparecerá después de 3 segundos
+            timer: 1000, // El mensaje desaparecerá después de 3 segundos
         });
     }
 }
@@ -425,7 +425,7 @@ async function borrarTexto(id) {
                 icon: 'success',
                 title: result.mensaje || "Texto borrado correctamente",
                 showConfirmButton: false, // No mostrar el botón "Aceptar"
-                timer: 2000, // El mensaje desaparecerá después de 2 segundos
+                timer: 1000, // El mensaje desaparecerá después de 2 segundos
             });
 
             // Actualiza la interfaz de usuario
@@ -540,7 +540,7 @@ async function guardarGraph(event) {
             icon: 'success',
             title: result.mensaje || "Graph guardado correctamente",
             showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 2000, // El mensaje desaparecerá después de 2 segundos
+            timer: 1000, // El mensaje desaparecerá después de 2 segundos
         });
 
         // Limpiar el formulario solo si se está editando
@@ -636,7 +636,7 @@ async function eliminarGraph(id) {
                 icon: 'success',
                 title: result.mensaje || "Graph eliminado correctamente",
                 showConfirmButton: false, // No mostrar el botón "Aceptar"
-                timer: 2000, // El mensaje desaparecerá después de 2 segundos
+                timer: 1000, // El mensaje desaparecerá después de 2 segundos
             });
 
             // Recargar la lista de graphs

@@ -7,13 +7,7 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: #007bff; /* Color azul */
-            color: white;
-            border: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -23,22 +17,19 @@
             display: none; /* Ocultar inicialmente */
         }
 
-        /* Cambiar color al pasar el mouse */
-        .boton-flotante:hover {
-            background-color: #0056b3; /* Color azul más oscuro */
-        }
-
         /* Mostrar el botón cuando esté activo */
         .boton-flotante.activo {
             display: flex;
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 {% endblock extra_style %}
 {% block extra_script %}
     <script src="{{ url_for('static', filename='js/principal.js') }}"></script>
     <!-- Add the theme's stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/quill.bubble.css') }}">
+    <!-- Add FontAwesome -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/@fortawesome/fontawesome-free/css/all.min.css') }}">
+    <!-- Add Quill -->
     <script src="{{ url_for('static', filename='utilidades-js/js/quill.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
@@ -54,8 +45,8 @@
         </div>
     </div>
     <!-- Botón flotante -->
-    <button id="botonFlotante" class="boton-flotante">
-        <i class="fas fa-plus"></i> <!-- Ícono de FontAwesome -->
+    <button id="botonFlotante" class="btn btn-success boton-flotante">Agregar Nota&nbsp;
+        <span class="fas fa-chevron-up"></span>
     </button>
     <!-- Formulario para agregar Notas -->
     <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
@@ -85,17 +76,17 @@
                     <tbody>
                     <tr style="height: 200px">
                         <td style="width: 10%; height: 200px" class="p-0 m-0">
-                            <textarea class="text-center w-100 h-100 border-1 p-0 m-0" type="text" id="titulo"
+                            <textarea class="text-center w-100 h-100 border-bottom-0 border-top-0 p-0 m-0" type="text" id="titulo"
                                       required></textarea>
                         </td>
                         <td style="width: 50%; height: 200px" class="p-0 m-0">
-                            <div id="contenido" class="w-100 h-100 border-2 p-0 m-0"></div>
+                            <div id="contenido" class="w-100 h-100 border-bottom-0 border-top-0 p-0 m-0"></div>
                         </td>
                         <td style="width: 30%; height: 200px" class="p-0 m-0">
-                            <textarea class="w-100 h-100 border-1 m-0" id="material"></textarea>
+                            <textarea class="w-100 h-100 border-right-0 border-bottom-0 border-top-0 m-0" id="material"></textarea>
                         </td>
                         <td style="width: 10%; height: 200px" class="w-10 p-0 m-0">
-                            <input style="width: 10px" class="text-center w-100 h-100 border-1 p-0 m-0" type="number"
+                            <input style="width: 10px" class="text-center w-100 h-100 border-bottom-0 border-top-0 p-0 m-0" type="number"
                                    id="numero_de_nota">
                         </td>
                     </tr>
