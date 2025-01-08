@@ -1,9 +1,45 @@
 {% extends "base.html" %}
 {% block title %}Administrar{% endblock %}
+{% block extra_style %}
+    <style>
+        /* Estilos para el botón flotante */
+        .boton-flotante {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #007bff; /* Color azul */
+            color: white;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 1000; /* Asegura que esté por encima de otros elementos */
+            display: none; /* Ocultar inicialmente */
+        }
+
+        /* Cambiar color al pasar el mouse */
+        .boton-flotante:hover {
+            background-color: #0056b3; /* Color azul más oscuro */
+        }
+
+        /* Mostrar el botón cuando esté activo */
+        .boton-flotante.activo {
+            display: flex;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock extra_style %}
 {% block extra_script %}
     <script src="{{ url_for('static', filename='js/principal.js') }}"></script>
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <!-- Add the theme's stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/quill.bubble.css') }}">
+    <script src="{{ url_for('static', filename='utilidades-js/js/quill.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
     <div class="card shadow p-1 m-2 rounded">
@@ -17,6 +53,10 @@
             <ul id="listaGuiones"></ul>
         </div>
     </div>
+    <!-- Botón flotante -->
+    <button id="botonFlotante" class="boton-flotante">
+        <i class="fas fa-plus"></i> <!-- Ícono de FontAwesome -->
+    </button>
     <!-- Formulario para agregar Notas -->
     <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
         <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
@@ -49,7 +89,7 @@
                                       required></textarea>
                         </td>
                         <td style="width: 50%; height: 200px" class="p-0 m-0">
-                            <div id="contenido" class="w-100 h-100 border-1 p-0 m-0"></div>
+                            <div id="contenido" class="w-100 h-100 border-2 p-0 m-0"></div>
                         </td>
                         <td style="width: 30%; height: 200px" class="p-0 m-0">
                             <textarea class="w-100 h-100 border-1 m-0" id="material"></textarea>
@@ -76,49 +116,51 @@
             </div>
         </form>
     </div>
-<!-- Formulario para agregar/editar Graphs -->
-<div class="card shadow p-1 m-2 rounded">
-    <div class="card-body">
-        <form id="formularioGraph" onsubmit="guardarGraph(event)">
-            <!-- Campo oculto para el ID del graph -->
-            <input type="hidden" id="graph_id" value="">
+    <!-- Formulario para agregar/editar Graphs -->
+    <div class="card shadow p-1 m-2 rounded">
+        <div class="card-body">
+            <form id="formularioGraph" onsubmit="guardarGraph(event)">
+                <!-- Campo oculto para el ID del graph -->
+                <input type="hidden" id="graph_id" value="">
 
-            <!-- Select para asociar a Texto -->
-            <div class="form-group mb-3">
-                <label for="texto_id">Carga de graphs</label>
-                <select class="form-control" id="texto_id" required>
-                    <!-- Las opciones se llenarán dinámicamente con JavaScript -->
-                </select>
-            </div>
+                <!-- Select para asociar a Texto -->
+                <div class="form-group mb-3">
+                    <label for="texto_id">Carga de graphs</label>
+                    <select class="form-control" id="texto_id" required>
+                        <!-- Las opciones se llenarán dinámicamente con JavaScript -->
+                    </select>
+                </div>
 
-            <!-- Fila para Primera Línea y Entrevistado -->
-            <div class="row p-0 m-0">
+                <!-- Fila para Primera Línea y Entrevistado -->
+                <div class="row p-0 m-0">
+                    <!-- Primera Línea -->
+                    <div class="col-6 p-0 m-0">
+                        <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
+                    </div>
+                    <!-- Entrevistado -->
+                    <div class="col-6 p-0 m-0">
+                        <input type="text" class="form-control m-0" id="entrevistado" placeholder="Entrevistado">
+                    </div>
+                </div>
+
                 <!-- Primera Línea -->
-                <div class="col-6 p-0 m-0">
-                    <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
+                <div class="form-group p-0 m-0">
+                    <input type="text" class="form-control m-0" id="primera_linea" placeholder="Primera línea">
                 </div>
-                <!-- Entrevistado -->
-                <div class="col-6 p-0 m-0">
-                    <input type="text" class="form-control m-0" id="entrevistado" placeholder="Entrevistado">
+
+                <!-- Segunda Línea -->
+                <div class="form-group p-0 m-0">
+                    <textarea class="form-control m-0" id="segunda_linea" placeholder="Segunda línea"></textarea>
                 </div>
-            </div>
 
-            <!-- Primera Línea -->
-            <div class="form-group p-0 m-0">
-                <input type="text" class="form-control m-0" id="primera_linea" placeholder="Primera línea">
-            </div>
-
-            <!-- Segunda Línea -->
-            <div class="form-group p-0 m-0">
-                <textarea class="form-control m-0" id="segunda_linea" placeholder="Segunda línea"></textarea>
-            </div>
-
-            <!-- Botón para enviar el formulario -->
-            <button type="submit" class="btn btn-outline-success mt-2" id="botonGuardarGraph">Agregar Graph</button>
-            <button type="button" class="btn btn-outline-danger mt-2" onclick="cancelarEdicionGraph()" id="botonCancelarGraph" style="display: none;">Cancelar</button>
-        </form>
+                <!-- Botón para enviar el formulario -->
+                <button type="submit" class="btn btn-outline-success mt-2" id="botonGuardarGraph">Agregar Graph</button>
+                <button type="button" class="btn btn-outline-danger mt-2" onclick="cancelarEdicionGraph()"
+                        id="botonCancelarGraph" style="display: none;">Cancelar
+                </button>
+            </form>
+        </div>
     </div>
-</div>
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
             <h2 id="encabezado"></h2>
@@ -142,7 +184,7 @@
     <script>
         // Inicializar Quill en el campo "contenido"
         const quill = new Quill('#contenido', {
-            theme: 'snow',
+            theme: 'bubble',
             modules: {
                 toolbar: [
                     ['bold', 'italic', 'underline', 'strike'],
@@ -151,12 +193,11 @@
                     [{'size': ['small', false, 'large', 'huge']}],
                     [{'color': []}, {'background': []}],
                     [{'align': []}],
+                    ['clean']
                 ]
             },
             bounds: '#contenido', // Define el contenedor del editor
             height: '200px',
         });
-
-
     </script>
 {% endblock body %}

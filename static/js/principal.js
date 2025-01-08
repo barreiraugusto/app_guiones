@@ -157,9 +157,9 @@ async function seleccionarGuion(id) {
             <td>${t.numero_de_nota}</td>
             <td>
                 <div class="btn-group-vertical">
-                    <button type="button" class="btn btn-outline-secondary" onclick="setTextoActivo(${t.id})">Seleccionar</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="editarTexto(event, ${t.id})">Editar</button>
-                    <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})">Borrar</button>
+                    <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         `;
@@ -177,8 +177,8 @@ async function seleccionarGuion(id) {
                         <strong>Primera Línea:</strong> ${g.primera_linea}<br>
                         <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
                         <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})">Editar</button>
-                            <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})">Borrar</button>
+                            <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 `;
@@ -294,9 +294,9 @@ async function cargarTextos() {
             <td>${t.numero_de_nota}</td>
             <td>
                 <div class="btn-group-vertical">
-                    <button type="button" class="btn btn-outline-secondary" onclick="setTextoActivo(${t.id})">Seleccionar</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="editarTexto(event, ${t.id})">Editar</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="borrarTexto(${t.id})">Borrar</button>
+                    <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         `;
@@ -714,8 +714,8 @@ function mostrarGraphsEnLista(graphs) {
                 <strong>Primera Línea:</strong> ${g.primera_linea}<br>
                 <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})">Editar</button>
-                    <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})">Borrar</button>
+                    <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         `;
@@ -795,4 +795,48 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('guion_id').value = guionSeleccionado;
         cargarTextosEnSelect(guionSeleccionado);
     }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Obtener referencias a los elementos
+    const botonFlotante = document.getElementById('botonFlotante');
+    const formularioTextoContainer = document.getElementById('formularioTextoContainer');
+
+    // Verificar si los elementos existen
+    if (!botonFlotante || !formularioTextoContainer) {
+        console.error('No se encontró el botón flotante o el formulario.');
+        return;
+    }
+
+    // Función para verificar si el formulario está visible en la pantalla
+    function formularioEsVisible() {
+        const rect = formularioTextoContainer.getBoundingClientRect();
+        return (
+            rect.top >= 0 && // El formulario no está por encima de la pantalla
+            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) // El formulario no está por debajo de la pantalla
+        );
+    }
+
+    // Función para desplazarse al formulario
+    function desplazarseAlFormulario() {
+        formularioTextoContainer.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+
+    // Función para actualizar la visibilidad del botón flotante
+    function actualizarVisibilidadBotonFlotante() {
+        if (formularioEsVisible()) {
+            botonFlotante.classList.remove('activo'); // Ocultar el botón
+        } else {
+            botonFlotante.classList.add('activo'); // Mostrar el botón
+        }
+    }
+
+    // Escuchar el evento de scroll para actualizar la visibilidad del botón
+    window.addEventListener('scroll', actualizarVisibilidadBotonFlotante);
+
+    // Desplazarse al formulario al hacer clic en el botón flotante
+    botonFlotante.addEventListener('click', desplazarseAlFormulario);
+
+    // Verificar la visibilidad inicial del botón
+    actualizarVisibilidadBotonFlotante();
 });
