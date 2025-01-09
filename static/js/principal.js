@@ -151,10 +151,10 @@ async function seleccionarGuion(id) {
         const materialContent = convertirUrlsEnEnlaces(t.material || '');
 
         filaTexto.innerHTML = `
-            <td>${t.titulo}</td>
+            <td><strong>${t.titulo}</strong></td>
             <td>${t.contenido}</td>
             <td>${materialContent}</td>
-            <td>${t.numero_de_nota}</td>
+            <td><h3>${t.numero_de_nota}</h3></td>
             <td>
                 <div class="btn-group-vertical">
                     <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
@@ -167,22 +167,30 @@ async function seleccionarGuion(id) {
 
         // Cargar los graphs asociados a este texto
         if (t.graphs && t.graphs.length > 0) {
+            // Inicializar el contador de Graphs para este texto
+            let contadorGraph = 1;
+
             t.graphs.forEach(g => {
                 const filaGraph = document.createElement('tr');
                 filaGraph.innerHTML = `
                     <td></td>
-                    <td colspan="4">
+                    <td class="bg-light" colspan="4">
+                        <strong>Graph ${contadorGraph}</strong><br>
+                        <hr>
                         <strong>Lugar:</strong> ${g.lugar}<br>
                         <strong>Entrevistado:</strong> ${g.entrevistado}<br>
                         <strong>Primera Línea:</strong> ${g.primera_linea}<br>
                         <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
                         <div class="btn-group btn-group-sm">
                             <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
+                            <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 `;
                 tbody.appendChild(filaGraph); // Insertar el graph debajo del texto
+
+                // Incrementar el contador para el próximo Graph
+                contadorGraph++;
             });
         }
     });
@@ -288,10 +296,10 @@ async function cargarTextos() {
             fila.classList.add('bg-success'); // Resaltar la fila del texto activo
         }
         fila.innerHTML = `
-            <td>${t.titulo}</td>
+            <td><strong>${t.titulo}</strong></td>
             <td>${t.contenido}</td>
             <td>${t.material || ''}</td>
-            <td>${t.numero_de_nota}</td>
+            <td><h3>${t.numero_de_nota}</h3></td>
             <td>
                 <div class="btn-group-vertical">
                     <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
@@ -703,12 +711,16 @@ function mostrarGraphsEnLista(graphs) {
         return;
     }
 
+    // Inicializar el contador
+    let contador = 1;
+
     // Recorrer los Graphs y agregar filas a la tabla
     graphs.forEach(g => {
         const filaGraph = document.createElement('tr');
         filaGraph.innerHTML = `
-            <td></td>
-            <td colspan="4">
+            <td class="bg-light" colspan="4">
+                <strong>Graph ${contador}</strong><br>
+                <hr>
                 <strong>Lugar:</strong> ${g.lugar}<br>
                 <strong>Entrevistado:</strong> ${g.entrevistado}<br>
                 <strong>Primera Línea:</strong> ${g.primera_linea}<br>
@@ -720,6 +732,9 @@ function mostrarGraphsEnLista(graphs) {
             </td>
         `;
         tbody.appendChild(filaGraph);
+
+        // Incrementar el contador para el próximo Graph
+        contador++;
     });
 }
 
