@@ -29,9 +29,9 @@ async function cargarGuiones() {
                 <strong>${g.nombre}</strong><br>
                 <em>${g.descripcion}</em><br>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" onclick="seleccionarGuion(${g.id})">Seleccionar</button>
-                    <button class="btn btn-outline-secondary" onclick="editarGuion(${g.id})">Editar</button>
-                    <button class="btn btn-outline-danger" onclick="borrarGuion(${g.id})">Borrar</button>
+                    <button class="btn btn-outline-success" onclick="seleccionarGuion(${g.id})"><i class="fas fa-check"></i></button>
+                    <button class="btn btn-outline-secondary" onclick="editarGuion(${g.id})"><i class="fas fa-edit"></i> </button>
+                    <button class="btn btn-outline-danger" onclick="borrarGuion(${g.id})"><i class="fas fa-trash"></i></button>
                 </div>
             `;
             lista.appendChild(li);
