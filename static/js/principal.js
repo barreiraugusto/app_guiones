@@ -172,27 +172,35 @@ async function seleccionarGuion(id) {
 
             t.graphs.forEach(g => {
                 const filaGraph = document.createElement('tr');
+
+                // Crear el texto que se copiará al portapapeles
+                const textoParaCopiar = `${g.lugar}\n${g.tema}\n${g.entrevistado}\n${g.primera_linea}\n${g.segunda_linea}`;
+
                 filaGraph.innerHTML = `
-                    <td></td>
-                    <td class="bg-light" colspan="4">
-                        <strong>Graph ${contadorGraph}</strong><br>
-                        <hr>
-                        <strong>Lugar:</strong> ${g.lugar}<br>
-                        <strong>Tema:</strong> ${g.tema}<br>
-                        <strong>Entrevistado:</strong> ${g.entrevistado}<br>
-                        <strong>Primera Línea:</strong> ${g.primera_linea}<br>
-                        <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </td>
-                `;
+            <td></td>
+            <td class="bg-light" colspan="4">
+                <strong>Graph ${contadorGraph}</strong><br>
+                <hr>
+                <strong>Lugar:</strong> ${g.lugar}<br>
+                <strong>Tema:</strong> ${g.tema}<br>
+                <strong>Entrevistado:</strong> ${g.entrevistado}<br>
+                <strong>Primera Línea:</strong> ${g.primera_linea}<br>
+                <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-outline-primary btn-copiar" data-clipboard-text="${textoParaCopiar.replace(/"/g, '&quot;')}"><i class="fas fa-copy"></i></button>
+                </div>
+            </td>
+        `;
                 tbody.appendChild(filaGraph); // Insertar el graph debajo del texto
 
                 // Incrementar el contador para el próximo Graph
                 contadorGraph++;
             });
+
+            // Inicializar clipboard.js
+            new ClipboardJS('.btn-copiar');
         }
     });
 
@@ -859,4 +867,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Verificar la visibilidad inicial del botón
     actualizarVisibilidadBotonFlotante();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const clipboard = new ClipboardJS('.btn-copiar');
+
+    clipboard.on('success', function (e) {
+        Swal.fire({
+            icon: 'success',
+            title: "Texto copiado",
+            showConfirmButton: false, // No mostrar el botón "Aceptar"
+            timer: 1000, // El mensaje desaparecerá después de 2 segundos
+        });
+        e.clearSelection(); // Limpiar la selección
+    });
 });
