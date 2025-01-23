@@ -178,6 +178,7 @@ async function seleccionarGuion(id) {
                         <strong>Graph ${contadorGraph}</strong><br>
                         <hr>
                         <strong>Lugar:</strong> ${g.lugar}<br>
+                        <strong>Tema:</strong> ${g.tema}<br>
                         <strong>Entrevistado:</strong> ${g.entrevistado}<br>
                         <strong>Primera Línea:</strong> ${g.primera_linea}<br>
                         <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
@@ -517,6 +518,7 @@ async function guardarGraph(event) {
     const graphId = document.getElementById('graph_id').value;
     const textoId = document.getElementById('texto_id').value;
     const lugar = document.getElementById('lugar').value;
+    const tema = document.getElementById('tema').value;
     const entrevistado = document.getElementById('entrevistado').value;
     const primeraLinea = document.getElementById('primera_linea').value;
     const segundaLinea = document.getElementById('segunda_linea').value;
@@ -533,6 +535,7 @@ async function guardarGraph(event) {
             body: JSON.stringify({
                 texto_id: textoId,
                 lugar: lugar,
+                tema: tema,
                 entrevistado: entrevistado,
                 primera_linea: primeraLinea,
                 segunda_linea: segundaLinea,
@@ -586,6 +589,7 @@ async function editarGraph(id) {
         document.getElementById('graph_id').value = graph.id;
         document.getElementById('texto_id').value = graph.texto_id;
         document.getElementById('lugar').value = graph.lugar;
+        document.getElementById('tema').value = graph.tema;
         document.getElementById('entrevistado').value = graph.entrevistado;
         document.getElementById('primera_linea').value = graph.primera_linea;
         document.getElementById('segunda_linea').value = graph.segunda_linea;
@@ -721,6 +725,7 @@ function mostrarGraphsEnLista(graphs) {
             <td class="bg-light" colspan="4">
                 <strong>Graph ${contador}</strong><br>
                 <hr>
+                <strong>Tema:</strong> ${g.tema}<br>
                 <strong>Lugar:</strong> ${g.lugar}<br>
                 <strong>Entrevistado:</strong> ${g.entrevistado}<br>
                 <strong>Primera Línea:</strong> ${g.primera_linea}<br>

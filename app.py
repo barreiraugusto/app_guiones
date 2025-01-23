@@ -38,6 +38,7 @@ class Graph(db.Model):
     entrevistado = db.Column(db.String(100), nullable=False)
     lugar = db.Column(db.String(100), nullable=False)
     texto_id = db.Column(db.Integer, db.ForeignKey('texto.id'), nullable=False)
+    tema = db.Column(db.String(100), default=None)  # Nuevo campo
 
 
 # Crear las tablas al iniciar la aplicación
@@ -227,6 +228,7 @@ def crear_graph():
         segunda_linea=data['segunda_linea'],
         entrevistado=data['entrevistado'],
         lugar=data['lugar'],
+        tema=data['tema'],
         texto_id=data['texto_id']
     )
     db.session.add(nuevo_graph)
@@ -243,6 +245,7 @@ def actualizar_graph(id):
         graph.segunda_linea = data.get('segunda_linea', graph.segunda_linea)
         graph.entrevistado = data.get('entrevistado', graph.entrevistado)
         graph.lugar = data.get('lugar', graph.lugar)
+        graph.tema = data.get('tema', graph.tema)
         db.session.commit()
         return jsonify({"mensaje": "Graph actualizado"})
     else:
@@ -270,6 +273,7 @@ def obtener_graph(id):
             "segunda_linea": graph.segunda_linea,
             "entrevistado": graph.entrevistado,
             "lugar": graph.lugar,
+            "tema": graph.tema,
             "texto_id": graph.texto_id
         })
     else:
@@ -287,7 +291,8 @@ def obtener_graphs_por_texto(texto_id):
         "primera_linea": g.primera_linea,
         "segunda_linea": g.segunda_linea,
         "entrevistado": g.entrevistado,
-        "lugar": g.lugar
+        "lugar": g.lugar,
+        "tema": g.tema
     } for g in graphs])
 
 
@@ -311,7 +316,8 @@ def guion(id):
                     "primera_linea": g.primera_linea,
                     "segunda_linea": g.segunda_linea,
                     "entrevistado": g.entrevistado,
-                    "lugar": g.lugar
+                    "lugar": g.lugar,
+                    "tema": g.tema
                 } for g in t.graphs]
             } for t in guion.textos]
         })
