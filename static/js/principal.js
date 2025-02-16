@@ -617,6 +617,72 @@ async function guardarGraph(event) {
     }
 }
 
+// Función para guardar un Graph sin cerrar
+async function agregarNoCerrar(event) {
+    event.preventDefault();
+
+    // Obtener los valores del formulario
+    const graphId = document.getElementById('graph_id').value;
+    const textoId = document.getElementById('texto_id').value;
+    const lugar = document.getElementById('lugar').value;
+    const tema = document.getElementById('tema').value;
+    const entrevistado = document.getElementById('entrevistado').value;
+    const primeraLinea = document.getElementById('primera_linea').value;
+    const segundaLinea = document.getElementById('segunda_linea').value;
+
+    try {
+        const url = graphEditando ? `/graphs/${graphEditando}` : '/graphs';
+        const method = graphEditando ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                texto_id: textoId,
+                lugar: lugar,
+                tema: tema,
+                entrevistado: entrevistado,
+                primera_linea: primeraLinea,
+                segunda_linea: segundaLinea,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al guardar el graph');
+        }
+
+        const result = await response.json();
+        Swal.fire({
+            icon: 'success',
+            title: result.mensaje || "Graph guardado correctamente",
+            showConfirmButton: false, // No mostrar el botón "Aceptar"
+            timer: 1000, // El mensaje desaparecerá después de 2 segundos
+        });
+
+        // Limpiar el formulario solo si se está editando
+        if (graphEditando) {
+            cancelarEdicionGraph(); // Limpiar el formulario y restablecer el botón
+        }
+        // Si no se está editando, no borrar los datos del formulario
+
+        // Recargar la lista de graphs
+        const guion_id = document.getElementById('guion_id').value;
+        if (guion_id) {
+            await seleccionarGuion(guion_id); // Recargar la tabla de textos y graphs
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Hubo un error al guardar el graph. Por favor, inténtalo de nuevo.',
+            showConfirmButton: false, // No mostrar el botón "Aceptar"
+            timer: 3000, // El mensaje desaparecerá después de 3 segundos
+        });
+    }
+}
+
 let graphEditando = null; // Variable para almacenar el ID del graph que se está editando
 
 // Función para editar un graph
