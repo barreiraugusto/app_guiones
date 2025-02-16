@@ -63,16 +63,31 @@ async function cargarGuiones() {
 }
 
 async function editarGuion(id) {
-    const response = await fetch(`/guiones/${id}`);
-    const guion = await response.json();
-    // Rellenar el formulario con los datos del guion
-    document.getElementById('nombreGuion').value = guion.nombre;
-    document.getElementById('descripcionGuion').value = guion.descripcion;
-    // Cambiar el botón de "Crear Guion" a "Guardar"
-    document.getElementById('botonGuardarGuion').textContent = 'Guardar';
-    document.getElementById('botonCancelar').style.display = 'inline';
-    // Guardar el ID del guion que se está editando
-    guionEditando = id;
+    try {
+        // Obtener los datos del guion desde el servidor
+        const response = await fetch(`/guiones/${id}`);
+        const guion = await response.json();
+
+        // Rellenar el formulario con los datos del guion
+        document.getElementById('nombreGuion').value = guion.nombre;
+        document.getElementById('descripcionGuion').value = guion.descripcion;
+
+        // Cambiar el texto del botón de "Crear Guion" a "Guardar"
+        document.getElementById('botonGuardarGuion').textContent = 'Guardar';
+
+        // Mostrar el botón de cancelar (si está oculto)
+        document.getElementById('botonCancelar').style.display = 'inline';
+
+        // Guardar el ID del guion que se está editando
+        guionEditando = id;
+
+        // Abrir el modal
+        $('#formularioGuionModal').modal('show');
+    } catch (error) {
+        console.error('Error al cargar el guion para editar:', error);
+        // Puedes mostrar un mensaje de error al usuario si lo deseas
+        alert('Hubo un error al cargar el guion. Por favor, inténtalo de nuevo.');
+    }
 }
 
 async function guardarGuion(event) {
@@ -80,31 +95,41 @@ async function guardarGuion(event) {
     const nombre = document.getElementById('nombreGuion').value;
     const descripcion = document.getElementById('descripcionGuion').value;
 
-    if (guionEditando) {
-        // Si se está editando un guion, enviar una solicitud PUT
-        await fetch(`/guiones/${guionEditando}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({nombre, descripcion})
-        });
-    } else {
-        // Si no se está editando, enviar una solicitud POST para crear un nuevo guion
-        await fetch('/guiones', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({nombre, descripcion})
-        });
-    }
+    try {
+        if (guionEditando) {
+            // Si se está editando un guion, enviar una solicitud PUT
+            await fetch(`/guiones/${guionEditando}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({nombre, descripcion})
+            });
+        } else {
+            // Si no se está editando, enviar una solicitud POST para crear un nuevo guion
+            await fetch('/guiones', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({nombre, descripcion})
+            });
+        }
 
-    // Limpiar el formulario y restablecer el botón
-    cancelarEdicionGiones();
-    // Recargar la lista de guiones
-    cargarGuiones();
-    cargarGuionesEnSelect(); // Actualizar el <select>
+        // Limpiar el formulario y restablecer el botón
+        cancelarEdicionGiones();
+
+        // Recargar la lista de guiones
+        cargarGuiones();
+        cargarGuionesEnSelect(); // Actualizar el <select>
+
+        // Cerrar el modal
+        $('#formularioGuionModal').modal('hide');
+    } catch (error) {
+        console.error('Error al guardar el guion:', error);
+        // Puedes mostrar un mensaje de error al usuario si lo deseas
+        alert('Hubo un error al guardar el guion. Por favor, inténtalo de nuevo.');
+    }
 }
 
 function cancelarEdicionGiones() {
@@ -559,6 +584,9 @@ async function guardarGraph(event) {
             throw new Error('Error al guardar el graph');
         }
 
+        // Cerrar el modal
+        $('#formularioGraphModal').modal('hide');
+
         const result = await response.json();
         Swal.fire({
             icon: 'success',
@@ -594,6 +622,7 @@ let graphEditando = null; // Variable para almacenar el ID del graph que se est�
 // Función para editar un graph
 async function editarGraph(id) {
     try {
+        // Obtener los datos del graph desde el servidor
         const response = await fetch(`/graphs/${id}`);
         if (!response.ok) throw new Error('Error al cargar el graph');
         const graph = await response.json();
@@ -609,20 +638,22 @@ async function editarGraph(id) {
 
         // Cambiar el botón de "Agregar Graph" a "Guardar"
         document.getElementById('botonGuardarGraph').textContent = 'Guardar';
+
+        // Mostrar el botón de cancelar
         document.getElementById('botonCancelarGraph').style.display = 'inline';
 
         // Guardar el ID del graph que se está editando
         graphEditando = id;
 
-        // Desplazarse al formulario
-        document.getElementById('formularioGraph').scrollIntoView({behavior: 'smooth', block: 'start'});
+        // Abrir el modal
+        $('#formularioGraphModal').modal('show');
     } catch (error) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
             text: error.message || 'Hubo un error al cargar el graph. Por favor, inténtalo de nuevo.',
-            showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 3000, // El mensaje desaparecerá después de 3 segundos
+            showConfirmButton: false,
+            timer: 3000,
         });
     }
 }
@@ -694,6 +725,8 @@ function cancelarEdicionGraph() {
 
     // Restablecer la variable de edición
     graphEditando = null;
+    // Cerrar el modal
+    $('#formularioGraphModal').modal('hide');
 }
 
 // Función para cargar y mostrar los Graphs asociados a un Texto

@@ -2,24 +2,8 @@
 {% block title %}Administrar{% endblock %}
 {% block extra_style %}
     <style>
-        /* Estilos para el botón flotante */
-        .boton-flotante {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            z-index: 1000; /* Asegura que esté por encima de otros elementos */
-            display: none; /* Ocultar inicialmente */
-        }
-
-        /* Mostrar el botón cuando esté activo */
-        .boton-flotante.activo {
-            display: flex;
+        body {
+            padding-top: 70px;
         }
     </style>
 {% endblock extra_style %}
@@ -36,29 +20,64 @@
 {% endblock extra_script %}
 {% block body %}
 
-    <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
-        <div class="card-header">
-            <h4>Guiones</h4>
-        </div>
-        <div class="card-body">
+    <!-- Barra de navegación fija en la parte superior -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+        <div class="container-fluid">
+            <!-- Logo o nombre de la aplicación (opcional) -->
+            <a class="navbar-brand" href="#">Guiones</a>
 
-            <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion" required><br>
-            <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
-                      required></textarea><br>
+            <!-- Botones en la barra de navegación -->
+            <div class="d-flex">
+                <!-- Botón para abrir el modal de Nuevo Guion -->
+                <button type="button" class="btn btn-primary mr-2" data-toggle="modal"
+                        data-target="#formularioGuionModal">
+                    Nuevo Guion
+                </button>
+
+                <!-- Botón para abrir el modal de Agregar Graph -->
+                <button type="button" class="btn btn-primary mr-2" data-toggle="modal"
+                        data-target="#formularioGraphModal">
+                    Agregar Graph
+                </button>
+
+                <button id="botonFlotante" class="btn btn-success mr-2">Agregar Nota</button>
+            </div>
         </div>
-        <div class="card-footer">
-            <button class="btn btn-outline-success" type="submit" id="botonGuardarGuion">Crear Guion</button>
+    </nav>
+
+    <!-- Modal Nuevo guion -->
+    <div class="modal fade bd-example-modal-lg" id="formularioGuionModal" tabindex="-1" role="dialog"
+         aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="formularioGuionModalLabel">Nuevo Guion</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
+                        <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion"
+                               required><br>
+                        <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
+                                  required></textarea><br>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGuion" form="formularioGuion">
+                        Crear Guion
+                    </button>
+                </div>
+            </div>
         </div>
-    </form>
+    </div>
+
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
             <ul id="listaGuiones"></ul>
         </div>
     </div>
-    <!-- Botón flotante -->
-    <button id="botonFlotante" class="btn btn-success boton-flotante">Agregar Nota&nbsp;
-        <span class="fas fa-chevron-up"></span>
-    </button>
     <!-- Formulario para agregar Notas -->
     <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
         <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
@@ -125,57 +144,75 @@
             </div>
         </form>
     </div>
-    <!-- Formulario para agregar/editar Graphs -->
-    <div class="card shadow p-1 m-2 rounded">
-        <form id="formularioGraph" onsubmit="guardarGraph(event)">
-            <div class="card-header">
-                <h4>Carga de graphs</h4>
+
+    <!-- Modal para el formulario de Graph -->
+    <div class="modal fade bd-example-modal-lg" id="formularioGraphModal" tabindex="-1" role="dialog"
+         aria-labelledby="formularioGraphModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="formularioGraphModalLabel">Carga de Graphs</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="formularioGraph" onsubmit="guardarGraph(event)">
+                        <!-- Campo oculto para el ID del graph -->
+                        <input type="hidden" id="graph_id" value="">
+
+                        <!-- Select para asociar a Texto -->
+                        <div class="form-group mb-3">
+                            <label for="texto_id">Nota:</label>
+                            <select class="form-control" id="texto_id" required>
+                                <!-- Las opciones se llenarán dinámicamente con JavaScript -->
+                            </select>
+                        </div>
+
+                        <!-- Fila para Primera Línea y Entrevistado -->
+                        <div class="row p-0 m-0">
+                            <!-- Primera Línea -->
+                            <div class="col-6 p-0 m-0">
+                                <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
+                                <input type="text" class="form-control m-0" id="tema" placeholder="Tema">
+                            </div>
+                            <!-- Entrevistado -->
+                            <div class="col-6 p-0 m-0">
+                                <input type="text" class="form-control m-0" id="entrevistado"
+                                       placeholder="Entrevistado">
+                            </div>
+                        </div>
+
+                        <!-- Primera Línea -->
+                        <div class="form-group p-0 m-0">
+                            <input type="text" class="form-control m-0" id="primera_linea" placeholder="Primera línea">
+                        </div>
+
+                        <!-- Segunda Línea -->
+                        <div class="form-group p-0 m-0">
+                            <textarea class="form-control m-0" id="segunda_linea"
+                                      placeholder="Segunda línea"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <!-- Botón para enviar el formulario -->
+                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph" form="formularioGraph">
+                        Agregar Graph
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="cancelarEdicionGraph()"
+                            id="botonCancelarGraph" style="display: none;">Cancelar
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
-                <!-- Campo oculto para el ID del graph -->
-                <input type="hidden" id="graph_id" value="">
-
-                <!-- Select para asociar a Texto -->
-                <div class="form-group mb-3">
-                    <label for="texto_id">Nota:</label>
-                    <select class="form-control" id="texto_id" required>
-                        <!-- Las opciones se llenarán dinámicamente con JavaScript -->
-                    </select>
-                </div>
-
-                <!-- Fila para Primera Línea y Entrevistado -->
-                <div class="row p-0 m-0">
-                    <!-- Primera Línea -->
-                    <div class="col-6 p-0 m-0">
-                        <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
-                        <input type="text" class="form-control m-0" id="tema" placeholder="Tema">
-                    </div>
-                    <!-- Entrevistado -->
-                    <div class="col-6 p-0 m-0">
-                        <input type="text" class="form-control m-0" id="entrevistado" placeholder="Entrevistado">
-                    </div>
-                </div>
-
-                <!-- Primera Línea -->
-                <div class="form-group p-0 m-0">
-                    <input type="text" class="form-control m-0" id="primera_linea" placeholder="Primera línea">
-                </div>
-
-                <!-- Segunda Línea -->
-                <div class="form-group p-0 m-0">
-                    <textarea class="form-control m-0" id="segunda_linea" placeholder="Segunda línea"></textarea>
-                </div>
-            </div>
-            <div class="card-footer">
-                <!-- Botón para enviar el formulario -->
-                <button type="submit" class="btn btn-outline-success mt-2" id="botonGuardarGraph">Agregar Graph
-                </button>
-                <button type="button" class="btn btn-outline-danger mt-2" onclick="cancelarEdicionGraph()"
-                        id="botonCancelarGraph" style="display: none;">Cancelar
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
+
+
+
+
+
+    <!-- Guion -->
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
             <h3 id="encabezado"></h3>
