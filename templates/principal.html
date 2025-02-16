@@ -10,7 +10,7 @@
 {% block extra_script %}
     <script src="{{ url_for('static', filename='js/principal.js') }}"></script>
     <!-- Add the theme's stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/quill.bubble.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/quill.snow.css') }}">
     <!-- Add FontAwesome -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/@fortawesome/fontawesome-free/css/all.min.css') }}">
     <!-- Add Quill -->
@@ -239,16 +239,37 @@
     <script>
         // Inicializar Quill en el campo "contenido"
         const quill = new Quill('#contenido', {
-            theme: 'bubble',
+            theme: 'snow',
             modules: {
                 toolbar: [
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{'list': 'ordered'}, {'list': 'bullet'}],
-                    [{'script': 'sub'}, {'script': 'super'}],
+                    // Fuente y tamaño
+                    [{'font': []}],
                     [{'size': ['small', false, 'large', 'huge']}],
-                    [{'color': []}, {'background': []}],
+
+                    // Estilos de texto
+                    ['bold', 'italic', 'underline', 'strike'],        // Negrita, cursiva, subrayado, tachado
+                    [{'color': []}, {'background': []}],          // Color de texto y fondo
+                    [{'script': 'sub'}, {'script': 'super'}],     // Subíndice y superíndice
+
+                    // Alineación y dirección del texto
                     [{'align': []}],
-                    ['clean']
+                    [{'direction': 'rtl'}],                         // Dirección de texto (de derecha a izquierda)
+
+                    // Listas
+                    [{'list': 'ordered'}, {'list': 'bullet'}],   // Listas ordenadas y no ordenadas
+                    [{'indent': '-1'}, {'indent': '+1'}],         // Sangría
+
+                    // Encabezados
+                    [{'header': [1, 2, 3, 4, 5, 6, false]}],        // Niveles de encabezado
+
+                    // Bloques de código y citas
+                    ['blockquote', 'code-block'],                     // Citas y bloques de código
+
+                    // Enlaces e imágenes
+                    ['link', 'image', 'video'],                       // Insertar enlaces, imágenes y videos
+
+                    // Limpiar formato
+                    ['clean']                                         // Limpiar formato
                 ]
             },
             bounds: '#contenido', // Define el contenedor del editor
