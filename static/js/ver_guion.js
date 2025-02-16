@@ -38,10 +38,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Convertir URLs en enlaces dentro del material
                 const materialContent = convertirUrlsEnEnlaces(t.material || '');
                 fila.innerHTML = `
+                    <td><h3>${t.numero_de_nota}</3></td>
                     <td><strong>${t.titulo}</strong></td>
                     <td>${t.contenido}</td>
                     <td>${materialContent}</td>
-                    <td><h3>${t.numero_de_nota}</h3></td>
                 `;
                 tbody.appendChild(fila);
 
@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <strong>Graph ${index + 1}</strong><br>
                                 <hr>
                                 <strong>Lugar:</strong> ${g.lugar}<br>
+                                <strong>Tema:</strong> ${g.tema}<br>
                                 <strong>Entrevistado:</strong> ${g.entrevistado}<br>
                                 <strong>Primera Línea:</strong> ${g.primera_linea}<br>
                                 <strong>Segunda Línea:</strong> ${g.segunda_linea}<br> 

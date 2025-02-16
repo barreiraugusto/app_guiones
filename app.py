@@ -39,6 +39,7 @@ class Graph(db.Model):
     lugar = db.Column(db.String(100), nullable=False)
     texto_id = db.Column(db.Integer, db.ForeignKey('texto.id'), nullable=False)
     tema = db.Column(db.String(100), default=None)  # Nuevo campo
+    activo = db.Column(db.Boolean, default=False)
 
 
 # Crear las tablas al iniciar la aplicación
@@ -49,6 +50,11 @@ with app.app_context():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/pantalla')
+def pantalla():
+    return render_template('pantalla.html')
 
 
 @app.route('/principal')
@@ -85,7 +91,9 @@ def textos():
                 "primera_linea": g.primera_linea,
                 "segunda_linea": g.segunda_linea,
                 "entrevistado": g.entrevistado,
-                "lugar": g.lugar
+                "lugar": g.lugar,
+                "tema": g.tema,
+                "activo": g.activo
             } for g in t.graphs]
         } for t in textos])
 
@@ -300,6 +308,7 @@ def obtener_graphs_por_texto(texto_id):
 def guion(id):
     guion = Guion.query.get(id)
     if guion:
+        print(f"Editando este guion {id}")
         return jsonify({
             "id": guion.id,
             "nombre": guion.nombre,
@@ -323,6 +332,59 @@ def guion(id):
         })
     else:
         return jsonify({"mensaje": "Guion no encontrado"}), 404
+
+
+@app.route('/guiones/<int:id>', methods=['PUT'])
+def editar_guion(id):
+    guion = Guion.query.get(id)
+    if not guion:
+        return jsonify({"mensaje": "Guion no encontrado"}), 404
+
+    # Obtener los datos del cuerpo de la solicitud
+    datos = request.get_json()
+
+    # Actualizar los campos del guion con los datos recibidos
+    if 'nombre' in datos:
+        guion.nombre = datos['nombre']
+    if 'descripcion' in datos:
+        guion.descripcion = datos['descripcion']
+
+    # Si hay textos en los datos, actualizarlos también
+    if 'textos' in datos:
+        for texto_data in datos['textos']:
+            texto = next((t for t in guion.textos if t.id == texto_data['id']), None)
+            if texto:
+                if 'numero_de_nota' in texto_data:
+                    texto.numero_de_nota = texto_data['numero_de_nota']
+                if 'titulo' in texto_data:
+                    texto.titulo = texto_data['titulo']
+                if 'contenido' in texto_data:
+                    texto.contenido = texto_data['contenido']
+                if 'material' in texto_data:
+                    texto.material = texto_data['material']
+                if 'activo' in texto_data:
+                    texto.activo = texto_data['activo']
+
+                # Si hay graphs en los datos del texto, actualizarlos también
+                if 'graphs' in texto_data:
+                    for graph_data in texto_data['graphs']:
+                        graph = next((g for g in texto.graphs if g.id == graph_data['id']), None)
+                        if graph:
+                            if 'primera_linea' in graph_data:
+                                graph.primera_linea = graph_data['primera_linea']
+                            if 'segunda_linea' in graph_data:
+                                graph.segunda_linea = graph_data['segunda_linea']
+                            if 'entrevistado' in graph_data:
+                                graph.entrevistado = graph_data['entrevistado']
+                            if 'lugar' in graph_data:
+                                graph.lugar = graph_data['lugar']
+                            if 'tema' in graph_data:
+                                graph.tema = graph_data['tema']
+
+    # Guardar los cambios en la base de datos
+    db.session.commit()
+
+    return jsonify({"mensaje": "Guion actualizado correctamente"}), 200
 
 
 @app.route('/listado_guiones')
@@ -352,6 +414,46 @@ def borrar_guion(id):
         return jsonify({"mensaje": "Guion eliminado"})
     else:
         return jsonify({"mensaje": "Guion no encontrado"}), 404
+
+
+@app.route('/control_graphs/<int:id>')
+def control_graphs(id):
+    guion = Guion.query.get(id)
+    if guion:
+        return render_template('control_graphs.html', guion=guion)
+    else:
+        return "Guion no encontrado", 404
+
+
+@app.route('/graphs/activo/<int:id>', methods=['PUT'])
+def setGraphsActivo(id):
+    Graph.query.update({Graph.activo: False})
+    graph = Graph.query.get(id)
+    graph.activo = True
+    db.session.commit()
+    return jsonify({"mensaje": "Graph activo actualizado"})
+
+
+@app.route('/obtener_graph_activo')
+def obtener_graph_activo():
+    graphs_activo = Graph.query.filter_by(activo=True).first()
+    if graphs_activo:
+        return jsonify({
+            "activo": graphs_activo.activo,
+            "id": graphs_activo.id,
+            "primera_linea": graphs_activo.primera_linea,
+            "segunda_linea": graphs_activo.segunda_linea,
+            "entrevistado": graphs_activo.entrevistado,
+            "lugar": graphs_activo.lugar,
+            "tema": graphs_activo.tema
+        })
+    else:
+        return jsonify({
+            "numero_de_nota": None,
+            "titulo": None,
+            "contenido": None,
+            "material": None
+        })
 
 
 if __name__ == '__main__':

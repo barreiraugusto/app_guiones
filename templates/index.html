@@ -1,19 +1,51 @@
 {% extends "base.html" %}
 {% block title %}MENÚ{% endblock %}
+{% block extra_style %}
+    <style>
+        .menu-fixed-right {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
 
+        .menu-card-right {
+            border-radius: 15px 0 0 15px;
+            box-shadow: -5px 5px 15px rgba(0, 0, 0, 0.1);
+            border-right: none;
+        }
+
+        .menu-card-right .btn {
+            border-radius: 12px 0 0 12px !important;
+            border-right: none;
+            text-align: left;
+            padding-left: 25px;
+            transition: all 0.2s ease;
+        }
+
+        .menu-card-right .btn-lg {
+            padding: 0.8rem 1.5rem;
+            font-size: 1.1rem;
+        }
+    </style>
+{% endblock extra_style %}
 {% block body %}
-    <!-- Contenedor principal que ocupa toda la pantalla -->
-    <div class="d-flex justify-content-center align-items-center p-0 m-0">
-        <div class="card shadow-lg p-4 m-5 rounded text-center" style="width: 400px;">
-            <div class="card-body">
-                <h4 class="card-title mb-4 text-secondary">GUIONES</h4>
-                <button class="btn btn-outline-secondary btn-block mb-2" onclick="window.location.href='/principal'">
+    <!-- Contenedor del menú -->
+    <div class="menu-fixed-right">
+        <div class="card menu-card-right pb-4 pl-4 pt-4 pr-0" style="width: 400px;">
+            <div class="card-body p-0">
+                <h4 class="card-title mb-4 text-secondary ps-2">GUIONES</h4>
+                <button class="btn btn-outline-secondary btn-block btn-lg mb-3"
+                        onclick="window.location.href='/principal'">
                     Control de Guiones
                 </button>
-                <button class="btn btn-outline-secondary btn-block mb-2" onclick="window.location.href='/siguiente'">
-                    Próxima Nota 
+                <button class="btn btn-outline-secondary btn-block btn-lg mb-3"
+                        onclick="window.location.href='/siguiente'">
+                    Próxima Nota
                 </button>
-                <button class="btn btn-outline-secondary btn-block" onclick="window.location.href='/listado_guiones'">
+                <button class="btn btn-outline-secondary btn-block btn-lg"
+                        onclick="window.location.href='/listado_guiones'">
                     Guiones
                 </button>
             </div>

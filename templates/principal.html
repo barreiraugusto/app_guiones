@@ -35,14 +35,23 @@
     <script src="{{ url_for('static', filename='utilidades-js/js/clipboard.min.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
+
+    <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
+        <div class="card-header">
+            <h4>Guiones</h4>
+        </div>
+        <div class="card-body">
+
+            <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion" required><br>
+            <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
+                      required></textarea><br>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-outline-success" type="submit" id="botonGuardarGuion">Crear Guion</button>
+        </div>
+    </form>
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
-            <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
-                <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion" required><br>
-                <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
-                          required></textarea><br>
-                <button class="btn btn-outline-success" type="submit" id="botonGuardarGuion">Crear Guion</button>
-            </form>
             <ul id="listaGuiones"></ul>
         </div>
     </div>
@@ -54,46 +63,53 @@
     <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
         <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
             <div class="card-header">
+                <h4>Agregar nota</h4>
+            </div>
+            <div class="card-body">
+
                 <!-- Fila aparte para el select -->
                 <div class="row">
                     <div class="col">
-                        <select class="form-control" id="guion_id" required>
+                        <label for="guion_id">Guion:</label>
+                        <select class="form-control" id="guion_id">
                             <!-- Las opciones se llenarán dinámicamente con JavaScript -->
                         </select>
                     </div>
                 </div>
-            </div>
-            <div class="card-body">
+
+                <!-- Campo oculto para el contenido -->
                 <input type="hidden" id="contenido-hidden" name="contenido">
-                <!-- Tabla para los inputs y textareas -->
-                <table class="table table-responsive">
-                    <thead class="thead-light">
-                    <tr>
-                        <th scope="col">Tipo</th>
-                        <th scope="col">Graf/Copete</th>
-                        <th scope="col">Codigo</th>
-                        <th scope="col">Nº de Nota</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr style="height: 200px">
-                        <td style="width: 10%; height: 200px" class="p-0 m-0">
-                            <textarea class="text-center w-100 h-100 border-bottom-0 border-top-0 p-0 m-0" type="text" id="titulo"
-                                      required></textarea>
-                        </td>
-                        <td style="width: 50%; height: 200px" class="p-0 m-0">
-                            <div id="contenido" class="w-100 h-100 border-bottom-0 border-top-0 p-0 m-0"></div>
-                        </td>
-                        <td style="width: 30%; height: 200px" class="p-0 m-0">
-                            <textarea class="w-100 h-100 border-right-0 border-bottom-0 border-top-0 m-0" id="material"></textarea>
-                        </td>
-                        <td style="width: 10%; height: 200px" class="w-10 p-0 m-0">
-                            <input style="width: 10px" class="text-center w-100 h-100 border-bottom-0 border-top-0 p-0 m-0" type="number"
-                                   id="numero_de_nota">
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+
+                <div class="row mt-2">
+                    <div class="col-10">
+                        <!-- Campo para el título -->
+                        <div class="form-group">
+                            <label for="titulo">Tipo:</label>
+                            <input class="form-control" id="titulo" name="titulo" required>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <!-- Campo para el número de nota -->
+                        <div class="form-group">
+                            <label for="numero_de_nota">Nota nro.:</label>
+                            <input class="form-control" type="number" id="numero_de_nota" name="numero_de_nota">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo para el contenido -->
+                <div class="form-group">
+                    <label for="contenido">Copete/Contenido:</label>
+                    <div id="contenido" style="height: 400px" class="form-control"></div>
+                </div>
+
+                <!-- Campo para el material -->
+                <div class="form-group">
+                    <label for="material">Codigo:</label>
+                    <textarea class="form-control" id="material" name="material"></textarea>
+                </div>
+
+
             </div>
             <div class="card-footer">
                 <!-- Fila para los botones -->
@@ -111,14 +127,17 @@
     </div>
     <!-- Formulario para agregar/editar Graphs -->
     <div class="card shadow p-1 m-2 rounded">
-        <div class="card-body">
-            <form id="formularioGraph" onsubmit="guardarGraph(event)">
+        <form id="formularioGraph" onsubmit="guardarGraph(event)">
+            <div class="card-header">
+                <h4>Carga de graphs</h4>
+            </div>
+            <div class="card-body">
                 <!-- Campo oculto para el ID del graph -->
                 <input type="hidden" id="graph_id" value="">
 
                 <!-- Select para asociar a Texto -->
                 <div class="form-group mb-3">
-                    <label for="texto_id">Carga de graphs</label>
+                    <label for="texto_id">Nota:</label>
                     <select class="form-control" id="texto_id" required>
                         <!-- Las opciones se llenarán dinámicamente con JavaScript -->
                     </select>
@@ -146,18 +165,20 @@
                 <div class="form-group p-0 m-0">
                     <textarea class="form-control m-0" id="segunda_linea" placeholder="Segunda línea"></textarea>
                 </div>
-
+            </div>
+            <div class="card-footer">
                 <!-- Botón para enviar el formulario -->
-                <button type="submit" class="btn btn-outline-success mt-2" id="botonGuardarGraph">Agregar Graph</button>
+                <button type="submit" class="btn btn-outline-success mt-2" id="botonGuardarGraph">Agregar Graph
+                </button>
                 <button type="button" class="btn btn-outline-danger mt-2" onclick="cancelarEdicionGraph()"
                         id="botonCancelarGraph" style="display: none;">Cancelar
                 </button>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
-            <h2 id="encabezado"></h2>
+            <h3 id="encabezado"></h3>
             <table class="table table-responsive" id="tablaTextos">
                 <thead class="thead-light">
                 <tr>

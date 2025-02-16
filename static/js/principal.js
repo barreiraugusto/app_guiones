@@ -329,7 +329,11 @@ async function guardarTexto(event) {
     const titulo = document.getElementById('titulo').value;
     const contenido = quill.root.innerHTML; // Obtener el contenido de Quill
     const material = document.getElementById('material').value;
-    const guionId = document.getElementById('guion_id').value;
+    // 2. Lógica para restaurar el guion seleccionado y cargar los textos
+    const guion_id = localStorage.getItem('guionSeleccionado');
+    if (guion_id) {
+        document.getElementById('guion_id').value = guion_id;
+    }
 
     try {
         const url = textoEditando ? `/textos/editar/${textoEditando}` : '/textos';
@@ -345,7 +349,7 @@ async function guardarTexto(event) {
                 titulo: titulo,
                 contenido: contenido,
                 material: material,
-                guion_id: guionId
+                guion_id: guion_id
             })
         });
 
@@ -369,8 +373,9 @@ async function guardarTexto(event) {
         await cargarTextosEnSelect();
 
         // Recargar la lista de textos en la tabla
-        if (guionId) {
-            seleccionarGuion(guionId);
+
+        if (guion_id) {
+            seleccionarGuion(guion_id);
         } else {
             cargarTextos();
         }
@@ -446,9 +451,9 @@ async function borrarTexto(id) {
             });
 
             // Actualiza la interfaz de usuario
-            const guionId = document.getElementById('guion_id').value;
-            if (guionId) {
-                seleccionarGuion(guionId); // Recargar la tabla de textos
+            const guion_id = document.getElementById('guion_id').value;
+            if (guion_id) {
+                seleccionarGuion(guion_id); // Recargar la tabla de textos
             } else {
                 cargarTextos(); // Si no hay guion seleccionado, recargar todos los textos
             }
@@ -569,9 +574,9 @@ async function guardarGraph(event) {
         // Si no se está editando, no borrar los datos del formulario
 
         // Recargar la lista de graphs
-        const guionId = document.getElementById('guion_id').value;
-        if (guionId) {
-            await seleccionarGuion(guionId); // Recargar la tabla de textos y graphs
+        const guion_id = document.getElementById('guion_id').value;
+        if (guion_id) {
+            await seleccionarGuion(guion_id); // Recargar la tabla de textos y graphs
         }
     } catch (error) {
         Swal.fire({
@@ -660,9 +665,9 @@ async function eliminarGraph(id) {
             });
 
             // Recargar la lista de graphs
-            const guionId = document.getElementById('guion_id').value;
-            if (guionId) {
-                await seleccionarGuion(guionId); // Recargar la tabla de textos y graphs
+            const guion_id = document.getElementById('guion_id').value;
+            if (guion_id) {
+                await seleccionarGuion(guion_id); // Recargar la tabla de textos y graphs
             }
         } catch (error) {
             // Mostrar mensaje de error con SweetAlert2
@@ -755,8 +760,8 @@ async function setTextoActivo(id) {
     await fetch(`/textos/activo/${id}`, {
         method: 'PUT'
     });
-    const guionId = document.getElementById('guion_id').value;
-    seleccionarGuion(guionId);
+    const guion_id = document.getElementById('guion_id').value;
+    seleccionarGuion(guion_id);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
