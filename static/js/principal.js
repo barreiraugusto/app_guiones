@@ -176,10 +176,10 @@ async function seleccionarGuion(id) {
         const materialContent = convertirUrlsEnEnlaces(t.material || '');
 
         filaTexto.innerHTML = `
+            <td><h3>${t.numero_de_nota}</h3></td>
             <td><strong>${t.titulo}</strong></td>
             <td>${t.contenido}</td>
             <td>${materialContent}</td>
-            <td><h3>${t.numero_de_nota}</h3></td>
             <td>
                 <div class="btn-group-vertical">
                     <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
