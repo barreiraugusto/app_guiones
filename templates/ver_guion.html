@@ -1,29 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Ver guion{% endblock %}
+{% block extra_style %}
+    <style>
+        body {
+            padding-top: 70px;
+        }
+    </style>
+{% endblock extra_style %}
 {% block extra_script %}
     <script src="{{ url_for('static', filename='js/ver_guion.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
+    <!-- Barra de navegación fija en la parte superior -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+        <div class="container-fluid">
+            <!-- Logo o nombre de la aplicación (opcional) -->
+            <a class="navbar-brand" href="#">Guiones</a>
+            <a href="/listado_guiones">
+                <button class="btn btn-outline-primary">Guiones</button>
+            </a>
+        </div>
+        </div>
+    </nav>
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-header">
             <h2>{{ guion.nombre }}</h2>
             <em>{{ guion.descripcion }}</em>
         </div>
         <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
-            <table class="table table-responsive" id="tablaTextos">
-                <thead class="thead-light">
-                <tr>
-                    <th scope="col">N°</th>
-                    <th scope="col">Tipo</th>
-                    <th scope="col">Graf/Copete</th>
-                    <th scope="col">Codigo</th>
-                </tr>
-                </thead>
-                <tbody>
+        <table class="table table-responsive" id="tablaTextos">
+            <thead class="thead-light">
+            <tr>
+                <th scope="col">N°</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Graf/Copete</th>
+                <th scope="col">Codigo</th>
+            </tr>
+            </thead>
+            <tbody>
 
-                <!-- Las filas se llenarán dinámicamente con JavaScript -->
-                </tbody>
-            </table>
+            <!-- Las filas se llenarán dinámicamente con JavaScript -->
+            </tbody>
+        </table>
 
         <div class="card-footer">
             <a href="/listado_guiones">
