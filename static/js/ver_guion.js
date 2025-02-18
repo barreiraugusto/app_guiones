@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Convertir URLs en enlaces dentro del material
                 const materialContent = convertirUrlsEnEnlaces(t.material || '');
                 fila.innerHTML = `
-                    <td><h3>${t.numero_de_nota}</3></td>
+                    <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
                     <td><strong>${t.titulo}</strong></td>
                     <td>${t.contenido}</td>
                     <td>${materialContent}</td>
@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     t.graphs.forEach((g, index) => {
                         const filaGraph = document.createElement('tr');
                         filaGraph.innerHTML = `
+                            <td></td>
                             <td></td>
                             <td class="bg-light" colspan="3">
                                 <strong>Graph ${index + 1}</strong><br>

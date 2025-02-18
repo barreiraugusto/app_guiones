@@ -21,7 +21,7 @@
 {% block body %}
 
     <!-- Barra de navegación fija en la parte superior -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
         <div class="container-fluid">
             <!-- Logo o nombre de la aplicación (opcional) -->
             <a class="navbar-brand" href="#">Guiones</a>
@@ -54,7 +54,7 @@
          aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header text-white bg-primary">
                     <h5 class="modal-title" id="formularioGuionModalLabel">Nuevo Guion</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -82,10 +82,11 @@
             <ul id="listaGuiones"></ul>
         </div>
     </div>
+
     <!-- Formulario para agregar Notas -->
     <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
         <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
-            <div class="card-header">
+            <div class="card-header text-white bg-primary">
                 <h4>Agregar nota</h4>
             </div>
             <div class="card-body">
@@ -154,7 +155,7 @@
          aria-labelledby="formularioGraphModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header text-white bg-primary">
                     <h5 class="modal-title" id="formularioGraphModalLabel">Carga de Graphs</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>

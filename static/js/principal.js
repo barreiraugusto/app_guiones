@@ -176,7 +176,7 @@ async function seleccionarGuion(id) {
         const materialContent = convertirUrlsEnEnlaces(t.material || '');
 
         filaTexto.innerHTML = `
-            <td><h3>${t.numero_de_nota}</h3></td>
+            <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
             <td><strong>${t.titulo}</strong></td>
             <td>${t.contenido}</td>
             <td>${materialContent}</td>
@@ -203,7 +203,8 @@ async function seleccionarGuion(id) {
 
                 filaGraph.innerHTML = `
             <td></td>
-            <td class="bg-light" colspan="4">
+            <td></td>
+            <td class="bg-light" colspan="3">
                 <strong>Graph ${contadorGraph}</strong><br>
                 <hr>
                 <strong>Lugar:</strong> ${g.lugar}<br>
