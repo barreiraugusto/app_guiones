@@ -39,9 +39,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const materialContent = convertirUrlsEnEnlaces(t.material || '');
                 fila.innerHTML = `
                     <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
-                    <td><strong>${t.titulo}</strong></td>
-                    <td>${t.contenido}</td>
+                    <td><strong>${t.titulo}</strong></td>  
+                    <td>${t.contenido}</td> 
                     <td>${materialContent}</td>
+                    <td>${t.musica}</td>
                 `;
                 tbody.appendChild(fila);
 

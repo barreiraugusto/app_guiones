@@ -120,20 +120,33 @@
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-10">
+                        <!-- Campo para el material -->
+                        <div class="form-group">
+                            <label for="material">Codigo:</label>
+                            <textarea class="form-control" id="material" name="material"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <!-- Campo para la musica -->
+                        <div class="form-group">
+                            <label for="musica">Música:</label>
+                            <select class="form-control" id="musica" name="musica">
+                                <option value="">Selecciona una opción</option>  <!-- Opción vacía -->
+                                {% for opcion in musica_opciones %}
+                                    <option value="{{ opcion }}">{{ opcion }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Campo para el contenido -->
                 <div class="form-group">
                     <label for="contenido">Copete/Contenido:</label>
                     <div id="contenido" style="height: 400px" class="form-control"></div>
                 </div>
-
-                <!-- Campo para el material -->
-                <div class="form-group">
-                    <label for="material">Codigo:</label>
-                    <textarea class="form-control" id="material" name="material"></textarea>
-                </div>
-
-
             </div>
             <div class="card-footer">
                 <!-- Fila para los botones -->
@@ -231,6 +244,7 @@
                     <th scope="col">Descripcion/Seccion</th>
                     <th scope="col">Graf/Copete</th>
                     <th scope="col">Codigo</th>
+                    <th scope="col">Musica</th>
                     <th scope="col">Acciones</th>
                 </tr>
                 </thead>

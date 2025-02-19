@@ -180,6 +180,7 @@ async function seleccionarGuion(id) {
             <td><strong>${t.titulo}</strong></td>
             <td>${t.contenido}</td>
             <td>${materialContent}</td>
+            <td>${t.musica}</td>
             <td>
                 <div class="btn-group-vertical">
                     <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
@@ -204,7 +205,7 @@ async function seleccionarGuion(id) {
                 filaGraph.innerHTML = `
             <td></td>
             <td></td>
-            <td class="bg-light" colspan="3">
+            <td class="bg-light" colspan="4">
                 <strong>Graph ${contadorGraph}</strong><br>
                 <hr>
                 <strong>Lugar:</strong> ${g.lugar}<br>
@@ -334,6 +335,7 @@ async function cargarTextos() {
             <td><strong>${t.titulo}</strong></td>
             <td>${t.contenido}</td>
             <td>${t.material || ''}</td>
+            <td>${t.musica}</td>
             <td><h3>${t.numero_de_nota}</h3></td>
             <td>
                 <div class="btn-group-vertical">
@@ -355,6 +357,7 @@ async function guardarTexto(event) {
     const titulo = document.getElementById('titulo').value;
     const contenido = quill.root.innerHTML; // Obtener el contenido de Quill
     const material = document.getElementById('material').value;
+    const musica = document.getElementById('musica').value;
     // 2. Lógica para restaurar el guion seleccionado y cargar los textos
     const guion_id = localStorage.getItem('guionSeleccionado');
     if (guion_id) {
@@ -374,6 +377,7 @@ async function guardarTexto(event) {
                 numero_de_nota: numeroDeNota,
                 titulo: titulo,
                 contenido: contenido,
+                musica: musica,
                 material: material,
                 guion_id: guion_id
             })
@@ -429,6 +433,7 @@ async function editarTexto(event, id) {
     quill.root.innerHTML = texto.contenido;
     document.getElementById('material').value = texto.material || '';
     document.getElementById('guion_id').value = texto.guion_id;
+    document.getElementById('musica').value = texto.musica;
 
     document.getElementById('botonGuardarTexto').textContent = 'Guardar';
     document.getElementById('botonCancelar').style.display = 'inline';

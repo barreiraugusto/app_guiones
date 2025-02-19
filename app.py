@@ -1,3 +1,5 @@
+from enum import Enum
+
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -16,6 +18,12 @@ class Guion(db.Model):
     textos = db.relationship('Texto', backref='guion', lazy=True)
 
 
+# Lista de opciones permitidas
+MUSICA_OPCIONES = [
+    "Policiales", "Tensión", "Impacto", "Románticas", "Dramáticas",
+    "Alegres", "Misterio", "Acción", "Nostálgicas", "Épicas", "Relajantes"
+]
+
 class Texto(db.Model):
     __tablename__ = 'texto'
     id = db.Column(db.Integer, primary_key=True)
@@ -25,6 +33,15 @@ class Texto(db.Model):
     material = db.Column(db.String(500), nullable=True)
     activo = db.Column(db.Boolean, default=False)
     guion_id = db.Column(db.Integer, db.ForeignKey('guion.id'), nullable=False)
+
+    # Campo de música como String
+    musica = db.Column(db.String(50), nullable=True)
+
+    # Validación manual
+    def set_musica(self, value):
+        if value not in MUSICA_OPCIONES:
+            raise ValueError(f"'{value}' no es una opción válida para música.")
+        self.musica = value
 
     # Relación con Graph con eliminación en cascada
     graphs = db.relationship('Graph', backref='texto', cascade="all, delete-orphan", lazy=True)
@@ -59,7 +76,7 @@ def pantalla():
 
 @app.route('/principal')
 def principal():
-    return render_template('principal.html')
+    return render_template('principal.html', musica_opciones=MUSICA_OPCIONES)
 
 
 @app.route('/textos', methods=['GET', 'POST'])
@@ -70,6 +87,7 @@ def textos():
             numero_de_nota=data['numero_de_nota'],
             titulo=data['titulo'],
             contenido=data['contenido'],
+            musica=data['musica'],
             material=data.get('material', ''),
             guion_id=data['guion_id']
         )
@@ -83,6 +101,7 @@ def textos():
             "numero_de_nota": t.numero_de_nota,
             "titulo": t.titulo,
             "contenido": t.contenido,
+            "musica": t.musica,
             "material": t.material,
             "activo": t.activo,
             "guion_id": t.guion_id,
@@ -126,6 +145,7 @@ def obtener_texto_activo():
             "titulo": texto_activo.titulo,
             "contenido": texto_activo.contenido,
             "material": texto_activo.material,
+            "musica": texto_activo.musica,
             "activo": texto_activo.activo,
             "guion_id": texto_activo.guion_id,
             "graphs": [{
@@ -141,6 +161,7 @@ def obtener_texto_activo():
             "numero_de_nota": None,
             "titulo": None,
             "contenido": None,
+            "musica": None,
             "material": None
         })
 
@@ -153,6 +174,7 @@ def obtener_textos_guion(id):
             "id": t.id,
             "titulo": t.titulo,
             "contenido": t.contenido,
+            "musica": t.musica,
             "material": t.material,
             "numero_de_nota": t.numero_de_nota,
             "activo": t.activo
@@ -170,6 +192,7 @@ def obtener_texto(id):
             "numero_de_nota": texto.numero_de_nota,
             "titulo": texto.titulo,
             "contenido": texto.contenido,
+            "musica": texto.musica,
             "material": texto.material,
             "activo": texto.activo
         })
@@ -185,6 +208,7 @@ def editar_texto(id):
         texto.numero_de_nota = data.get('numero_de_nota', texto.numero_de_nota)
         texto.titulo = data.get('titulo', texto.titulo)
         texto.contenido = data.get('contenido', texto.contenido)
+        texto.musica = data.get('musica', texto.musica)
         texto.material = data.get('material', texto.material)
         db.session.commit()
         return jsonify({"mensaje": "Texto actualizado"})
@@ -318,6 +342,7 @@ def guion(id):
                 "numero_de_nota": t.numero_de_nota,
                 "titulo": t.titulo,
                 "contenido": t.contenido,
+                "musica": t.musica,
                 "material": t.material,
                 "activo": t.activo,
                 "graphs": [{
@@ -360,6 +385,8 @@ def editar_guion(id):
                     texto.titulo = texto_data['titulo']
                 if 'contenido' in texto_data:
                     texto.contenido = texto_data['contenido']
+                if 'musica' in texto_data:
+                    texto.musica = texto_data['musica']
                 if 'material' in texto_data:
                     texto.material = texto_data['material']
                 if 'activo' in texto_data:
@@ -452,6 +479,7 @@ def obtener_graph_activo():
             "numero_de_nota": None,
             "titulo": None,
             "contenido": None,
+            "musica": None,
             "material": None
         })
 
