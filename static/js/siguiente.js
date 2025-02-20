@@ -12,6 +12,7 @@ async function actualizarTextoActivo() {
     const numeroElement = document.getElementById('texto-activo-numero-de-nota');
     const contenidoElement = document.getElementById('texto-activo-contenido');
     const materialElement = document.getElementById('texto-activo-material');
+    const musicaElement = document.getElementById('texto-activo-musica');
 
     if (data.titulo) {
         tituloElement.textContent = `${data.titulo}`;
@@ -20,6 +21,7 @@ async function actualizarTextoActivo() {
 
         // Convertir URLs en enlaces dentro del material
         materialElement.innerHTML = convertirUrlsEnEnlaces(data.material || '');
+        musicaElement.innerHTML = convertirUrlsEnEnlaces(data.musica || '').toUpperCase();
     } else {
         tituloElement.textContent = "No hay un texto activo seleccionado.";
         contenidoElement.innerHTML = ""; // Usar innerHTML para limpiar el contenido

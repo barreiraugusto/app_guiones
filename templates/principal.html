@@ -19,7 +19,6 @@
     <script src="{{ url_for('static', filename='utilidades-js/js/clipboard.min.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
-
     <!-- Barra de navegación fija en la parte superior -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
         <div class="container-fluid">
@@ -33,22 +32,18 @@
                         data-target="#formularioGuionModal">
                     Nuevo Guion
                 </button>
-
                 <!-- Botón para abrir el modal de Agregar Graph -->
                 <button type="button" class="btn btn-primary mr-2" data-toggle="modal"
                         data-target="#formularioGraphModal">
                     Agregar Graph
                 </button>
-
                 <button id="botonFlotante" class="btn btn-primary mr-2">Agregar Nota</button>
-
                 <a href="/">
                     <button class="btn btn-success">Menu</button>
                 </a>
             </div>
         </div>
     </nav>
-
     <!-- Modal Nuevo guion -->
     <div class="modal fade bd-example-modal-lg" id="formularioGuionModal" tabindex="-1" role="dialog"
          aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
@@ -76,13 +71,11 @@
             </div>
         </div>
     </div>
-
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
             <ul id="listaGuiones"></ul>
         </div>
     </div>
-
     <!-- Formulario para agregar Notas -->
     <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
         <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
@@ -90,7 +83,6 @@
                 <h4>Agregar nota</h4>
             </div>
             <div class="card-body">
-
                 <!-- Fila aparte para el select -->
                 <div class="row">
                     <div class="col">
@@ -100,10 +92,8 @@
                         </select>
                     </div>
                 </div>
-
                 <!-- Campo oculto para el contenido -->
                 <input type="hidden" id="contenido-hidden" name="contenido">
-
                 <div class="row mt-2">
                     <div class="col-10">
                         <!-- Campo para el título -->
@@ -141,7 +131,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Campo para el contenido -->
                 <div class="form-group">
                     <label for="contenido">Copete/Contenido:</label>
@@ -162,7 +151,6 @@
             </div>
         </form>
     </div>
-
     <!-- Modal para el formulario de Graph -->
     <div class="modal fade bd-example-modal-lg" id="formularioGraphModal" tabindex="-1" role="dialog"
          aria-labelledby="formularioGraphModalLabel" aria-hidden="true">
@@ -186,7 +174,6 @@
                                 <!-- Las opciones se llenarán dinámicamente con JavaScript -->
                             </select>
                         </div>
-
                         <!-- Fila para Primera Línea y Entrevistado -->
                         <div class="row p-0 m-0">
                             <!-- Primera Línea -->
@@ -200,12 +187,10 @@
                                        placeholder="Entrevistado">
                             </div>
                         </div>
-
                         <!-- Primera Línea -->
                         <div class="form-group p-0 m-0">
                             <input type="text" class="form-control m-0" id="primera_linea" placeholder="Primera línea">
                         </div>
-
                         <!-- Segunda Línea -->
                         <div class="form-group p-0 m-0">
                             <textarea class="form-control m-0" id="segunda_linea"
@@ -228,11 +213,6 @@
             </div>
         </div>
     </div>
-
-
-
-
-
     <!-- Guion -->
     <div class="card shadow p-1 m-2 rounded">
         <div class="card-body">
@@ -254,7 +234,6 @@
             </table>
         </div>
     </div>
-
     <script>
         // Inicializar Quill en el campo "contenido"
         const quill = new Quill('#contenido', {
@@ -264,29 +243,22 @@
                     // Fuente y tamaño
                     [{'font': []}],
                     [{'size': ['small', false, 'large', 'huge']}],
-
                     // Estilos de texto
                     ['bold', 'italic', 'underline', 'strike'],        // Negrita, cursiva, subrayado, tachado
                     [{'color': []}, {'background': []}],          // Color de texto y fondo
                     [{'script': 'sub'}, {'script': 'super'}],     // Subíndice y superíndice
-
                     // Alineación y dirección del texto
                     [{'align': []}],
                     [{'direction': 'rtl'}],                         // Dirección de texto (de derecha a izquierda)
-
                     // Listas
                     [{'list': 'ordered'}, {'list': 'bullet'}],   // Listas ordenadas y no ordenadas
                     [{'indent': '-1'}, {'indent': '+1'}],         // Sangría
-
                     // Encabezados
                     [{'header': [1, 2, 3, 4, 5, 6, false]}],        // Niveles de encabezado
-
                     // Bloques de código y citas
                     ['blockquote', 'code-block'],                     // Citas y bloques de código
-
                     // Enlaces e imágenes
                     ['link', 'image', 'video'],                       // Insertar enlaces, imágenes y videos
-
                     // Limpiar formato
                     ['clean']                                         // Limpiar formato
                 ]

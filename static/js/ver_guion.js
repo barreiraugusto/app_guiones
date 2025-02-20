@@ -31,9 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             textosFiltrados.forEach(t => {
                 const fila = document.createElement('tr');
-                if (t.activo) {
-                    fila.classList.add('bg-success'); // Resaltar la fila del texto activo
-                }
 
                 // Convertir URLs en enlaces dentro del material
                 const materialContent = convertirUrlsEnEnlaces(t.material || '');
@@ -78,3 +75,52 @@ document.addEventListener('DOMContentLoaded', function () {
     // Cargar los textos al abrir la página
     cargarTextos();
 });
+
+function exportarAPDF() {
+    // Mostrar el loader
+    document.getElementById('loader').style.display = 'block';
+
+    if (typeof html2canvas === 'undefined') {
+        console.error('html2canvas no está cargado.');
+        document.getElementById('loader').style.display = 'none'; // Ocultar el loader en caso de error
+        return;
+    }
+
+    const elemento = document.querySelector('.card');
+    const tituloGuion = document.querySelector('.card-header h2').innerText;
+
+    html2canvas(elemento, {
+        scale: 2,
+        useCORS: true,
+        logging: true,
+        scrollY: -window.scrollY,
+        windowHeight: elemento.scrollHeight,
+    }).then((canvas) => {
+        const {jsPDF} = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = doc.internal.pageSize.getWidth();
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let position = 0;
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        while (position < imgHeight) {
+            doc.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+            position += pageHeight;
+
+            if (position < imgHeight) {
+                doc.addPage();
+            }
+        }
+
+        doc.save(`${tituloGuion}.pdf`);
+
+        // Ocultar el loader una vez que el PDF se haya generado
+        document.getElementById('loader').style.display = 'none';
+    }).catch((error) => {
+        console.error('Error al generar el PDF:', error);
+        document.getElementById('loader').style.display = 'none'; // Ocultar el loader en caso de error
+    });
+}

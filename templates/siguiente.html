@@ -2,7 +2,7 @@
 
 {% block title %}Siguiente{% endblock %}
 {% block extra_script %}
-<script src="{{ url_for('static', filename='js/siguiente.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/siguiente.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
     <div class="card shadow p-1 m-2 rounded">
@@ -11,12 +11,26 @@
             <h2 id="texto-activo-titulo" class="m-0"></h2>
         </div>
         <div class="card-body">
-            <p><h3 id="texto-activo-contenido"></h3></p>
+            <p>
+            <h3 id="texto-activo-contenido"></h3></p>
         </div>
     </div>
-    <div class="card shadow p-1 m-2 rounded">
-        <div class="card-body">
-            <p id="texto-activo-material"></p>
+
+    <div class="row">
+
+        <div class="col-6">
+            <div class="card shadow p-1 m-2 rounded">
+                <div class="card-body">
+                    <h5><p id="texto-activo-material"></p></h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="card shadow p-0 m-2 rounded">
+                <div class="card-body text-center bg-warning">
+                    <h2><p id="texto-activo-musica"></p></h2>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock body %}
