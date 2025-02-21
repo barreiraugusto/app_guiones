@@ -146,6 +146,9 @@ async function seleccionarGuion(id) {
     const encabezado = document.getElementById("encabezado");
     const guionSelect = document.getElementById("guion_id");
 
+    // Guardar la selección actual del <select> de textos
+    const textoIdSeleccionado = document.getElementById('texto_id').value;
+
     // Actualizar el encabezado con el nombre del guion seleccionado
     const opcionSeleccionada = Array.from(guionSelect.options).find(option => option.value == id);
     if (opcionSeleccionada) {
@@ -206,7 +209,10 @@ async function seleccionarGuion(id) {
             <td></td>
             <td></td>
             <td class="bg-light" colspan="4">
+             <details>
+              <summary class="bg-light" style="cursor: pointer; padding: 10px;">
                 <strong>Graph ${contadorGraph}</strong><br>
+                </summary>
                 <hr>
                 <strong>Lugar:</strong> ${g.lugar}<br>
                 <strong>Tema:</strong> ${g.tema}<br>
@@ -218,6 +224,7 @@ async function seleccionarGuion(id) {
                     <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                     <button class="btn btn-outline-primary btn-copiar" data-clipboard-text="${textoParaCopiar.replace(/"/g, '&quot;')}"><i class="fas fa-copy"></i></button>
                 </div>
+                </details>
             </td>
         `;
                 tbody.appendChild(filaGraph); // Insertar el graph debajo del texto
@@ -236,7 +243,17 @@ async function seleccionarGuion(id) {
     localStorage.setItem('guionSeleccionado', id);
 
     // Cargar los textos en el <select> de textos
-    cargarTextosEnSelect(id);
+    await cargarTextosEnSelect(id);
+
+    // Restaurar la selección del <select> de textos
+    const selectTexto = document.getElementById('texto_id');
+    const opcionExiste = Array.from(selectTexto.options).some(option => option.value === textoIdSeleccionado);
+
+    if (opcionExiste) {
+        selectTexto.value = textoIdSeleccionado; // Restaurar la selección
+    } else {
+        console.warn("La opción seleccionada ya no está disponible.");
+    }
 }
 
 function convertirUrlsEnEnlaces(texto) {
@@ -636,6 +653,11 @@ async function agregarNoCerrar(event) {
     const primeraLinea = document.getElementById('primera_linea').value;
     const segundaLinea = document.getElementById('segunda_linea').value;
 
+    // Guardar la selección actual de los elementos <select>
+    const lugarSeleccionado = document.getElementById('lugar').value;
+    const temaSeleccionado = document.getElementById('tema').value;
+    const entrevistadoSeleccionado = document.getElementById('entrevistado').value;
+
     try {
         const url = graphEditando ? `/graphs/${graphEditando}` : '/graphs';
         const method = graphEditando ? 'PUT' : 'POST';
@@ -663,28 +685,30 @@ async function agregarNoCerrar(event) {
         Swal.fire({
             icon: 'success',
             title: result.mensaje || "Graph guardado correctamente",
-            showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 1000, // El mensaje desaparecerá después de 2 segundos
+            showConfirmButton: false,
+            timer: 1000,
         });
-
-        // Limpiar el formulario solo si se está editando
-        if (graphEditando) {
-            cancelarEdicionGraph(); // Limpiar el formulario y restablecer el botón
-        }
-        // Si no se está editando, no borrar los datos del formulario
 
         // Recargar la lista de graphs
         const guion_id = document.getElementById('guion_id').value;
         if (guion_id) {
             await seleccionarGuion(guion_id); // Recargar la tabla de textos y graphs
         }
+
+        // Restaurar la selección de los elementos <select> después de recargar
+        document.getElementById('texto_id').value = textoId;
+
+        // Limpiar el formulario solo si se está editando
+        if (graphEditando) {
+            cancelarEdicionGraph(); // Limpiar el formulario y restablecer el botón
+        }
     } catch (error) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
             text: error.message || 'Hubo un error al guardar el graph. Por favor, inténtalo de nuevo.',
-            showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 3000, // El mensaje desaparecerá después de 3 segundos
+            showConfirmButton: false,
+            timer: 3000,
         });
     }
 }
