@@ -208,9 +208,9 @@ async function seleccionarGuion(id) {
                 filaGraph.innerHTML = `
             <td></td>
             <td></td>
-            <td class="bg-light" colspan="4">
+            <td class="bg-light p-0" colspan="4">
              <details>
-              <summary class="bg-light" style="cursor: pointer; padding: 10px;">
+              <summary class="bg-light" style="cursor: pointer;">
                 <strong>Graph ${contadorGraph}</strong><br>
                 </summary>
                 <hr>
