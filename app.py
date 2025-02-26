@@ -20,8 +20,8 @@ class Guion(db.Model):
 
 # Lista de opciones permitidas
 MUSICA_OPCIONES = [
-    "Policiales", "Tensión", "Impacto", "Románticas", "Dramáticas",
-    "Alegres", "Misterio", "Acción", "Nostálgicas", "Épicas", "Relajantes"
+    "Titulos", "Movil", "Policial", "Tensión", "Impacto", "Romántica", "Dramática",
+    "Alegre", "Misterio", "Acción", "Nostálgica", "Épica", "Relajante", "Neutral"
 ]
 
 class Texto(db.Model):

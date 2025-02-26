@@ -172,8 +172,10 @@ async function seleccionarGuion(id) {
     guion.textos.forEach(t => {
         // Crear la fila del texto
         const filaTexto = document.createElement('tr');
+        // Agregar la clase bg-light al <tr>
+        filaTexto.classList.add('bg-light');
         if (t.activo) {
-            filaTexto.classList.add('bg-success'); // Resaltar el texto activo
+            filaTexto.classList.replace('bg-light','bg-success'); // Resaltar el texto activo
         }
 
         const materialContent = convertirUrlsEnEnlaces(t.material || '');
@@ -181,11 +183,11 @@ async function seleccionarGuion(id) {
         filaTexto.innerHTML = `
             <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
             <td><strong>${t.titulo}</strong></td>
-            <td>${t.contenido}</td>
+<!--            <td>${t.contenido}</td>-->
             <td>${materialContent}</td>
             <td>${t.musica}</td>
             <td>
-                <div class="btn-group-vertical">
+                <div class="btn-group">
                     <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
                     <button type="button" class="btn btn-outline-secondary" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
                     <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})"><i class="fas fa-trash"></i></button>
@@ -201,6 +203,8 @@ async function seleccionarGuion(id) {
 
             t.graphs.forEach(g => {
                 const filaGraph = document.createElement('tr');
+
+
 
                 // Crear el texto que se copiará al portapapeles
                 const textoParaCopiar = `${g.lugar}\n${g.tema}\n${g.entrevistado}\n${g.primera_linea}\n${g.segunda_linea}`;
