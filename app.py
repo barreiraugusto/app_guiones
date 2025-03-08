@@ -1,6 +1,8 @@
+import time
 from enum import Enum
+from threading import Thread
 
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -8,6 +10,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///textos.db'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+# Estado del cronómetro
+cronometro_activo = False
+tiempo = 0
 
 
 class Guion(db.Model):
@@ -23,6 +28,7 @@ MUSICA_OPCIONES = [
     "Titulos", "Movil", "Policial", "Tensión", "Impacto", "Romántica", "Dramática",
     "Alegre", "Misterio", "Acción", "Nostálgica", "Épica", "Relajante", "Neutral"
 ]
+
 
 class Texto(db.Model):
     __tablename__ = 'texto'
@@ -484,5 +490,61 @@ def obtener_graph_activo():
         })
 
 
+# Función para simular el cronómetro
+def simular_cronometro():
+    global tiempo, cronometro_activo
+    while True:
+        if cronometro_activo:
+            tiempo += 1
+            print(f"Tiempo actual: {tiempo}")  # Depuración
+        time.sleep(1)
+
+
+@app.route('/reloj')
+def reloj():
+    return render_template('reloj.html')
+
+
+@app.route('/control')
+def control():
+    return render_template('control.html')
+
+
+# Ruta para el stream de eventos (SSE)
+@app.route('/stream')
+def stream():
+    def event_stream():
+        global tiempo, cronometro_activo
+        while True:
+            estado = "activo" if cronometro_activo else "inactivo"
+            yield f"data: {tiempo},{estado}\n\n"
+            time.sleep(1)
+    return Response(event_stream(), mimetype='text/event-stream')
+
+# Ruta para iniciar el cronómetro
+@app.route('/iniciar')
+def iniciar():
+    global cronometro_activo
+    cronometro_activo = True
+    return '', 204  # Respuesta vacía (sin contenido)
+
+# Ruta para detener el cronómetro
+@app.route('/detener')
+def detener():
+    global cronometro_activo
+    cronometro_activo = False
+    return '', 204
+
+# Ruta para restablecer el cronómetro
+@app.route('/restablecer')
+def restablecer():
+    global tiempo
+    tiempo = 0
+    return '', 204
+
+
+
 if __name__ == '__main__':
+    # Iniciar el hilo para simular el cronómetro
+    Thread(target=simular_cronometro, daemon=True).start()
     app.run(host='0.0.0.0', port=5000)

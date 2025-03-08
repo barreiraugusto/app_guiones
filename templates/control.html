@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Administrar{% endblock %}
+{% block extra_style %}
+    <style>
+        body {
+            padding-top: 70px;
+        }
+    </style>
+{% endblock extra_style %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Control del Cronómetro</h1>
+        <button id="inicio" class="btn btn-primary">Inicio</button>
+        <button id="detener" class="btn btn-danger">Detener</button>
+    </div>
+
+    <script>
+        // Función para enviar solicitudes al servidor
+        function enviarSolicitud(url) {
+            fetch(url)
+                .then(response => {
+                    if (response.status === 204) {
+                        console.log(`Solicitud a ${url} enviada correctamente`);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Referencias a los botones
+        const inicioBoton = document.getElementById('inicio');
+        const detenerBoton = document.getElementById('detener');
+
+        // Evento para el botón "Inicio"
+        inicioBoton.addEventListener('click', () => {
+            if (inicioBoton.textContent === "Inicio") {
+                enviarSolicitud('/iniciar');
+            } else if (inicioBoton.textContent === "Restablecer") {
+                enviarSolicitud('/restablecer');
+                inicioBoton.textContent = "Inicio"; // Cambiar a "Inicio" después de restablecer
+            }
+        });
+
+        // Evento para el botón "Detener"
+        detenerBoton.addEventListener('click', () => {
+            enviarSolicitud('/detener');
+            inicioBoton.textContent = "Restablecer"; // Cambiar a "Restablecer" después de detener
+        });
+    </script>
+{% endblock body %}
+
+

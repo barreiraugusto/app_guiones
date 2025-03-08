@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Administrar{% endblock %}
+{% block extra_style %}
+    <style>
+        body {
+            padding-top: 70px;
+        }
+    </style>
+{% endblock extra_style %}
+{% block extra_script %}
+    <script src="{{ url_for('static', filename='js/reloj.js') }}"></script>
+{% endblock extra_script %}
+{% block body %}
+
+        <div class="modal-body">
+            <div class="container-fluid">
+                <div class="jumbotron text-center">
+                    <p>Hora</p>
+                    <div id="reloj" class="display-1" style="font-size: 10rem;"></div>
+                    <p class="mt-5">Cronómetro</p>
+                    <div id="cronometro" class="display-1 " style="font-size: 10rem;">00:00:00</div>
+                </div>
+            </div>
+        </div>
+
+
+    <script>
+        // Conectar al stream de eventos (SSE)
+        const eventSource = new EventSource('/stream');
+
+        // Actualizar el cronómetro y el estado del botón cuando se reciba un mensaje del servidor
+        eventSource.onmessage = (event) => {
+            const [tiempo, estado] = event.data.split(',');
+            const horas = Math.floor(tiempo / 3600).toString().padStart(2, '0');
+            const minutos = Math.floor((tiempo % 3600) / 60).toString().padStart(2, '0');
+            const segundos = (tiempo % 60).toString().padStart(2, '0');
+            document.getElementById('cronometro').textContent = `${horas}:${minutos}:${segundos}`;
+
+            // Actualizar el botón en control.html (si está abierto)
+            if (window.opener) {
+                const inicioBoton = window.opener.document.getElementById('inicio');
+                const restablecerBoton = window.opener.document.getElementById('restablecer');
+                if (inicioBoton && restablecerBoton) {
+                    if (estado === "activo") {
+                        inicioBoton.textContent = "Restablecer";
+                        restablecerBoton.style.display = "inline";
+                    } else {
+                        inicioBoton.textContent = "Inicio";
+                        restablecerBoton.style.display = "none";
+                    }
+                }
+            }
+        };
+
+        // Reloj en tiempo real
+        function actualizarReloj() {
+            const ahora = new Date();
+            const horas = ahora.getHours().toString().padStart(2, '0');
+            const minutos = ahora.getMinutes().toString().padStart(2, '0');
+            const segundos = ahora.getSeconds().toString().padStart(2, '0');
+            document.getElementById('reloj').textContent = `${horas}:${minutos}:${segundos}`;
+        }
+
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+    </script>
+{% endblock body %}
