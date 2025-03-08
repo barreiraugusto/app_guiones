@@ -4,6 +4,7 @@
     <style>
         body {
             padding-top: 70px;
+            background-color: #1d2124;
         }
     </style>
 {% endblock extra_style %}
@@ -11,19 +12,12 @@
     <script src="{{ url_for('static', filename='js/reloj.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
-
-        <div class="modal-body">
-            <div class="container-fluid">
-                <div class="jumbotron text-center">
-                    <p>Hora</p>
-                    <div id="reloj" class="display-1" style="font-size: 10rem;"></div>
-                    <p class="mt-5">Cronómetro</p>
-                    <div id="cronometro" class="display-1 " style="font-size: 10rem;">00:00:00</div>
-                </div>
-            </div>
-        </div>
-
-
+    <div class="jumbotron text-white text-center bg-dark p-0 m-2">
+        <div id="reloj" class=" p-0 mb-2" style="font-size: 12rem;"></div>
+    </div>
+    <div class="jumbotron text-white text-center bg-dark p-0 m-2">
+        <div id="cronometro" class="p-0 mt-2 mb-0" style="font-size: 12rem;">00:00:00</div>
+    </div>
     <script>
         // Conectar al stream de eventos (SSE)
         const eventSource = new EventSource('/stream');

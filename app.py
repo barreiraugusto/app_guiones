@@ -1,15 +1,15 @@
 import time
-from enum import Enum
 from threading import Thread
 
 from flask import Flask, jsonify, request, render_template, Response
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///textos.db'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
 # Estado del cronómetro
 cronometro_activo = False
 tiempo = 0

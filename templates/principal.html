@@ -30,7 +30,7 @@
                 <!-- Botones del cronometro-->
                 <button id="inicio" class="btn btn-primary mr-2">Inicio</button>
                 <button id="detener" class="btn btn-danger mr-2">Detener</button>
-                <div id="cronometro" class="h3 ml-2 mr-4 text-white">00:00:00</div>
+                <div id="cronometro" class="h3 p-0 ml-2 mr-3 mb-0 mt-0 text-white">00:00:00</div>
                 <!-- Botón para abrir el modal de Nuevo Guion -->
                 <button type="button" class="btn btn-primary mr-2" data-toggle="modal"
                         data-target="#formularioGuionModal">
@@ -329,16 +329,5 @@
             }
         };
 
-        // Reloj en tiempo real
-        function actualizarReloj() {
-            const ahora = new Date();
-            const horas = ahora.getHours().toString().padStart(2, '0');
-            const minutos = ahora.getMinutes().toString().padStart(2, '0');
-            const segundos = ahora.getSeconds().toString().padStart(2, '0');
-            document.getElementById('reloj').textContent = `${horas}:${minutos}:${segundos}`;
-        }
-
-        setInterval(actualizarReloj, 1000);
-        actualizarReloj();
     </script>
 {% endblock body %}
