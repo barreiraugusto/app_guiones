@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobreimpreso</title>
+    <script src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
+    <style>
+    	/* Fondo negro para toda la pantalla */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black; /* Fondo negro */
+            overflow: hidden; /* Evita el desplazamiento */
+        }
+
+        /* Contenedor principal del sobreimpreso */
+        .overlay {
+            position: absolute;
+            bottom: 10%; /* Posición vertical */
+            left: 20px; /* Alineado a la izquierda */
+            width: 80%; /* Ancho total (10% logo + 70% texto) */
+            height: 10%; /* Alto del contenedor */
+            display: flex;
+            align-items: center;
+            overflow: hidden; /* Oculta el texto inicialmente */
+        }
+
+        /* Marco del logotipo */
+        .logo-container {
+            width: 10%; /* Ancho del logo (10% de la pantalla) */
+            height: 100%; /* Alto del contenedor */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #001f3f; /* Azul muy oscuro */
+            border: 1px solid #c0c0c0; /* Borde plateado */
+            border-radius: 0; /* Esquinas rectas */
+            padding: 0; /* Espacio interno */
+            box-sizing: border-box; /* Incluye el padding en el ancho/alto */
+            animation: slideIn 2s forwards; /* Animación de entrada */
+        }
+
+        /* Estilo del logotipo */
+        .logo {
+            max-width: 100%; /* Ajusta el logo al contenedor */
+            max-height: 100%; /* Ajusta el logo al contenedor */
+        }
+
+        /* Marco del texto */
+        .text-container {
+            width: 70%; /* Ancho del texto (70% de la pantalla) */
+            height: 100%; /* Alto del contenedor */
+            background-color: #001f3f; /* Azul muy oscuro */
+            border: 1px solid #c0c0c0; /* Borde plateado */
+            border-radius: 0; /* Esquinas rectas */
+            padding: 10px; /* Espacio interno */
+            box-sizing: border-box; /* Incluye el padding en el ancho/alto */
+            opacity: 0; /* Texto invisible inicialmente */
+            animation: fadeInText 1s 2s forwards; /* Animación de texto */
+            margin-left: 0px; /* Espacio entre el logo y el texto */
+            text-transform: uppercase; /* Todo en mayúsculas */
+            color: white; /* Color del texto */
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Estilo de las líneas de texto */
+        .text-container .line1 {
+            font-size: 20px; /* Tamaño de la línea 1 */
+            color: #40e0d0; /* Color turquesa */
+            font-weight: bold;
+        }
+
+        .text-container .line2 {
+            font-size: 24px; /* Tamaño de la línea 2 */
+            color: white; /* Color blanco */
+        }
+
+        /* Animación de entrada del logo */
+        {#@keyframes slideIn {#}
+        {#    0% {#}
+        {#        transform: translateX(-100%); /* Comienza fuera de la pantalla */#}
+        {#    }#}
+        {#    100% {#}
+        {#        transform: translateX(0); /* Termina en su posición final */#}
+        {#    }#}
+
+
+        /* Animación de aparición del texto */
+        @keyframes fadeInText {
+            0% {
+                opacity: 0;
+                transform: translateX(-20px); /* Desplazamiento inicial */
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0); /* Termina visible */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor del sobreimpreso -->
+    <div class="overlay">
+        <!-- Marco del logotipo -->
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='mosca.gif') }}" alt="Logo Animado" class="logo">
+        </div>
+        <!-- Marco del texto -->
+        <div class="text-container">
+            <div class="line1" id="linea1"></div>
+            <div class="line2" id="linea2"></div>
+        </div>
+    </div>
+</body>
+</html>
