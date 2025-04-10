@@ -84,8 +84,10 @@
     <!-- Formulario para agregar Notas -->
     <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
         <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
-            <div class="card-header text-white bg-primary">
-                <h4>Agregar nota</h4>
+            <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
+                <h4 class="m-0">Agregar nota</h4>
+
+                <button class="btn btn-success" type="submit" id="botonGuardarTexto">Agregar</button>
             </div>
             <div class="card-body">
                 <!-- Fila aparte para el select -->
@@ -235,7 +237,7 @@
                     <th></th>
                     <th></th>
                     <th></th>
-                    <th>Duracion total: </th>
+                    <th>Duracion total:</th>
                     <th><span id="tiempo_total"></span></th>
                     <th></th>
                 </tr>
