@@ -30,7 +30,7 @@ async function cargarGuiones() {
                 <em>${g.descripcion}</em><br>
                 <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-success" onclick="seleccionarGuion(${g.id})"><i class="fas fa-check"></i></button>
-                    <button class="btn btn-outline-secondary" onclick="editarGuion(${g.id})"><i class="fas fa-edit"></i> </button>
+                    <button class="btn btn-outline-info" onclick="editarGuion(${g.id})"><i class="fas fa-edit"></i> </button>
                     <button class="btn btn-outline-danger" onclick="borrarGuion(${g.id})"><i class="fas fa-trash"></i></button>
                 </div>
             `;
@@ -174,8 +174,12 @@ async function seleccionarGuion(id) {
         const filaTexto = document.createElement('tr');
         // Agregar la clase bg-light al <tr>
         filaTexto.classList.add('bg-light');
-        if (t.activo) {
-            filaTexto.classList.replace('bg-light','bg-success'); // Resaltar el texto activo
+        if (t.emitido) {
+            console.log("Emitido");
+            filaTexto.classList.replace('bg-light', 'bg-secondary');
+        } else if (t.activo) {
+            console.log("Activo");
+            filaTexto.classList.replace('bg-light', 'bg-warning');
         }
 
         const materialContent = convertirUrlsEnEnlaces(t.material || '');
@@ -186,10 +190,12 @@ async function seleccionarGuion(id) {
 <!--            <td>${t.contenido}</td>-->
             <td>${materialContent}</td>
             <td>${t.musica}</td>
+            <td>${t.duracion}</td>
             <td>
                 <div class="btn-group">
-                    <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-outline-warning" onclick="setTextoActivo(${t.id})"><i class="fas fa-arrow-right"></i></button>
+                    <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})"><i class="fas fa-check"></i></button>
+                    <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
                     <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
@@ -203,7 +209,6 @@ async function seleccionarGuion(id) {
 
             t.graphs.forEach(g => {
                 const filaGraph = document.createElement('tr');
-
 
 
                 // Crear el texto que se copiará al portapapeles
@@ -224,7 +229,7 @@ async function seleccionarGuion(id) {
                 <strong>Primera Línea:</strong> ${g.primera_linea}<br>
                 <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-info" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                     <button class="btn btn-outline-primary btn-copiar" data-clipboard-text="${textoParaCopiar.replace(/"/g, '&quot;')}"><i class="fas fa-copy"></i></button>
                 </div>
@@ -258,6 +263,7 @@ async function seleccionarGuion(id) {
     } else {
         console.warn("La opción seleccionada ya no está disponible.");
     }
+    actualizarTiempoTotal(id);
 }
 
 function convertirUrlsEnEnlaces(texto) {
@@ -357,11 +363,13 @@ async function cargarTextos() {
             <td>${t.contenido}</td>
             <td>${t.material || ''}</td>
             <td>${t.musica}</td>
+            <td>${t.duracion}</td>
             <td><h3>${t.numero_de_nota}</h3></td>
             <td>
                 <div class="btn-group-vertical">
-                    <button type="button" class="btn btn-outline-success" onclick="setTextoActivo(${t.id})"><i class="fas fa-check"></i></button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-outline-warning" onclick="setTextoActivo(${t.id})"><i class="fas fa-arrow-right"></i></button>
+                    <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})"><i class="fas fa-check"></i></button>
+                    <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
                     <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
@@ -376,6 +384,7 @@ async function guardarTexto(event) {
     // Obtener los valores del formulario
     const numeroDeNota = document.getElementById('numero_de_nota').value;
     const titulo = document.getElementById('titulo').value;
+    const duracion = document.getElementById('duracion').value;
     const contenido = quill.root.innerHTML; // Obtener el contenido de Quill
     const material = document.getElementById('material').value;
     const musica = document.getElementById('musica').value;
@@ -397,6 +406,7 @@ async function guardarTexto(event) {
             body: JSON.stringify({
                 numero_de_nota: numeroDeNota,
                 titulo: titulo,
+                duracion: duracion,
                 contenido: contenido,
                 musica: musica,
                 material: material,
@@ -451,6 +461,7 @@ async function editarTexto(event, id) {
     // Rellenar el formulario con los datos del texto
     document.getElementById('numero_de_nota').value = texto.numero_de_nota;
     document.getElementById('titulo').value = texto.titulo;
+    document.getElementById('duracion').value = texto.duracion;
     quill.root.innerHTML = texto.contenido;
     document.getElementById('material').value = texto.material || '';
     document.getElementById('guion_id').value = texto.guion_id;
@@ -535,6 +546,25 @@ function cancelarEdicion() {
 
     // Restablecer la variable de edición
     textoEditando = null;
+}
+
+async function actualizarTiempoTotal(Id) {
+    try {
+        // Hacer la petición a tu endpoint Flask
+        const response = await fetch(`/tiempos/${Id}`);
+        const data = await response.json();
+
+        if (response.ok) {
+            // Mostrar la duración total en el elemento th
+            document.getElementById('tiempo_total').textContent = data.duracion_total;
+        } else {
+            console.error('Error:', data.mensaje);
+            document.getElementById('tiempo_total').textContent = '00:00';
+        }
+    } catch (error) {
+        console.error('Error al obtener los tiempos:', error);
+        document.getElementById('tiempo_total').textContent = '00:00';
+    }
 }
 
 // Función para cargar textos en el <select>
@@ -877,7 +907,7 @@ function mostrarGraphsEnLista(graphs) {
                 <strong>Primera Línea:</strong> ${g.primera_linea}<br>
                 <strong>Segunda Línea:</strong> ${g.segunda_linea}<br>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-info" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
@@ -895,6 +925,46 @@ async function setTextoActivo(id) {
     });
     const guion_id = document.getElementById('guion_id').value;
     seleccionarGuion(guion_id);
+}
+
+async function setTextoEmitido(id) {
+    await fetch(`/textos/emitido/${id}`, {
+        method: 'PUT'
+    });
+    const guion_id = document.getElementById('guion_id').value;
+    seleccionarGuion(guion_id);
+}
+
+async function ExportarGraphsXML() {
+    try {
+        const response = await fetch(`/generar_xml`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.mensaje || 'Error al generar los archivos');
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: result.mensaje || "Archivos XML generados correctamente",
+            showConfirmButton: false,
+            timer: 2000  // 2 segundos
+        });
+
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            showConfirmButton: true
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -48,6 +48,7 @@ def textos():
         nuevo_texto = Texto(
             numero_de_nota=data['numero_de_nota'],
             titulo=data['titulo'],
+            duracion=data['duracion'],
             contenido=data['contenido'],
             musica=data['musica'],
             material=data.get('material', ''),
@@ -62,6 +63,7 @@ def textos():
             "id": t.id,
             "numero_de_nota": t.numero_de_nota,
             "titulo": t.titulo,
+            "duracion": t.duracion,
             "contenido": t.contenido,
             "musica": t.musica,
             "material": t.material,
@@ -86,6 +88,16 @@ def setTextoActivo(id):
     texto.activo = True
     db.session.commit()
     return jsonify({"mensaje": "Texto activo actualizado"})
+
+@textos_bp.route('/textos/emitido/<int:id>', methods=['PUT'])
+def setTextoEmitido(id):
+    texto = Texto.query.get(id)
+    if texto.emitido:
+        texto.emitido = False
+    else:
+        texto.emitido = True
+    db.session.commit()
+    return jsonify({"mensaje": "El texto se marco como emitido"})
 
 
 @textos_bp.route('/siguiente')
@@ -154,6 +166,7 @@ def obtener_texto(id):
             "id": texto.id,
             "numero_de_nota": texto.numero_de_nota,
             "titulo": texto.titulo,
+            "duracion": texto.duracion,
             "contenido": texto.contenido,
             "musica": texto.musica,
             "material": texto.material,
@@ -163,6 +176,41 @@ def obtener_texto(id):
         return jsonify({"mensaje": "Texto no encontrado"}), 404
 
 
+@textos_bp.route('/tiempos/<int:id>', methods=['GET'])
+def obtener_tiempos(id):
+    texto = Texto.query.get(id)
+
+    if not texto:
+        return jsonify({"mensaje": "Texto no encontrado"}), 404
+
+    # Obtener todos los textos del mismo guion
+    textos_del_guion = Texto.query.filter_by(guion_id=texto.guion_id).all()
+
+    # Calcular la suma total de las duraciones en segundos
+    total_segundos = 0
+    for t in textos_del_guion:
+        if t.duracion:
+            try:
+                # Dividir en horas, minutos y segundos
+                partes = t.duracion.split(':')
+
+                if len(partes) == 3:  # Formato HH:MM:SS
+                    h, m, s = map(int, partes)
+                    total_segundos += h * 3600 + m * 60 + s
+                elif len(partes) == 2:  # Formato MM:SS (para compatibilidad hacia atrás)
+                    m, s = map(int, partes)
+                    total_segundos += m * 60 + s
+            except (ValueError, AttributeError):
+                continue  # Ignora formatos inválidos
+
+    # Convertir el total de segundos a HH:MM:SS
+    horas, resto = divmod(total_segundos, 3600)
+    minutos, segundos = divmod(resto, 60)
+    duracion_total = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
+    return jsonify({"duracion_total": duracion_total})
+
+
 @textos_bp.route('/textos/editar/<int:id>', methods=['PUT'])
 def editar_texto(id):
     data = request.json
@@ -170,6 +218,7 @@ def editar_texto(id):
     if texto:
         texto.numero_de_nota = data.get('numero_de_nota', texto.numero_de_nota)
         texto.titulo = data.get('titulo', texto.titulo)
+        texto.duracion = data.get('duracion', texto.duracion)
         texto.contenido = data.get('contenido', texto.contenido)
         texto.musica = data.get('musica', texto.musica)
         texto.material = data.get('material', texto.material)

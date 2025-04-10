@@ -44,6 +44,7 @@
                     Agregar Graph
                 </button>
                 <button id="botonFlotante" class="btn btn-primary mr-2">Agregar Nota</button>
+                <button class="btn btn-warning mr-2" onclick="ExportarGraphsXML()">Generar Graph</button>
                 <button onclick="window.location.href='/'" class="btn btn-success">Menu</button>
             </div>
         </div>
@@ -64,7 +65,7 @@
                         <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion"
                                required><br>
                         <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
-                                  required></textarea><br>
+                        ></textarea><br>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -99,7 +100,7 @@
                 <!-- Campo oculto para el contenido -->
                 <input type="hidden" id="contenido-hidden" name="contenido">
                 <div class="row mt-2">
-                    <div class="col-10">
+                    <div class="col-8">
                         <!-- Campo para el título -->
                         <div class="form-group">
                             <label for="titulo">Descripción/Sección:</label>
@@ -111,6 +112,13 @@
                         <div class="form-group">
                             <label for="numero_de_nota">Nota nro.:</label>
                             <input class="form-control" type="number" id="numero_de_nota" name="numero_de_nota">
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <!-- Campo para la duracion -->
+                        <div class="form-group">
+                            <label for="duracion">Duracion:</label>
+                            <input class="form-control" type="time" step="1" id="duracion" name="duracion">
                         </div>
                     </div>
                 </div>
@@ -205,10 +213,10 @@
                 <div class="modal-footer">
                     <!-- Botón para enviar el formulario -->
                     <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph" form="formularioGraph">
-                        Agregar y cerrar
+                        Guardar y cerrar
                     </button>
                     <button type="button" class="btn btn-outline-success" onclick="agregarNoCerrar(event)"
-                            id="agregarNoCerrar">Agregar
+                            id="agregarNoCerrar"><i class="fas fa-plus"></i>&nbsp;Agregar
                     </button>
                     <button type="button" class="btn btn-outline-danger" onclick="cancelarEdicionGraph()"
                             id="botonCancelarGraph" style="display: none;">Cancelar
@@ -224,11 +232,20 @@
             <table class="table table-responsive" id="tablaTextos">
                 <thead class="thead-light">
                 <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th>Duracion total: </th>
+                    <th><span id="tiempo_total"></span></th>
+                    <th></th>
+                </tr>
+                <tr>
                     <th scope="col">Nº</th>
                     <th scope="col">Descripcion/Seccion</th>
                     {#                    <th scope="col">Graf/Copete</th>#}
                     <th scope="col">Codigo</th>
                     <th scope="col">Musica</th>
+                    <th scope="col">Duracion</th>
                     <th scope="col">Acciones</th>
                 </tr>
                 </thead>

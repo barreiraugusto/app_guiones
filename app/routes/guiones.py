@@ -36,10 +36,12 @@ def guion(id):
                 "id": t.id,
                 "numero_de_nota": t.numero_de_nota,
                 "titulo": t.titulo,
+                "duracion": t.duracion,
                 "contenido": t.contenido,
                 "musica": t.musica,
                 "material": t.material,
                 "activo": t.activo,
+                "emitido": t.emitido,
                 "graphs": [{
                     "id": g.id,
                     "primera_linea": g.primera_linea,
@@ -78,6 +80,8 @@ def editar_guion(id):
                     texto.numero_de_nota = texto_data['numero_de_nota']
                 if 'titulo' in texto_data:
                     texto.titulo = texto_data['titulo']
+                if 'duracion' in texto_data:
+                    texto.duracion = texto_data['duracion']
                 if 'contenido' in texto_data:
                     texto.contenido = texto_data['contenido']
                 if 'musica' in texto_data:

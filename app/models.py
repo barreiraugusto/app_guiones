@@ -5,7 +5,7 @@ class Guion(db.Model):
     __tablename__ = 'guion'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(200), nullable=False)
-    descripcion = db.Column(db.String(500), nullable=False)
+    descripcion = db.Column(db.String(500), nullable=True)
     textos = db.relationship('Texto', backref='guion', lazy=True)
 
 class Texto(db.Model):
@@ -16,6 +16,8 @@ class Texto(db.Model):
     contenido = db.Column(db.String(500), nullable=False)
     material = db.Column(db.String(500), nullable=True)
     activo = db.Column(db.Boolean, default=False)
+    emitido = db.Column(db.Boolean, default=False, nullable=False)
+    duracion = db.Column(db.String(5), default='00:00', nullable=False)
     guion_id = db.Column(db.Integer, db.ForeignKey('guion.id'), nullable=False)
     musica = db.Column(db.String(50), nullable=True)
     graphs = db.relationship('Graph', backref='texto', cascade="all, delete-orphan", lazy=True)
