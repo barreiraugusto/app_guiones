@@ -2,6 +2,9 @@
 {% block title %}Ver guion{% endblock %}
 {% block extra_script %}
     <script src="{{ url_for('static', filename='js/grafica.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/guiones.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/textos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
     <!-- Add FontAwesome -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/@fortawesome/fontawesome-free/css/all.min.css') }}">
 {% endblock extra_script %}
@@ -12,26 +15,88 @@
             <em>{{ guion.descripcion }}</em>
         </div>
         <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
-            <table class="table table-responsive" id="tablaTextos">
-                <thead class="thead-light">
-                <tr>
-                    <th scope="col">Tipo</th>
-                    <th scope="col">Graf/Copete</th>
-                    <th scope="col">Codigo</th>
-                    <th scope="col">Nº</th>
-                </tr>
-                </thead>
-                <tbody>
+        <table class="table table-responsive" id="tablaTextos">
+            <thead class="thead-light">
+            <tr>
+                <th scope="col">Tipo</th>
+                <th scope="col">Graf/Copete</th>
+                <th scope="col">Codigo</th>
+                <th scope="col">Nº</th>
+            </tr>
+            </thead>
+            <tbody>
 
-                <!-- Las filas se llenarán dinámicamente con JavaScript -->
+            <!-- Las filas se llenarán dinámicamente con JavaScript -->
 
-                </tbody>
-            </table>
+            </tbody>
+        </table>
 
         <div class="card-footer">
             <a href="/listado_guiones">
                 <button class="btn btn-outline-primary">Atras</button>
             </a>
+        </div>
+    </div>
+    <!-- Modal para el formulario de Graph -->
+    <div class="modal fade bd-example-modal-lg" id="formularioGraphModal" tabindex="-1" role="dialog"
+         aria-labelledby="formularioGraphModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white bg-primary">
+                    <h5 class="modal-title" id="formularioGraphModalLabel">Carga de Graphs</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="formularioGraph" onsubmit="guardarGraph(event)">
+                        <!-- Campo oculto para el ID del graph -->
+                        <input type="hidden" id="graph_id" value="">
+
+                        <!-- Select para asociar a Texto -->
+                        <div class="form-group mb-3">
+                            <label for="texto_id">Nota:</label>
+                            <select class="form-control" id="texto_id" required>
+                                <!-- Las opciones se llenarán dinámicamente con JavaScript -->
+                            </select>
+                        </div>
+                        <!-- Fila para Primera Línea y Entrevistado -->
+                        <div class="row p-0 m-0">
+                            <!-- Primera Línea -->
+                            <div class="col-6 p-0 m-0">
+                                <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
+                                <input type="text" class="form-control m-0" id="tema" placeholder="Tema">
+                            </div>
+                            <!-- Entrevistado -->
+                            <div class="col-6 p-0 m-0">
+                                <input type="text" class="form-control m-0" id="entrevistado"
+                                       placeholder="Entrevistado">
+                            </div>
+                        </div>
+                        <!-- Primera Línea -->
+                        <div class="form-group p-0 m-0">
+                            <input type="text" class="form-control m-0" id="primera_linea" placeholder="Primera línea">
+                        </div>
+                        <!-- Segunda Línea -->
+                        <div class="form-group p-0 m-0">
+                            <textarea class="form-control m-0" id="segunda_linea"
+                                      placeholder="Segunda línea"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <!-- Botón para enviar el formulario -->
+                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph" form="formularioGraph">
+                        Guardar y cerrar
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="agregarNoCerrar(event)"
+                            id="agregarNoCerrar"><i class="fas fa-plus"></i>&nbsp;Agregar
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="cancelarEdicionGraph()"
+                            id="botonCancelarGraph" style="display: none;">Cancelar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock body %}

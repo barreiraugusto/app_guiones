@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Administrar{% endblock %}
+{% block extra_style %}
+    <style>
+        body {
+            padding-top: 70px;
+        }
+
+        .config-section {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .status-message {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+{% endblock extra_style %}
+
+{% block body %}
+    <div class="container">
+        <h2 class="mb-4">Control</h2>
+
+        <form id="displayControlForm">
+            <!-- Sección Posiciones Principales -->
+            <div class="config-section">
+                <h3>Grupo</h3>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="mainVertical">Vertical (px):</label>
+                        <input type="number" class="form-control" id="mainVertical" min="0" max="1080" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="mainHorizontal">Horizontal Left (px):</label>
+                        <input type="number" class="form-control" id="mainHorizontal" min="0" required>
+                    </div>
+                </div>
+            </div>
+
+{#            <!-- Sección Logo -->#}
+{#            <div class="config-section">#}
+{#                <h3>Contenedor de Logo</h3>#}
+{#                <div class="form-group">#}
+{#                    <label for="logoWidth">Ancho Logo (% del contenedor):</label>#}
+{#                    <input type="number" class="form-control" id="logoWidth" min="1" max="100" required>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Sección Texto -->#}
+{#            <div class="config-section">#}
+{#                <h3>Contenedor de Texto</h3>#}
+{#                <div class="form-group">#}
+{#                    <label for="textWidth">Ancho Texto (% del contenedor):</label>#}
+{#                    <input type="number" class="form-control" id="textWidth" min="1" max="100" required>#}
+{#                </div>#}
+{#            </div>#}
+
+            <!-- Sección Badges -->
+            <!-- Dentro de la sección "Badges Superiores" -->
+            <div class="config-section">
+                <h3>Badges Superiores</h3>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <h5>Lugar</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="lugarX">Posición X (px):</label>
+                                <input type="number" class="form-control" id="lugarX" min="0" value="0">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="lugarY">Posición Y (px):</label>
+                                <input type="number" class="form-control" id="lugarY" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <h5>Nombre</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="nombreX">Posición X (px):</label>
+                                <input type="number" class="form-control" id="nombreX" min="0" value="0">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="nombreY">Posición Y (px):</label>
+                                <input type="number" class="form-control" id="nombreY" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Vivo -->
+            <div class="config-section">
+                <h3>Badge "Vivo"</h3>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="liveShow">Mostrar:</label>
+                        <select class="form-control" id="liveShow" required>
+                            <option value="true">Sí</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="liveText">Texto:</label>
+                        <input type="text" class="form-control" id="liveText" required>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="liveTop">Top (px):</label>
+                        <input type="number" class="form-control" id="liveTop" min="0" required>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="liveRight">Right (px):</label>
+                        <input type="number" class="form-control" id="liveRight" min="0" required>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-save mb-3">
+                <i class="fas fa-save"></i> Guardar Configuración
+            </button>
+
+            <div id="statusMessage" class="alert alert-success status-message" role="alert">
+                Configuración actualizada correctamente!
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            // Elementos del DOM
+            const form = document.getElementById('displayControlForm');
+            const statusMessage = document.getElementById('statusMessage');
+
+            // Cargar configuración actual
+            async function loadConfig() {
+                try {
+                    const response = await fetch('/get_display_config');
+                    if (!response.ok) throw new Error('Error al cargar configuración');
+
+                    const config = await response.json();
+                    populateForm(config);
+                } catch (error) {
+                    console.error('Error:', error);
+                    showStatus('Error al cargar configuración', 'danger');
+                }
+            }
+
+            // Rellenar formulario con la configuración
+            function populateForm(config) {
+                // Layout
+                if (config.layout) {
+                    document.getElementById('mainVertical').value = parseFloat(config.layout.main_vertical) || 850;
+                    document.getElementById('mainHorizontal').value = parseFloat(config.layout.main_horizontal) || 50;
+                    {#document.getElementById('logoWidth').value = parseFloat(config.layout.logo_width) || 10;#}
+                    {#document.getElementById('textWidth').value = parseFloat(config.layout.text_width) || 70;#}
+                }
+
+                // Badges
+                if (config.badges) {
+                    document.getElementById('lugarX').value = parseFloat(config.badges.lugar_x) || 1571;
+                    document.getElementById('lugarY').value = parseFloat(config.badges.lugar_y) || 153;
+                    document.getElementById('nombreX').value = parseFloat(config.badges.nombre_x) || 988;
+                    document.getElementById('nombreY').value = parseFloat(config.badges.nombre_y) || 106;
+                }
+
+                // Live badge
+                if (config.live) {
+                    document.getElementById('liveShow').value = config.live.show ? 'true' : 'false';
+                    document.getElementById('liveText').value = config.live.text || 'VIVO';
+                    document.getElementById('liveTop').value = parseFloat(config.live.top) || 20;
+                    document.getElementById('liveRight').value = parseFloat(config.live.right) || 20;
+                }
+            }
+
+            // Mostrar mensaje de estado
+            function showStatus(message, type = 'success') {
+                statusMessage.textContent = message;
+                statusMessage.className = `alert alert-${type} status-message`;
+                statusMessage.style.display = 'block';
+
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 3000);
+            }
+
+            // Manejar envío del formulario
+            form.onsubmit = async function (e) {
+                e.preventDefault();
+
+                const config = {
+                    layout: {
+                        main_vertical: document.getElementById('mainVertical').value + 'px',
+                        main_horizontal: document.getElementById('mainHorizontal').value + 'px',
+                        {#logo_width: document.getElementById('logoWidth').value + '%',#}
+                        {#text_width: document.getElementById('textWidth').value + '%'#}
+                    },
+                    badges: {
+                        lugar_x: document.getElementById('lugarX').value + 'px',
+                        lugar_y: document.getElementById('lugarY').value + 'px',
+                        nombre_x: document.getElementById('nombreX').value + 'px',
+                        nombre_y: document.getElementById('nombreY').value + 'px'
+                    },
+                    live: {
+                        show: document.getElementById('liveShow').value === 'true',
+                        text: document.getElementById('liveText').value.trim() || 'VIVO',
+                        top: document.getElementById('liveTop').value + 'px',
+                        right: document.getElementById('liveRight').value + 'px'
+                    }
+                };
+
+                try {
+                    const response = await fetch('/update_display_config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(config)
+                    });
+
+                    if (response.ok) {
+                        showStatus('Configuración actualizada correctamente');
+                    } else {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showStatus('Error al actualizar la configuración', 'danger');
+                }
+            };
+
+            // Inicializar
+            await loadConfig();
+        });
+
+    </script>
+{% endblock %}

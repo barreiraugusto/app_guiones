@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}MENÚ{% endblock %}
+{% block title %}SIGPRO{% endblock %}
 {% block extra_style %}
     <style>
         .menu-fixed-right {
@@ -28,8 +28,11 @@
             padding: 0.8rem 1.5rem;
             font-size: 1.1rem;
         }
-        body{
-            background-color: #f0f0f0;
+
+        body {
+            background: url('{{ url_for('static', filename='img/sigpro-back-ca.png') }}') no-repeat center center fixed;
+            background-color: #F2F2F2FF;
+            background-size: 50% auto; /* Ajusta al 50% del ancho del contenedor */
         }
     </style>
 {% endblock extra_style %}
@@ -38,7 +41,7 @@
     <div class="menu-fixed-right">
         <div class="card menu-card-right pb-4 pl-4 pt-4 pr-0" style="width: 15rem;">
             <div class="card-body p-0">
-                <h4 class="card-title mb-4 text-secondary ps-2">GUIONES</h4>
+                {#                <h4 class="card-title mb-4 text-secondary ps-2">SIGPRO</h4>#}
                 <button class="btn btn-outline-primary btn-block btn-lg mb-3"
                         onclick="window.location.href='/principal'">
                     Control de Guiones

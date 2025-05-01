@@ -13,6 +13,7 @@
         body {
             font-family: Arial, sans-serif;
             padding-top: 20px;
+            margin: 0;
         }
 
         .card {
@@ -22,8 +23,10 @@
         }
 
         .card-header h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 0;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
         }
 
         .card-header em {
@@ -35,12 +38,26 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            table-layout: fixed;
+            font-size: 12px;
         }
 
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 5px;
             text-align: left;
+            word-wrap: break-word;
+            overflow: hidden; /* Ocultar contenido que desborda */
+        }
+
+        /* Opcional: agregar tooltip para contenido cortado */
+        td:hover {
+            overflow: visible;
+            white-space: normal;
+            z-index: 100;
+            position: relative;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         }
 
         .custom-cell {
@@ -69,11 +86,11 @@
     <table>
         <thead>
         <tr>
-            <th>N°</th>
-            <th>Tipo</th>
-            <th>Graf/Copete</th>
-            <th>Código</th>
-            <th>Música</th>
+            <th scope="col" style="width: 5%">Nº</th>
+            <th scope="col" style="width: 10%">Descripcion/Seccion</th>
+            <th scope="col" style="width: 50%">Graf/Copete</th>
+            <th scope="col" style="width: 20%">Codigo</th>
+            <th scope="col" style="width: 10%">Musica</th>
         </tr>
         </thead>
         <tbody>

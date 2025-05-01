@@ -1,14 +1,48 @@
 {% extends "base.html" %}
-{% block title %}Administrar{% endblock %}
+{% block extratitle %} - CONTROL{% endblock extratitle %}
 {% block extra_style %}
     <style>
         body {
             padding-top: 70px;
         }
+
+        .card-guion {
+            transition: transform 0.2s;
+        }
+
+        .card-guion:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 992px) {
+            .navbar-collapse {
+                max-height: calc(100vh - 60px);
+                overflow-y: auto;
+            }
+
+            .navbar-brand img {
+                max-height: 30px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #tablaTextos {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
-    <script src="{{ url_for('static', filename='js/principal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/guiones.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/textos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/eventos.js') }}"></script>
+
     <!-- Add the theme's stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/quill.snow.css') }}">
     <!-- Add FontAwesome -->
@@ -19,151 +53,175 @@
     <script src="{{ url_for('static', filename='utilidades-js/js/clipboard.min.js') }}"></script>
 {% endblock extra_script %}
 {% block body %}
-    <!-- Barra de navegación fija en la parte superior -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
         <div class="container-fluid">
-            <!-- Logo o nombre de la aplicación (opcional) -->
-            <a class="navbar-brand" href="#">Guiones</a>
+            <!-- Logo -->
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
+            </a>
 
-            <!-- Botones en la barra de navegación -->
-            <div class="d-flex">
-                <!-- Botones del cronometro-->
-                <div class="d-flex btn border-info mr-2">
-                    <button id="inicio" class="btn btn-primary mr-2">Inicio</button>
-                    <button id="detener" class="btn btn-danger mr-2">Detener</button>
-                    <div id="cronometro" class="h3 p-0 ml-2 mr-3 mb-0 mt-0 text-white">00:00:00</div>
+            <!-- Botón hamburguesa -->
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Contenido colapsable (todo a la derecha) -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
+                    <!-- Cronómetro (ahora dentro del grupo derecho) -->
+                    <div class="d-flex btn border-info mr-2 mb-2 mb-lg-0">
+                        <button id="inicio" class="btn btn-primary btn-sm mr-2">Inicio</button>
+                        <button id="detener" class="btn btn-danger btn-sm mr-2">Detener</button>
+                        <div id="cronometro" class="h3 p-0 ml-2 mb-0 text-white">00:00:00</div>
+                    </div>
+
+                    <!-- Botones originales -->
+                    <button type="button" class="btn btn-primary mr-2 mb-2 mb-lg-0" data-toggle="modal"
+                            data-target="#formularioGuionModal">
+                        Nuevo Guion
+                    </button>
+                    <button id="botonFlotante" class="btn btn-primary mr-2 mb-2 mb-lg-0">Agregar Nota</button>
+                    <button type="button" class="btn btn-primary mr-2 mb-2 mb-lg-0" data-toggle="modal"
+                            data-target="#formularioGraphModal">
+                        Agregar Graph
+                    </button>
+                    <button onclick="window.location.href='/'" class="btn btn-success">Menu</button>
                 </div>
-                <!-- Botón para abrir el modal de Nuevo Guion -->
-                <button type="button" class="btn btn-primary mr-2" data-toggle="modal"
-                        data-target="#formularioGuionModal">
-                    Nuevo Guion
-                </button>
-                <!-- Botón para abrir el modal de Agregar Graph -->
-                <button type="button" class="btn btn-primary mr-2" data-toggle="modal"
-                        data-target="#formularioGraphModal">
-                    Agregar Graph
-                </button>
-                <button id="botonFlotante" class="btn btn-primary mr-2">Agregar Nota</button>
-                <button class="btn btn-warning mr-2" onclick="ExportarGraphsXML()">Generar Graph</button>
-                <button onclick="window.location.href='/'" class="btn btn-success">Menu</button>
             </div>
         </div>
     </nav>
-    <!-- Modal Nuevo guion -->
-    <div class="modal fade bd-example-modal-lg" id="formularioGuionModal" tabindex="-1" role="dialog"
-         aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header text-white bg-primary">
-                    <h5 class="modal-title" id="formularioGuionModalLabel">Nuevo Guion</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
-                        <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion"
-                               required><br>
-                        <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
-                        ></textarea><br>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGuion" form="formularioGuion">
-                        Crear Guion
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
-    <div class="card shadow p-1 m-2 rounded">
-        <div class="card-body">
-            <ul id="listaGuiones"></ul>
-        </div>
-    </div>
-    <!-- Formulario para agregar Notas -->
-    <div id="formularioTextoContainer" class="card shadow p-1 m-2 rounded">
-        <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
-            <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
-                <h4 class="m-0">Agregar nota</h4>
+    <div class="row">
+        <div class="col-lg-6 col-12 mt-lg-2 mt-4 pr-0">
+            <!-- Formulario para agregar Notas -->
+            <div id="formularioTextoContainer" class="card shadow p-1 rounded">
+                <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
+                    <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
+                        <h4 class="m-0">Agregar nota</h4>
 
-                <button class="btn btn-success" type="submit" id="botonGuardarTexto">Agregar</button>
+                        <button class="btn btn-success" type="submit" id="botonGuardarTexto">Agregar</button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Fila aparte para el select -->
+                        <div class="row">
+                            <div class="col">
+                                <label for="guion_id">Guion:</label>
+                                <select class="form-control" id="guion_id">
+                                    <!-- Las opciones se llenarán dinámicamente con JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Campo oculto para el contenido -->
+                        <input type="hidden" id="contenido-hidden" name="contenido">
+                        <div class="row mt-2">
+                            <div class="col-lg-8 col-sm-12">
+                                <!-- Campo para el título -->
+                                <div class="form-group">
+                                    <label for="titulo">Descripción/Sección:</label>
+                                    <input class="form-control" id="titulo" name="titulo" required>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-sm-12">
+                                <!-- Campo para el número de nota -->
+                                <div class="form-group">
+                                    <label for="numero_de_nota">Nota nro.:</label>
+                                    <input class="form-control" type="number" id="numero_de_nota" name="numero_de_nota">
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-sm-12">
+                                <!-- Campo para la duracion -->
+                                <div class="form-group">
+                                    <label for="duracion">Duracion:</label>
+                                    <input class="form-control" type="time" step="1" id="duracion" name="duracion">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-10 col-sm-12">
+                                <!-- Campo para el material -->
+                                <div class="form-group">
+                                    <label for="material">Codigo:</label>
+                                    <textarea class="form-control" id="material" name="material"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-sm-12">
+                                <!-- Campo para la musica -->
+                                <div class="form-group">
+                                    <label for="musica">Música:</label>
+                                    <select class="form-control" id="musica" name="musica">
+                                        <option value="">Selecciona una opción</option>  <!-- Opción vacía -->
+                                        {% for opcion in musica_opciones %}
+                                            <option value="{{ opcion }}">{{ opcion }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Campo para el contenido -->
+                        <div class="form-group">
+                            <label for="contenido">Copete/Contenido:</label>
+                            <div id="contenido" style="height: 400px" class="form-control"></div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <!-- Fila para los botones -->
+                        <div class="row">
+                            <div class="col">
+                                <button class="btn btn-outline-success" type="submit" id="botonGuardarTexto">Agregar
+                                    Nota
+                                </button>
+                                <button class="btn btn-outline-danger" type="button" onclick="cancelarEdicion()"
+                                        id="botonCancelar" style="display: none;">Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
-            <div class="card-body">
-                <!-- Fila aparte para el select -->
-                <div class="row">
-                    <div class="col">
-                        <label for="guion_id">Guion:</label>
-                        <select class="form-control" id="guion_id">
-                            <!-- Las opciones se llenarán dinámicamente con JavaScript -->
-                        </select>
+        </div>
+        <div class="col-lg-6 col-12 mt-lg-2 mt-4 d-flex flex-column gap-3">
+            <div class="row p-1 rounded">
+                <!-- Lista de guiones -->
+                <div class="card shadow rounded w-100">
+                    <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
+                        <h4 class="m-0">Guiones</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="listaGuiones" class="container-fluid"></div>
                     </div>
                 </div>
-                <!-- Campo oculto para el contenido -->
-                <input type="hidden" id="contenido-hidden" name="contenido">
-                <div class="row mt-2">
-                    <div class="col-8">
-                        <!-- Campo para el título -->
-                        <div class="form-group">
-                            <label for="titulo">Descripción/Sección:</label>
-                            <input class="form-control" id="titulo" name="titulo" required>
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <!-- Campo para el número de nota -->
-                        <div class="form-group">
-                            <label for="numero_de_nota">Nota nro.:</label>
-                            <input class="form-control" type="number" id="numero_de_nota" name="numero_de_nota">
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <!-- Campo para la duracion -->
-                        <div class="form-group">
-                            <label for="duracion">Duracion:</label>
-                            <input class="form-control" type="time" step="1" id="duracion" name="duracion">
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-10">
-                        <!-- Campo para el material -->
-                        <div class="form-group">
-                            <label for="material">Codigo:</label>
-                            <textarea class="form-control" id="material" name="material"></textarea>
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <!-- Campo para la musica -->
-                        <div class="form-group">
-                            <label for="musica">Música:</label>
-                            <select class="form-control" id="musica" name="musica">
-                                <option value="">Selecciona una opción</option>  <!-- Opción vacía -->
-                                {% for opcion in musica_opciones %}
-                                    <option value="{{ opcion }}">{{ opcion }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <!-- Campo para el contenido -->
-                <div class="form-group">
-                    <label for="contenido">Copete/Contenido:</label>
-                    <div id="contenido" style="height: 400px" class="form-control"></div>
-                </div>
-            </div>
-            <div class="card-footer">
-                <!-- Fila para los botones -->
-                <div class="row">
-                    <div class="col">
-                        <button class="btn btn-outline-success" type="submit" id="botonGuardarTexto">Agregar Nota
-                        </button>
-                        <button class="btn btn-outline-danger" type="button" onclick="cancelarEdicion()"
-                                id="botonCancelar" style="display: none;">Cancelar
-                        </button>
+                <!-- Guion -->
+                <div class="card shadow rounded w-100">
+                    <div class="card-body">
+                        <h3 id="encabezado"></h3>
+                        <table class="table table-responsive" id="tablaTextos">
+                            <thead class="thead-light">
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th>Duracion total:</th>
+                                <th><span id="tiempo_total"></span></th>
+                                <th></th>
+                            </tr>
+                            <tr>
+                                <th scope="col" style="width: 5%">Nº</th>
+                                <th scope="col" style="width: 15%">Descripcion/Seccion</th>
+                                {#                    <th scope="col">Graf/Copete</th>#}
+                                <th scope="col" style="width: 50%">Codigo</th>
+                                <th scope="col" style="width: 5%">Musica</th>
+                                <th scope="col" style="width: 10%">Duracion</th>
+                                <th scope="col" style="width: 15%">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- Las filas se llenarán dinámicamente con JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
     <!-- Modal para el formulario de Graph -->
     <div class="modal fade bd-example-modal-lg" id="formularioGraphModal" tabindex="-1" role="dialog"
@@ -227,36 +285,34 @@
             </div>
         </div>
     </div>
-    <!-- Guion -->
-    <div class="card shadow p-1 m-2 rounded">
-        <div class="card-body">
-            <h3 id="encabezado"></h3>
-            <table class="table table-responsive" id="tablaTextos">
-                <thead class="thead-light">
-                <tr>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th>Duracion total:</th>
-                    <th><span id="tiempo_total"></span></th>
-                    <th></th>
-                </tr>
-                <tr>
-                    <th scope="col">Nº</th>
-                    <th scope="col">Descripcion/Seccion</th>
-                    {#                    <th scope="col">Graf/Copete</th>#}
-                    <th scope="col">Codigo</th>
-                    <th scope="col">Musica</th>
-                    <th scope="col">Duracion</th>
-                    <th scope="col">Acciones</th>
-                </tr>
-                </thead>
-                <tbody>
-                <!-- Las filas se llenarán dinámicamente con JavaScript -->
-                </tbody>
-            </table>
+    <!-- Modal Nuevo guion -->
+    <div class="modal fade bd-example-modal-lg" id="formularioGuionModal" tabindex="-1" role="dialog"
+         aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white bg-primary">
+                    <h5 class="modal-title" id="formularioGuionModalLabel">Nuevo Guion</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
+                        <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion"
+                               required><br>
+                        <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
+                        ></textarea><br>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGuion" form="formularioGuion">
+                        Crear Guion
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
     <script>
         // Inicializar Quill en el campo "contenido"
         const quill = new Quill('#contenido', {
@@ -309,7 +365,7 @@
         inicioBoton.addEventListener('click', () => {
             if (inicioBoton.textContent === "Inicio") {
                 enviarSolicitud('/iniciar');
-            } else if (inicioBoton.textContent === "Restablecer") {
+            } else if (inicioBoton.textContent === "Rest.") {
                 enviarSolicitud('/restablecer');
                 inicioBoton.textContent = "Inicio"; // Cambiar a "Inicio" después de restablecer
             }
@@ -318,7 +374,7 @@
         // Evento para el botón "Detener"
         detenerBoton.addEventListener('click', () => {
             enviarSolicitud('/detener');
-            inicioBoton.textContent = "Restablecer"; // Cambiar a "Restablecer" después de detener
+            inicioBoton.textContent = "Rest."; // Cambiar a "Restablecer" después de detener
         });
 
         // Conectar al stream de eventos (SSE)
@@ -338,7 +394,7 @@
                 const restablecerBoton = window.opener.document.getElementById('restablecer');
                 if (inicioBoton && restablecerBoton) {
                     if (estado === "activo") {
-                        inicioBoton.textContent = "Restablecer";
+                        inicioBoton.textContent = "Rest.";
                         restablecerBoton.style.display = "inline";
                     } else {
                         inicioBoton.textContent = "Inicio";

@@ -1,11 +1,15 @@
+import json
 import os
-from flask import current_app
-from xml.etree.ElementTree import Element, SubElement, tostring
-from xml.dom import minidom
+import time
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request, render_template
-from ..models import Graph, Texto, Guion
+from flask import Response, stream_with_context
+from flask import current_app
+
 from .. import db
+from ..models import Graph, Texto, Guion
+from ..config_manager import display_config, save_config
 
 graphs_bp = Blueprint('graphs', __name__)
 
@@ -89,6 +93,42 @@ def obtener_graphs_por_texto(texto_id):
     } for g in graphs])
 
 
+@graphs_bp.route('/stream_graphs')
+def stream_graphs():
+    def event_stream():
+        while True:
+            try:
+                # Usar with para manejo adecuado de la sesión
+                with current_app.app_context():
+                    # Consulta modificada - LIMIT con valor literal
+                    graph_activo = db.session.query(Graph).filter_by(activo=True).limit(1).first()
+
+                    live_config = display_config.get('live', {
+                        'show': True,
+                        'text': 'VIVO',
+                        'position': 'top-right'
+                    })
+
+                    data = {
+                        "activo": bool(graph_activo),
+                        "primera_linea": graph_activo.primera_linea if graph_activo else "",
+                        "segunda_linea": graph_activo.segunda_linea if graph_activo else "",
+                        "show_live": live_config['show'],
+                        "live_text": live_config['text'],
+                        "live_position": live_config['position']
+                    }
+
+                    yield f"data: {json.dumps(data)}\n\n"
+                    time.sleep(1)
+
+            except Exception as e:
+                current_app.logger.error(f"Error en stream_graphs: {str(e)}")
+                yield "event: error\ndata: {}\n\n"
+                time.sleep(5)
+
+    return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+
+
 @graphs_bp.route('/control_graphs/<int:id>')
 def control_graphs(id):
     guion = Guion.query.get(id)
@@ -102,9 +142,13 @@ def control_graphs(id):
 def setGraphsActivo(id):
     Graph.query.update({Graph.activo: False})
     graph = Graph.query.get(id)
-    graph.activo = True
-    db.session.commit()
-    return jsonify({"mensaje": "Graph activo actualizado"})
+    if graph:
+        graph.activo = True
+        db.session.commit()
+        # Pequeña pausa para asegurar que la base de datos se actualice
+        time.sleep(0.1)
+        return jsonify({"mensaje": "Graph activo actualizado"})
+    return jsonify({"error": "Graph no encontrado"}), 404
 
 
 @graphs_bp.route('/obtener_graph_activo')
@@ -195,3 +239,178 @@ def generar_xml_graphs():
             'success': False,
             'mensaje': f"Error al generar los archivos XML: {str(e)}"
         }), 500
+
+
+DEFAULT_DISPLAY_CONFIG = {
+    "layout": {
+        "main_bottom": "5%",
+        "main_left": "20px",
+        "main_width": "100%",
+        "main_height": "10%",
+        "logo_width": "10%",
+        "text_width": "70%",
+        "main_vertical": "850px",
+        "main_horizontal": "50px"
+    },
+    "badges": {
+        "lugar_x": "1571px",
+        "lugar_y": "153px",
+        "nombre_x": "988px",
+        "nombre_y": "106px"
+    },
+    "live": {
+        "show": True,
+        "text": "VIVO",
+        "top": "150px",
+        "right": "150px"
+    },
+}
+
+# Inicializa display_config con los valores por defecto
+display_config = DEFAULT_DISPLAY_CONFIG.copy()
+
+
+@graphs_bp.route('/update_display_config', methods=['POST'])
+def update_display_config():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "No data provided"}), 400
+
+        # Cargar la configuración actual desde archivo
+        config_file = 'display_config.json'
+        current_config = {}
+        if os.path.exists(config_file):
+            with open(config_file, 'r') as f:
+                current_config = json.load(f)
+
+        # Validación de booleano
+        if 'live' in data and 'show' in data['live']:
+            data['live']['show'] = str(data['live']['show']).lower() == 'true'
+
+        # Actualización profunda
+        for section in ['layout', 'badges', 'live']:
+            if section in data:
+                if section not in current_config:
+                    current_config[section] = {}
+                current_config[section].update(data[section])
+
+        # Añadir timestamp
+        current_config['last_updated'] = datetime.utcnow().isoformat()
+
+        # Guardar
+        with open(config_file, 'w') as f:
+            json.dump(current_config, f, indent=4)
+
+        return jsonify({
+            "status": "success",
+            "updated": current_config['last_updated']
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Error updating display config: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+_CONFIG_CACHE = None
+_LAST_LOAD_TIME = None
+_CACHE_EXPIRY = timedelta(seconds=5)  # Refrescar caché cada 5 segundos
+
+
+@graphs_bp.route('/get_display_config')
+def get_display_config():
+    global _CONFIG_CACHE, _LAST_LOAD_TIME
+
+    if _CONFIG_CACHE and _LAST_LOAD_TIME and (datetime.now() - _LAST_LOAD_TIME < _CACHE_EXPIRY):
+        return jsonify(_CONFIG_CACHE)
+
+    config_file = 'display_config.json'
+
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+                _CONFIG_CACHE = config
+                _LAST_LOAD_TIME = datetime.now()
+                return jsonify(config)
+        else:
+            return jsonify({}), 200
+
+    except json.JSONDecodeError as e:
+        current_app.logger.error(f"Invalid JSON in config file: {str(e)}")
+        return jsonify({}), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Error loading config: {str(e)}")
+        return jsonify({}), 500
+
+
+
+@graphs_bp.route('/stream_display_config')
+def stream_display_config():
+    app = current_app._get_current_object()
+
+    def event_stream():
+        last_sent = None
+        while True:
+            try:
+                with app.app_context():
+                    db.session.expire_all()
+                    graph_activo = db.session.query(Graph).filter_by(activo=True).first()
+
+                    # Leer display_config desde archivo
+                    try:
+                        with open('display_config.json', 'r') as f:
+                            saved_config = json.load(f)
+                    except Exception as e:
+                        app.logger.error(f"No se pudo cargar display_config.json: {str(e)}")
+                        saved_config = {
+                            "layout": {},
+                            "badges": {},
+                            "live": {}
+                        }
+
+                    # Configuración enviada al cliente
+                    config = {
+                        "layout": saved_config.get("layout", {}),
+                        "badges": saved_config.get("badges", {}),
+                        "live": saved_config.get("live", {}),
+                        "content": {
+                            "primera_linea": "",
+                            "segunda_linea": "",
+                            "top_left": "",
+                            "top_right": "",
+                        }
+                    }
+
+                    if graph_activo:
+                        config['content'] = {
+                            "primera_linea": graph_activo.primera_linea or "",
+                            "segunda_linea": graph_activo.segunda_linea or "",
+                            "entrevistado": graph_activo.entrevistado or "",
+                            "lugar": graph_activo.lugar or ""
+                        }
+
+                    config_json = json.dumps(config)
+                    if config_json != last_sent:
+                        yield f"data: {config_json}\n\n"
+                        last_sent = config_json
+
+                    time.sleep(0.5)
+
+            except Exception as e:
+                app.logger.error(f"SSE Error: {str(e)}")
+                yield "event: error\ndata: {}\n\n"
+                time.sleep(5)
+
+    return Response(
+        event_stream(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no'
+        }
+    )
+

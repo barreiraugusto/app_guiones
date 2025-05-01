@@ -89,6 +89,7 @@ def setTextoActivo(id):
     db.session.commit()
     return jsonify({"mensaje": "Texto activo actualizado"})
 
+
 @textos_bp.route('/textos/emitido/<int:id>', methods=['PUT'])
 def setTextoEmitido(id):
     texto = Texto.query.get(id)
@@ -178,14 +179,13 @@ def obtener_texto(id):
 
 @textos_bp.route('/tiempos/<int:id>', methods=['GET'])
 def obtener_tiempos(id):
-    texto = Texto.query.get(id)
-
+    print(f"el id es {id}")
+    texto = Texto.query.filter_by(guion_id=id)
+    print(f"el texto es: {texto}")
     if not texto:
         return jsonify({"mensaje": "Texto no encontrado"}), 404
-
     # Obtener todos los textos del mismo guion
-    textos_del_guion = Texto.query.filter_by(guion_id=texto.guion_id).all()
-
+    textos_del_guion = texto.all()
     # Calcular la suma total de las duraciones en segundos
     total_segundos = 0
     for t in textos_del_guion:
@@ -202,12 +202,11 @@ def obtener_tiempos(id):
                     total_segundos += m * 60 + s
             except (ValueError, AttributeError):
                 continue  # Ignora formatos inválidos
-
     # Convertir el total de segundos a HH:MM:SS
     horas, resto = divmod(total_segundos, 3600)
     minutos, segundos = divmod(resto, 60)
     duracion_total = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
-
+    print(f"Duracion total: {duracion_total}")
     return jsonify({"duracion_total": duracion_total})
 
 

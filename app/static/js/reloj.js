@@ -48,7 +48,7 @@ if (cronometroElemento) {
                     console.log(`Tiempo incrementado: ${tiempo}`); // Depuración
                     actualizarCronometro();
                 }, 1000);
-                inicioBoton.textContent = 'Restablecer';
+                inicioBoton.textContent = 'Rest.';
                 restablecerBoton.style.display = 'inline';
                 console.log('Cronómetro iniciado'); // Depuración
             }
@@ -57,7 +57,7 @@ if (cronometroElemento) {
         detenerBoton.addEventListener('click', () => {
             clearInterval(cronometroInterval);
             cronometroInterval = null;
-            inicioBoton.textContent = 'Restablecer';
+            inicioBoton.textContent = 'Rest.';
             restablecerBoton.style.display = 'inline';
             console.log('Cronómetro detenido'); // Depuración
         });

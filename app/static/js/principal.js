@@ -266,12 +266,6 @@ async function seleccionarGuion(id) {
     actualizarTiempoTotal(id);
 }
 
-function convertirUrlsEnEnlaces(texto) {
-    // Expresión regular para detectar URLs
-    const urlRegex = /https?:\/\/[^\s]+/g;
-    return texto.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
-}
-
 async function borrarGuion(id) {
     // Mostrar un cuadro de confirmación con SweetAlert2
     const result = await Swal.fire({
@@ -548,23 +542,20 @@ function cancelarEdicion() {
     textoEditando = null;
 }
 
-async function actualizarTiempoTotal(Id) {
-    try {
-        // Hacer la petición a tu endpoint Flask
-        const response = await fetch(`/tiempos/${Id}`);
-        const data = await response.json();
+async function setTextoActivo(id) {
+    await fetch(`/textos/activo/${id}`, {
+        method: 'PUT'
+    });
+    const guion_id = document.getElementById('guion_id').value;
+    seleccionarGuion(guion_id);
+}
 
-        if (response.ok) {
-            // Mostrar la duración total en el elemento th
-            document.getElementById('tiempo_total').textContent = data.duracion_total;
-        } else {
-            console.error('Error:', data.mensaje);
-            document.getElementById('tiempo_total').textContent = '00:00';
-        }
-    } catch (error) {
-        console.error('Error al obtener los tiempos:', error);
-        document.getElementById('tiempo_total').textContent = '00:00';
-    }
+async function setTextoEmitido(id) {
+    await fetch(`/textos/emitido/${id}`, {
+        method: 'PUT'
+    });
+    const guion_id = document.getElementById('guion_id').value;
+    seleccionarGuion(guion_id);
 }
 
 // Función para cargar textos en el <select>
@@ -602,6 +593,31 @@ async function cargarTextosEnSelect(guion_id = null) {
             showConfirmButton: false, // No mostrar el botón "Aceptar"
             timer: 3000, // El mensaje desaparecerá después de 3 segundos
         });
+    }
+}
+
+function convertirUrlsEnEnlaces(texto) {
+    // Expresión regular para detectar URLs
+    const urlRegex = /https?:\/\/[^\s]+/g;
+    return texto.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+}
+
+async function actualizarTiempoTotal(Id) {
+    try {
+        // Hacer la petición a tu endpoint Flask
+        const response = await fetch(`/tiempos/${Id}`);
+        const data = await response.json();
+
+        if (response.ok) {
+            // Mostrar la duración total en el elemento th
+            document.getElementById('tiempo_total').textContent = data.duracion_total;
+        } else {
+            console.error('Error:', data.mensaje);
+            document.getElementById('tiempo_total').textContent = '00:00';
+        }
+    } catch (error) {
+        console.error('Error al obtener los tiempos:', error);
+        document.getElementById('tiempo_total').textContent = '00:00';
     }
 }
 
@@ -917,22 +933,6 @@ function mostrarGraphsEnLista(graphs) {
         // Incrementar el contador para el próximo Graph
         contador++;
     });
-}
-
-async function setTextoActivo(id) {
-    await fetch(`/textos/activo/${id}`, {
-        method: 'PUT'
-    });
-    const guion_id = document.getElementById('guion_id').value;
-    seleccionarGuion(guion_id);
-}
-
-async function setTextoEmitido(id) {
-    await fetch(`/textos/emitido/${id}`, {
-        method: 'PUT'
-    });
-    const guion_id = document.getElementById('guion_id').value;
-    seleccionarGuion(guion_id);
 }
 
 async function ExportarGraphsXML() {

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sobreimpresos TV</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #222; /* fondo de contraste */
+    }
+
+    .tv-overlay {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .overlay-wrapper {
+      position: absolute;
+      top: 85%;   /* Cambiá esto para mover todo el conjunto */
+      left: 5%;   /* Y esto también */
+      /*width: 90%;*/
+    }
+
+    .bottom-bar {
+      display: flex;
+      align-items: center; /* que ambas columnas se estiren igual */
+      color: white;
+      gap: 0; /* asegura que no haya separación entre logo y zócalo */
+    }
+
+    .logo {
+      width: 150px;
+      height: 150px;
+      background-image: url('mosca.gif');
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0; /* evita que se achique */
+    }
+
+    .info-text {
+      height: 152px; /* igual al alto de la imagen */
+      width: 1737px;  /* igual al ancho exacto de la imagen */
+      background: url('zocalo_sin_bordes.png') no-repeat center center;
+      background-size: contain;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: visible;
+      padding-left: 20px; /* opcional para que el texto no toque el borde */
+    }
+
+
+
+    .blue-text {
+      color: #00ccff;
+      font-weight: bold;
+      font-size: 30px;
+      text-transform: uppercase;
+    }
+
+    .main-text {
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .location-tag {
+      width: 291px;
+      height: 45px;
+      position: absolute;
+      bottom: 139px;
+      right: 24px;
+      background: url('subida_localidad.png') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: black;
+      font-weight: bold;
+      font-size: 26px;
+      text-align: center;
+      box-sizing: border-box;
+      padding: 0 10px;
+    }
+
+    .name-tag {
+      width: 893px;
+      height: 45px;
+      position: absolute;
+      bottom: 98px;
+      right: 35px;
+      background: url('subida_nombre.png') no-repeat center center;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 28px;
+      text-transform: uppercase;
+      text-align: center;
+      box-sizing: border-box;
+      padding: 0 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="tv-overlay">
+    <div class="overlay-wrapper">
+      <div class="bottom-bar">
+        <div class="logo"></div>
+        <div class="info-text">
+          <div class="blue-text">RECORRIDA DE OBRA</div>
+          <div class="main-text">ETAPA FINAL DEL SEGUNDO TRAMO DE LAS RUTAS PROVINCIALES Nº10 Y Nº32</div>
+        </div>
+      </div>
+
+      <div class="location-tag">MÓVIL - VIALE</div>
+      <div class="name-tag">DARÍO SCHNEIDER – MIN. PLANEAMIENTO</div>
+    </div>
+  </div>
+</body>
+</html>

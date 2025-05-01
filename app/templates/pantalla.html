@@ -2,120 +2,161 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobreimpreso</title>
-    <script src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
+    <title>Sobreimpresos</title>
     <style>
-    	/* Fondo negro para toda la pantalla */
-        body, html {
+        body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black; /* Fondo negro */
-            overflow: hidden; /* Evita el desplazamiento */
-        }
-
-        /* Contenedor principal del sobreimpreso */
-        .overlay {
-            position: absolute;
-            bottom: 10%; /* Posición vertical */
-            left: 20px; /* Alineado a la izquierda */
-            width: 80%; /* Ancho total (10% logo + 70% texto) */
-            height: 10%; /* Alto del contenedor */
-            display: flex;
-            align-items: center;
-            overflow: hidden; /* Oculta el texto inicialmente */
-        }
-
-        /* Marco del logotipo */
-        .logo-container {
-            width: 10%; /* Ancho del logo (10% de la pantalla) */
-            height: 100%; /* Alto del contenedor */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #001f3f; /* Azul muy oscuro */
-            border: 1px solid #c0c0c0; /* Borde plateado */
-            border-radius: 0; /* Esquinas rectas */
-            padding: 0; /* Espacio interno */
-            box-sizing: border-box; /* Incluye el padding en el ancho/alto */
-            animation: slideIn 2s forwards; /* Animación de entrada */
-        }
-
-        /* Estilo del logotipo */
-        .logo {
-            max-width: 100%; /* Ajusta el logo al contenedor */
-            max-height: 100%; /* Ajusta el logo al contenedor */
-        }
-
-        /* Marco del texto */
-        .text-container {
-            width: 70%; /* Ancho del texto (70% de la pantalla) */
-            height: 100%; /* Alto del contenedor */
-            background-color: #001f3f; /* Azul muy oscuro */
-            border: 1px solid #c0c0c0; /* Borde plateado */
-            border-radius: 0; /* Esquinas rectas */
-            padding: 10px; /* Espacio interno */
-            box-sizing: border-box; /* Incluye el padding en el ancho/alto */
-            opacity: 0; /* Texto invisible inicialmente */
-            animation: fadeInText 1s 2s forwards; /* Animación de texto */
-            margin-left: 0px; /* Espacio entre el logo y el texto */
-            text-transform: uppercase; /* Todo en mayúsculas */
-            color: white; /* Color del texto */
             font-family: Arial, sans-serif;
+            background: transparent;
+        }
+
+        /* Badge "Vivo" */
+        .live-badge {
+            position: absolute;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 18px;
+            -webkit-text-stroke: 1px #1e1e1e;
+            text-transform: uppercase;
+            text-shadow: 1px -1px 2px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .tv-overlay {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .grupo {
+            position: absolute;
+            top: 850px;
+            left: 50px;
+        }
+
+        .bottom-bar {
+            display: flex;
+            align-items: center;
+            color: white;
+            gap: 0;
+        }
+
+        .logo {
+            width: 150px;
+            height: 150px;
+            background-image: url('{{ url_for('static', filename='img/grafica/mosca.gif') }}');
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+        }
+
+        .info-text {
+            height: 152px;
+            width: 1737px;
+            background: url('{{ url_for('static', filename='img/grafica/zocalo_sin_bordes.png') }}') no-repeat center center;
+            background-size: contain;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: flex-start;
+            overflow: visible;
         }
 
-        /* Estilo de las líneas de texto */
-        .text-container .line1 {
-            font-size: 20px; /* Tamaño de la línea 1 */
-            color: #40e0d0; /* Color turquesa */
+        .blue-text {
+            color: #00ccff;
             font-weight: bold;
+            font-size: 30px;
+            text-transform: uppercase;
+            padding-left: 30px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
-        .text-container .line2 {
-            font-size: 24px; /* Tamaño de la línea 2 */
-            color: white; /* Color blanco */
+        .main-text {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            padding-left: 30px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
-        /* Animación de entrada del logo */
-        {#@keyframes slideIn {#}
-        {#    0% {#}
-        {#        transform: translateX(-100%); /* Comienza fuera de la pantalla */#}
-        {#    }#}
-        {#    100% {#}
-        {#        transform: translateX(0); /* Termina en su posición final */#}
-        {#    }#}
+        .location-tag {
+            width: 291px;
+            height: 45px;
+            position: absolute;
+            bottom: 153px;
+            right: 6px;
+            background: url('{{ url_for('static', filename='img/grafica/subida_localidad.png') }}') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #003685;
+            font-weight: bold;
+            font-size: 24px; /* Ajustado para coincidir con maxFontSize */
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            padding: 0 24px; /* Coincide con el valor en la función */
+        }
 
+        .name-tag {
+            width: 893px;
+            height: 45px;
+            position: absolute;
+            bottom: 106px;
+            right: 6px;
+            background: url('{{ url_for('static', filename='img/grafica/subida_nombre.png') }}') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            color: #02b2ef;
+            font-weight: bold;
+            font-size: 24px; /* Ajustado para coincidir con maxFontSize */
+            text-transform: uppercase;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            padding: 0 24px; /* Coincide con el valor en la función */
+        }
 
-        /* Animación de aparición del texto */
-        @keyframes fadeInText {
-            0% {
-                opacity: 0;
-                transform: translateX(-20px); /* Desplazamiento inicial */
-            }
-            100% {
-                opacity: 1;
-                transform: translateX(0); /* Termina visible */
-            }
+        #lugar, #nombre {
+            transition: opacity 0.3s ease;
         }
     </style>
 </head>
 <body>
-    <!-- Contenedor del sobreimpreso -->
-    <div class="overlay">
-        <!-- Marco del logotipo -->
-        <div class="logo-container">
-            <img src="{{ url_for('static', filename='mosca.gif') }}" alt="Logo Animado" class="logo">
+<!-- Badge "Vivo" -->
+<div class="live-badge" id="liveBadge"></div>
+
+<div class="tv-overlay">
+    <div class="grupo" id="grupo">
+        <div class="bottom-bar">
+            <div class="logo"></div>
+            <div class="info-text" id="textContainer">
+                <div class="blue-text" id="linea1"></div>
+                <div class="main-text" id="linea2"></div>
+            </div>
         </div>
-        <!-- Marco del texto -->
-        <div class="text-container">
-            <div class="line1" id="linea1"></div>
-            <div class="line2" id="linea2"></div>
-        </div>
+
+        <div class="location-tag" id="lugar"></div>
+        <div class="name-tag" id="nombre"></div>
     </div>
+</div>
+<script type="module" src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
 </body>
 </html>

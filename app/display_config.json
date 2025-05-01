@@ -1,0 +1,25 @@
+{
+    "layout": {
+        "main_bottom": "5%",
+        "main_left": "20px",
+        "main_width": "100%",
+        "main_height": "10%",
+        "logo_width": "10%",
+        "text_width": "70%",
+        "main_vertical": "850px",
+        "main_horizontal": "50px"
+    },
+    "badges": {
+        "lugar_x": "1571px",
+        "lugar_y": "152px",
+        "nombre_x": "988px",
+        "nombre_y": "106px"
+    },
+    "live": {
+        "show": true,
+        "text": "VIVO",
+        "top": "150px",
+        "right": "150px"
+    },
+    "last_updated": "2025-04-21T01:50:54.988535"
+}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Ver guion{% endblock %}
+{% block extratitle %} - GUION{% endblock extratitle %}
 {% block extra_style %}
     <style>
         #loader {
@@ -50,6 +50,36 @@
         body {
             padding-top: 70px;
         }
+
+        .card {
+            overflow-x: auto;
+        }
+
+        #tablaTextos th, #tablaTextos td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Ajusta los anchos de las columnas según necesites */
+        #tablaTextos th:nth-child(1), #tablaTextos td:nth-child(1) {
+            width: 5%;
+        }
+
+        #tablaTextos th:nth-child(2), #tablaTextos td:nth-child(2) {
+            width: 15%;
+        }
+
+        #tablaTextos th:nth-child(3), #tablaTextos td:nth-child(3) {
+            width: 50%;
+        }
+
+        #tablaTextos th:nth-child(4), #tablaTextos td:nth-child(4) {
+            width: 20%;
+        }
+
+        #tablaTextos th:nth-child(5), #tablaTextos td:nth-child(5) {
+            width: 5%;
+        }
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
@@ -80,20 +110,31 @@
             <em>{{ guion.descripcion }}</em>
         </div>
         <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
-        <table class="table table-responsive" id="tablaTextos">
-            <thead class="thead-light">
-            <tr>
-                <th scope="col">N°</th>
-                <th scope="col">Tipo</th>
-                <th scope="col">Graf/Copete</th>
-                <th scope="col">Codigo</th>
-                <th scope="col">Musica</th>
-            </tr>
-            </thead>
-            <tbody>
-            <!-- Las filas se llenarán dinámicamente con JavaScript -->
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table" id="tablaTextos" style="table-layout: fixed; width: 100%;">
+                <thead class="thead-light">
+                {#            <tr>#}
+                {#                <th></th>#}
+                {#                <th></th>#}
+                {#                <th></th>#}
+                {#                <th>Duracion total:</th>#}
+                {#                <th><span id="tiempo_total"></span></th>#}
+                {#                <th></th>#}
+                {#            </tr>#}
+                <tr>
+                    <th scope="col" style="width: 5%">Nº</th>
+                    <th scope="col" style="width: 10%">Descripcion/Seccion</th>
+                    <th scope="col" style="width: 50%">Graf/Copete</th>
+                    <th scope="col" style="width: 20%">Codigo</th>
+                    <th scope="col" style="width: 10%">Musica</th>
+                    {#                <th scope="col" style="width: 5%">Duracion</th>#}
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Las filas se llenarán dinámicamente con JavaScript -->
+                </tbody>
+            </table>
+        </div>
         <div class="card-footer">
             <a href="/listado_guiones">
                 <button class="btn btn-outline-primary">Atras</button>

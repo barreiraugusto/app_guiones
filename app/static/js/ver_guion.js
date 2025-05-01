@@ -57,9 +57,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const contenidoActual = fila.querySelector('.contenido')?.innerHTML;
             const materialActual = fila.querySelector('.material')?.innerHTML;
             const musicaActual = fila.querySelector('.musica')?.innerHTML;
-            console.log(t.contenido)
+            const duracionActual = fila.querySelector('.duracion')?.innerHTML;
 
-            if (tituloActual !== t.titulo || contenidoActual !== t.contenido || materialActual !== materialContent || musicaActual !== t.musica) {
+            if (tituloActual !== t.titulo || contenidoActual !== t.contenido || materialActual !== materialContent || musicaActual !== t.musica || duracionActual !== t.duracion) {
                 // Actualizar el contenido de la fila solo si ha cambiado
                 fila.innerHTML = `
                 <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="contenido">${t.contenido}</td> 
                 <td class="material">${materialContent}</td>
                 <td class="musica">${t.musica}</td>
+<!--                <td class="duracion">${t.duracion}</td>-->
             `;
             }
 

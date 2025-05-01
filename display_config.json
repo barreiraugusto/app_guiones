@@ -1,0 +1,19 @@
+{
+    "layout": {
+        "main_vertical": "700px",
+        "main_horizontal": "50px"
+    },
+    "badges": {
+        "lugar_x": "1590px",
+        "lugar_y": "152px",
+        "nombre_x": "989px",
+        "nombre_y": "106px"
+    },
+    "live": {
+        "show": true,
+        "text": "MUERTO",
+        "top": "150px",
+        "right": "150px"
+    },
+    "last_updated": "2025-04-26T18:48:06.897633"
+}
