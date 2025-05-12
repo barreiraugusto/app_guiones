@@ -10,111 +10,132 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Función para convertir URLs en enlaces
     function convertirUrlsEnEnlaces(texto) {
+        if (!texto) return '';
         const urlRegex = /https?:\/\/[^\s]+/g;
         return texto.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
     }
 
     // Función para actualizar la tabla
-    function esVideo(url) {
-        return url.match(/\.(mp4|webm|ogg)/i); // Verificar si la URL es un video
-    }
-
     function actualizarTabla(textos) {
         const tbody = document.querySelector('#tablaTextos tbody');
-        const filasExistentes = tbody.querySelectorAll('tr');
         const textosFiltrados = textos.filter(t => t.guion_id == guionId);
 
-        // Ordenar los textos por "numero_de_nota" de menor a mayor
+        // Ordenar los textos por "numero_de_nota"
         textosFiltrados.sort((a, b) => a.numero_de_nota - b.numero_de_nota);
 
-        // Crear un mapa de los textos actuales para comparar con los existentes
+        // Crear un mapa de los textos actuales
         const textosMap = new Map(textosFiltrados.map(t => [t.id, t]));
 
-        // Eliminar filas que ya no están en los datos actualizados
-        filasExistentes.forEach(fila => {
-            const textoId = fila.getAttribute('data-texto-id');
-            if (!textosMap.has(Number(textoId))) {
+        // Eliminar filas que ya no están en los datos
+        document.querySelectorAll('#tablaTextos tr[data-texto-id]').forEach(fila => {
+            if (!textosMap.has(Number(fila.getAttribute('data-texto-id')))) {
                 fila.remove();
             }
         });
 
         // Actualizar o agregar filas
         textosFiltrados.forEach(t => {
-            let fila = tbody.querySelector(`tr[data-texto-id="${t.id}"]`);
+            let filaTexto = tbody.querySelector(`tr[data-texto-id="${t.id}"]`);
 
-            if (!fila) {
-                // Crear una nueva fila si no existe
-                fila = document.createElement('tr');
-                fila.setAttribute('data-texto-id', t.id);
-                tbody.appendChild(fila);
+            if (!filaTexto) {
+                filaTexto = document.createElement('tr');
+                filaTexto.setAttribute('data-texto-id', t.id);
+                tbody.appendChild(filaTexto);
             }
 
-            // Convertir URLs en enlaces dentro del material
+            // Convertir URLs en material
             const materialContent = convertirUrlsEnEnlaces(t.material || '');
 
-            // Verificar si el contenido ha cambiado antes de actualizar
-            const tituloActual = fila.querySelector('td:nth-child(2) strong')?.textContent;
-            const contenidoActual = fila.querySelector('.contenido')?.innerHTML;
-            const materialActual = fila.querySelector('.material')?.innerHTML;
-            const musicaActual = fila.querySelector('.musica')?.innerHTML;
-            const duracionActual = fila.querySelector('.duracion')?.innerHTML;
-
-            if (tituloActual !== t.titulo || contenidoActual !== t.contenido || materialActual !== materialContent || musicaActual !== t.musica || duracionActual !== t.duracion) {
-                // Actualizar el contenido de la fila solo si ha cambiado
-                fila.innerHTML = `
+            // Actualizar contenido del texto
+            filaTexto.innerHTML = `
                 <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
-                <td><strong>${t.titulo}</strong></td>  
-                <td class="contenido">${t.contenido}</td> 
-                <td class="material">${materialContent}</td>
-                <td class="musica">${t.musica}</td>
-<!--                <td class="duracion">${t.duracion}</td>-->
+                <td><strong>${t.titulo}</strong></td>
+                <td>${t.contenido || ''}</td>
+                <td>${materialContent}</td>
+                <td>${t.musica || ''}</td>
+                <td>${t.duracion || ''}</td>
             `;
-            }
 
-            // Filas para los Graphs asociados al Texto
+            // Procesar graphs del texto
             if (t.graphs && t.graphs.length > 0) {
-                // Eliminar los graphs existentes asociados a este texto
-                const graphsExistentes = tbody.querySelectorAll(`tr[data-graph-parent-id="${t.id}"]`);
-                graphsExistentes.forEach(graph => graph.remove());
+                // Eliminar graphs existentes de este texto
+                document.querySelectorAll(`tr[data-graph-parent="${t.id}"]`).forEach(el => el.remove());
 
-                // Insertar los graphs debajo de la fila del texto
+                // Agregar nuevos graphs (siempre desplegados)
                 t.graphs.forEach((g, index) => {
                     const filaGraph = document.createElement('tr');
                     filaGraph.setAttribute('data-graph-id', g.id);
-                    filaGraph.setAttribute('data-graph-parent-id', t.id); // Asociar el graph al texto
+                    filaGraph.setAttribute('data-graph-parent', t.id);
+                    filaGraph.className = 'graph-row';
+
+                    // Procesar bajadas
+                    const bajadasContent = g.bajadas && g.bajadas.length > 0 ?
+                        `<ul class="mb-0">${g.bajadas.map(b => `<li>${b}</li>`).join('')}</ul>` :
+                        '<p class="mb-0">No hay bajadas</p>';
+
+                    // Procesar entrevistados y citas
+                    let entrevistadosContent = '';
+                    if (g.entrevistados && g.entrevistados.length > 0) {
+                        entrevistadosContent = g.entrevistados.map(e => `
+                            <div class="mb-2">
+                                <strong>${e.nombre}:</strong>
+                                <ul class="mb-0">${e.citas.map(c => `<li>${c}</li>`).join('')}</ul>
+                            </div>
+                        `).join('');
+                    }
+
                     filaGraph.innerHTML = `
-                    <td></td>
-                    <td></td>
-                    <td class="bg-light" colspan="3">
-                        <strong>Graph ${index + 1}</strong><br>
-                        <hr>
-                        <strong>Lugar:</strong> ${g.lugar}<br>
-                        <strong>Tema:</strong> ${g.tema}<br>
-                        <strong>Entrevistado:</strong> ${g.entrevistado}<br>
-                        <strong>Primera Línea:</strong> ${g.primera_linea}<br>
-                        <strong>Segunda Línea:</strong> ${g.segunda_linea}<br> 
-                    </td>
-                `;
-                    // Insertar el graph debajo de la fila del texto
-                    fila.insertAdjacentElement('afterend', filaGraph);
+                        <td></td>
+                        <td></td>
+                        <td colspan="4" class="p-3 bg-light">
+                            <div class="mb-2"><strong>Graph ${index + 1}</strong></div>
+                            <div class="mb-2"><strong>Lugar:</strong> ${g.lugar || 'N/A'}</div>
+                            <div class="mb-2"><strong>Tema:</strong> ${g.tema || 'N/A'}</div>
+                            <div class="mb-2">
+                                <strong>Bajadas:</strong>
+                                ${bajadasContent}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Entrevistados:</strong>
+                                ${entrevistadosContent || '<p class="mb-0">No hay entrevistados</p>'}
+                            </div>
+                        </td>
+                    `;
+
+                    filaTexto.insertAdjacentElement('afterend', filaGraph);
                 });
             }
         });
     }
 
+    actualizarTiempoTotal(guionId);
+
     // Suscribirse a las actualizaciones del servidor
     const eventSource = new EventSource('/stream_textos');
 
     eventSource.onmessage = function (event) {
-        const textos = JSON.parse(event.data);
-        actualizarTabla(textos);
+        try {
+            const textos = JSON.parse(event.data);
+            actualizarTabla(textos);
+        } catch (error) {
+            console.error('Error al procesar actualización:', error);
+        }
     };
 
-    // Cargar los textos al abrir la página
+    eventSource.onerror = function () {
+        console.error('Error en la conexión SSE');
+    };
+
+    // Cargar los textos iniciales
     fetch('/textos')
-        .then(response => response.json())
-        .then(textos => actualizarTabla(textos))
-        .catch(error => console.error('Error al cargar los textos:', error));
+        .then(response => {
+            if (!response.ok) throw new Error('Error al cargar textos');
+            return response.json();
+        })
+        .then(actualizarTabla)
+        .catch(error => {
+            console.error('Error:', error);
+        });
 });
 
 function exportarAPDF() {
@@ -142,9 +163,9 @@ function exportarAPDF() {
                     .replace(/['"]/g, ''); // Eliminar comillas si las hay
             }
 
-            return response.blob().then(blob => ({ blob, filename }));
+            return response.blob().then(blob => ({blob, filename}));
         })
-        .then(({ blob, filename }) => {
+        .then(({blob, filename}) => {
             // Crear un enlace para descargar el PDF
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');

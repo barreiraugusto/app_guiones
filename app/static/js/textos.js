@@ -9,27 +9,42 @@ async function cargarTextos() {
     tbody.innerHTML = ''; // Limpiar la tabla antes de llenarla
 
     textos.forEach(t => {
-        const fila = document.createElement('tr');
-        if (t.activo) {
-            fila.classList.add('bg-success'); // Resaltar la fila del texto activo
+        // Crear fila de texto
+        const filaTexto = document.createElement('tr');
+        filaTexto.classList.add('bg-light');
+
+        if (t.emitido) {
+            filaTexto.classList.replace('bg-light', 'bg-secondary');
+        } else if (t.activo) {
+            filaTexto.classList.replace('bg-light', 'bg-warning');
         }
-        fila.innerHTML = `
-            <td><strong>${t.titulo}</strong></td>
-            <td>${t.contenido}</td>
-            <td>${t.material || ''}</td>
-            <td>${t.musica}</td>
-            <td>${t.duracion}</td>
-            <td><h3>${t.numero_de_nota}</h3></td>
-            <td>
-                <div class="btn-group-vertical">
-                    <button type="button" class="btn btn-outline-warning" onclick="setTextoActivo(${t.id})"><i class="fas fa-arrow-right"></i></button>
-                    <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})"><i class="fas fa-check"></i></button>
-                    <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})"><i class="fas fa-edit"></i></button>
-                    <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})"><i class="fas fa-trash"></i></button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(fila);
+
+        const materialContent = convertirUrlsEnEnlaces(t.material || '');
+
+        filaTexto.innerHTML = `
+                    <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
+                    <td><strong>${t.titulo}</strong></td>
+                    <td>${materialContent}</td>
+                    <td>${t.musica}</td>
+                    <td>${t.duracion}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-warning" onclick="setTextoActivo(${t.id})">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+        tbody.appendChild(filaTexto);
     });
 }
 
@@ -207,7 +222,7 @@ async function setTextoActivo(id) {
     await fetch(`/textos/activo/${id}`, {
         method: 'PUT'
     });
-    const guion_id = document.getElementById('guion_id').value;
+    const guion_id = localStorage.getItem('guionSeleccionado');
     seleccionarGuion(guion_id);
 }
 
@@ -220,9 +235,17 @@ async function setTextoEmitido(id) {
 }
 
 // Función para cargar textos en el <select>
-async function cargarTextosEnSelect(guion_id = null) {
+async function cargarTextosEnSelect() {
     try {
-        const response = await fetch('/textos');
+        // Obtener el guion_id seleccionado actualmente
+        const guion_id = document.getElementById('guion_id').value;
+
+        if (!guion_id) {
+            console.log("No hay guion seleccionado");
+            return;
+        }
+
+        const response = await fetch(`/textos/por-guion/${guion_id}`);
         if (!response.ok) {
             throw new Error('Error al cargar los textos');
         }
@@ -231,10 +254,7 @@ async function cargarTextosEnSelect(guion_id = null) {
         const selectTexto = document.getElementById('texto_id');
         selectTexto.innerHTML = '<option value="">Selecciona una Nota</option>'; // Opción por defecto
 
-        // Filtrar textos por guion_id (si se proporciona)
-        const textosFiltrados = guion_id ? textos.filter(t => t.guion_id == guion_id) : textos;
-
-        textosFiltrados.forEach(t => {
+        textos.forEach(t => {
             const option = document.createElement('option');
             option.value = t.id;
             option.textContent = `Nota: ${t.numero_de_nota} - ${t.titulo}`;
@@ -251,8 +271,8 @@ async function cargarTextosEnSelect(guion_id = null) {
             icon: 'error',
             title: 'Error',
             text: error.message || 'Hubo un error al cargar los textos. Por favor, inténtalo de nuevo.',
-            showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 3000, // El mensaje desaparecerá después de 3 segundos
+            showConfirmButton: false,
+            timer: 3000,
         });
     }
 }

@@ -1,8 +1,11 @@
+from collections import defaultdict
+
 from flask import Blueprint, jsonify, request, render_template, make_response
+from sqlalchemy.orm import joinedload, selectinload
 from weasyprint import HTML
 
 from .. import db
-from ..models import Guion
+from ..models import Guion, Texto, Graph, Cita, graph_bajada
 
 guiones_bp = Blueprint('guiones', __name__)
 
@@ -24,36 +27,80 @@ def guiones():
 
 
 @guiones_bp.route('/guiones/<int:id>', methods=['GET'])
-def guion(id):
-    guion = Guion.query.get(id)
-    if guion:
-        print(f"Editando este guion {id}")
-        return jsonify({
+def obtener_guion(id):
+    try:
+        # Carga optimizada para la nueva estructura
+        guion = db.session.query(Guion).options(
+            selectinload(Guion.textos).options(
+                selectinload(Texto.graphs).options(
+                    selectinload(Graph.bajadas),
+                    selectinload(Graph.citas).joinedload(Cita.entrevistado),
+                    selectinload(Graph.entrevistados)
+                )
+            )
+        ).get(id)
+
+        if not guion:
+            return jsonify({"mensaje": "Guion no encontrado"}), 404
+
+        # Procesamiento para combinar ambas fuentes de entrevistados
+        respuesta = {
             "id": guion.id,
             "nombre": guion.nombre,
             "descripcion": guion.descripcion,
-            "textos": [{
-                "id": t.id,
-                "numero_de_nota": t.numero_de_nota,
-                "titulo": t.titulo,
-                "duracion": t.duracion,
-                "contenido": t.contenido,
-                "musica": t.musica,
-                "material": t.material,
-                "activo": t.activo,
-                "emitido": t.emitido,
-                "graphs": [{
-                    "id": g.id,
-                    "primera_linea": g.primera_linea,
-                    "segunda_linea": g.segunda_linea,
-                    "entrevistado": g.entrevistado,
-                    "lugar": g.lugar,
-                    "tema": g.tema
-                } for g in t.graphs]
-            } for t in guion.textos]
-        })
-    else:
-        return jsonify({"mensaje": "Guion no encontrado"}), 404
+            "textos": []
+        }
+
+        for texto in guion.textos:
+            texto_data = {
+                "id": texto.id,
+                "numero_de_nota": texto.numero_de_nota,
+                "titulo": texto.titulo,
+                "duracion": texto.duracion,
+                "contenido": texto.contenido,
+                "musica": texto.musica,
+                "material": texto.material,
+                "activo": texto.activo,
+                "emitido": texto.emitido,
+                "graphs": []
+            }
+
+            for graph in texto.graphs:
+                # Combinar entrevistados de ambas relaciones
+                todos_entrevistados = {}
+
+                # 1. Entrevistados con citas
+                for cita in graph.citas:
+                    if cita.entrevistado.nombre.strip():
+                        todos_entrevistados[cita.entrevistado.id] = {
+                            "nombre": cita.entrevistado.nombre,
+                            "citas": [cita.texto] if cita.texto.strip() else ["Sin cita"]
+                        }
+
+                # 2. Entrevistados sin citas (relación directa)
+                for entrevistado in graph.entrevistados:
+                    if entrevistado.id not in todos_entrevistados and entrevistado.nombre.strip():
+                        todos_entrevistados[entrevistado.id] = {
+                            "nombre": entrevistado.nombre,
+                            "citas": ["Sin cita"]
+                        }
+
+                graph_data = {
+                    "id": graph.id,
+                    "lugar": graph.lugar,
+                    "tema": graph.tema,
+                    "activo": graph.activo,
+                    "bajadas": [b.texto for b in graph.bajadas],
+                    "entrevistados": list(todos_entrevistados.values())
+                }
+                texto_data["graphs"].append(graph_data)
+
+            respuesta["textos"].append(texto_data)
+
+        return jsonify(respuesta)
+
+    except Exception as e:
+        return jsonify({"mensaje": "Error interno", "error": str(e)}), 500
 
 
 @guiones_bp.route('/guiones/<int:id>', methods=['PUT'])
@@ -131,15 +178,37 @@ def ver_guion(id):
 @guiones_bp.route('/guiones/borrar/<int:id>', methods=['DELETE'])
 def borrar_guion(id):
     guion = Guion.query.get(id)
-    if guion:
-        # Eliminar todos los textos asociados al guion
+    if not guion:
+        return jsonify({"mensaje": "Guion no encontrado"}), 404
+
+    try:
+        # Eliminar en cascada manual para evitar problemas
         for texto in guion.textos:
+            for graph in texto.graphs:
+                # 1. Eliminar las relaciones many-to-many en graph_bajada
+                db.session.execute(
+                    db.delete(graph_bajada).where(graph_bajada.c.graph_id == graph.id)
+                )
+
+                # 2. Eliminar todas las citas asociadas al graph
+                for cita in graph.citas:
+                    db.session.delete(cita)
+
+                # 3. Finalmente eliminar el graph
+                db.session.delete(graph)
+
+            # Eliminar el texto
             db.session.delete(texto)
+
+        # Eliminar el guion
         db.session.delete(guion)
         db.session.commit()
-        return jsonify({"mensaje": "Guion eliminado"})
-    else:
-        return jsonify({"mensaje": "Guion no encontrado"}), 404
+
+        return jsonify({"mensaje": "Guion eliminado correctamente"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"mensaje": f"Error al eliminar: {str(e)}"}), 500
 
 
 @guiones_bp.route('/exportar_pdf/<int:guion_id>')
@@ -155,7 +224,8 @@ def exportar_pdf(guion_id):
         pdf = HTML(string=html).write_pdf()
 
         # Limpiar el nombre del guion para usarlo como nombre de archivo
-        nombre_archivo = guion.nombre.replace("/", "_").replace("\\", "_").replace(":", "_")  # Reemplazar caracteres no válidos
+        nombre_archivo = guion.nombre.replace("/", "_").replace("\\", "_").replace(":",
+                                                                                   "_")  # Reemplazar caracteres no válidos
         nombre_archivo = nombre_archivo.replace(" ", "_")  # Reemplazar espacios con guiones bajos
 
         # Crear una respuesta con el PDF
@@ -168,5 +238,3 @@ def exportar_pdf(guion_id):
         # Registrar el error y devolver una respuesta de error
         print(f"Error al generar el PDF: {e}")
         return "Error al generar el PDF", 500
-
-

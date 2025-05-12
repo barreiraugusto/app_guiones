@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Lógica para guiones seleccionados
     const guionSelect = document.getElementById('guion_id');
     const guionSeleccionado = localStorage.getItem('guionSeleccionado');
+    console.log("El guion en eventos es:", guionSeleccionado);
 
     // Restaurar selección al cargar
     if (guionSeleccionado && guionSelect) {

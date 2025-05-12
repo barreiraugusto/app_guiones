@@ -1,10 +1,12 @@
 import json
 import time
+from sqlite3 import IntegrityError
 
-from flask import Blueprint, jsonify, request, render_template, stream_with_context, Response
+from flask import Blueprint, jsonify, request, render_template, stream_with_context, Response, current_app
 
+from sqlalchemy.orm import joinedload, selectinload
 from .. import db
-from ..models import Texto, Guion
+from ..models import Texto, Guion, Graph, Cita
 
 textos_bp = Blueprint('textos', __name__)
 
@@ -13,72 +15,163 @@ textos_bp = Blueprint('textos', __name__)
 def stream_textos():
     def event_stream():
         while True:
-            db.session.expire_all()  # Limpiar la caché de SQLAlchemy
-            textos = Texto.query.all()
-            data = [{
-                "id": t.id,
-                "numero_de_nota": t.numero_de_nota,
-                "titulo": t.titulo,
-                "contenido": t.contenido,
-                "musica": t.musica,
-                "material": t.material,
-                "activo": t.activo,
-                "guion_id": t.guion_id,
-                "graphs": [{
-                    "id": g.id,
-                    "primera_linea": g.primera_linea,
-                    "segunda_linea": g.segunda_linea,
-                    "entrevistado": g.entrevistado,
-                    "lugar": g.lugar,
-                    "tema": g.tema,
-                    "activo": g.activo
-                } for g in t.graphs]
-            } for t in textos]
+            try:
+                with current_app.app_context():
+                    db.session.expire_all()  # Limpiar la caché de SQLAlchemy
 
-            yield f"data: {json.dumps(data)}\n\n"
-            time.sleep(10)  # Esperar 1 segundo antes de enviar la siguiente actualización
+                    # Cargar todos los textos con sus relaciones
+                    textos = Texto.query.options(
+                        selectinload(Texto.graphs).options(
+                            selectinload(Graph.bajadas),
+                            joinedload(Graph.citas).joinedload(Cita.entrevistado)
+                        )
+                    ).all()
 
-    return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+                    data = []
+                    for t in textos:
+                        texto_data = {
+                            "id": t.id,
+                            "numero_de_nota": t.numero_de_nota,
+                            "titulo": t.titulo,
+                            "contenido": t.contenido,
+                            "musica": t.musica,
+                            "duracion": t.duracion,
+                            "material": t.material,
+                            "activo": t.activo,
+                            "emitido": t.emitido,
+                            "guion_id": t.guion_id,
+                            "graphs": []
+                        }
+
+                        for g in t.graphs:
+                            # Agrupar citas por entrevistado
+                            entrevistados = {}
+                            for cita in g.citas:
+                                nombre = cita.entrevistado.nombre
+                                if nombre not in entrevistados:
+                                    entrevistados[nombre] = []
+                                entrevistados[nombre].append(cita.texto)
+
+                            graph_data = {
+                                "id": g.id,
+                                "lugar": g.lugar,
+                                "tema": g.tema,
+                                "activo": g.activo,
+                                "bajadas": [b.texto for b in g.bajadas],
+                                "entrevistados": [
+                                    {
+                                        "nombre": nombre,
+                                        "citas": citas
+                                    } for nombre, citas in entrevistados.items()
+                                ]
+                            }
+                            texto_data["graphs"].append(graph_data)
+
+                        data.append(texto_data)
+
+                    yield f"data: {json.dumps(data)}\n\n"
+                    time.sleep(10)  # Esperar 10 segundos antes de enviar la siguiente actualización
+
+            except Exception as e:
+                current_app.logger.error(f"Error en stream_textos: {str(e)}")
+                yield "event: error\ndata: {}\n\n"
+                time.sleep(5)  # Esperar antes de reintentar
+
+    return Response(stream_with_context(event_stream()),
+                    content_type='text/event-stream',
+                    headers={'X-Accel-Buffering': 'no'})
 
 
 @textos_bp.route('/textos', methods=['GET', 'POST'])
 def textos():
     if request.method == 'POST':
         data = request.json
-        nuevo_texto = Texto(
-            numero_de_nota=data['numero_de_nota'],
-            titulo=data['titulo'],
-            duracion=data['duracion'],
-            contenido=data['contenido'],
-            musica=data['musica'],
-            material=data.get('material', ''),
-            guion_id=data['guion_id']
-        )
-        db.session.add(nuevo_texto)
-        db.session.commit()
-        return jsonify({"mensaje": "Texto agregado"}), 201
+        if not data or 'numero_de_nota' not in data or 'titulo' not in data:
+            return jsonify({"mensaje": "Datos incompletos"}), 400
+
+        try:
+            nuevo_texto = Texto(
+                numero_de_nota=data['numero_de_nota'],
+                titulo=data['titulo'],
+                duracion=data.get('duracion', ''),
+                contenido=data.get('contenido', ''),
+                musica=data.get('musica', ''),
+                material=data.get('material', ''),
+                guion_id=data.get('guion_id')
+            )
+            db.session.add(nuevo_texto)
+            db.session.commit()
+            return jsonify({
+                "mensaje": "Texto agregado",
+                "id": nuevo_texto.id
+            }), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"mensaje": f"Error al crear texto: {str(e)}"}), 500
     else:
-        textos = Texto.query.all()
-        return jsonify([{
-            "id": t.id,
-            "numero_de_nota": t.numero_de_nota,
-            "titulo": t.titulo,
-            "duracion": t.duracion,
-            "contenido": t.contenido,
-            "musica": t.musica,
-            "material": t.material,
-            "activo": t.activo,
-            "guion_id": t.guion_id,
-            "graphs": [{
-                "id": g.id,
-                "primera_linea": g.primera_linea,
-                "segunda_linea": g.segunda_linea,
-                "entrevistado": g.entrevistado,
-                "lugar": g.lugar,
-                "tema": g.tema,
-                "activo": g.activo
-            } for g in t.graphs]
-        } for t in textos])
+        # GET method
+        textos = Texto.query.options(
+            joinedload(Texto.graphs).joinedload(Graph.bajadas),
+            joinedload(Texto.graphs).joinedload(Graph.citas).joinedload(Cita.entrevistado)
+        ).all()
+
+        response_data = []
+        for t in textos:
+            texto_data = {
+                "id": t.id,
+                "numero_de_nota": t.numero_de_nota,
+                "titulo": t.titulo,
+                "duracion": t.duracion,
+                "contenido": t.contenido,
+                "musica": t.musica,
+                "material": t.material,
+                "activo": t.activo,
+                "guion_id": t.guion_id,
+                "graphs": []
+            }
+
+            for g in t.graphs:
+                # Agrupar citas por entrevistado
+                entrevistados_dict = {}
+                for cita in g.citas:
+                    nombre = cita.entrevistado.nombre
+                    if nombre not in entrevistados_dict:
+                        entrevistados_dict[nombre] = []
+                    entrevistados_dict[nombre].append(cita.texto)
+
+                graph_data = {
+                    "id": g.id,
+                    "lugar": g.lugar,
+                    "tema": g.tema,
+                    "activo": g.activo,
+                    "bajadas": [b.texto for b in g.bajadas],
+                    "entrevistados": [
+                        {
+                            "nombre": nombre,
+                            "citas": citas
+                        }
+                        for nombre, citas in entrevistados_dict.items()
+                    ]
+                }
+                texto_data["graphs"].append(graph_data)
+
+            response_data.append(texto_data)
+
+        return jsonify(response_data)
+
+
+@textos_bp.route('/textos/por-guion/<int:guion_id>', methods=['GET'])
+def textos_por_guion(guion_id):
+    textos = Texto.query.filter_by(guion_id=guion_id).all()
+    return jsonify([{
+        "id": t.id,
+        "numero_de_nota": t.numero_de_nota,
+        "titulo": t.titulo,
+        "duracion": t.duracion,
+        "contenido": t.contenido,
+        "musica": t.musica,
+        "material": t.material
+    } for t in textos])
 
 
 @textos_bp.route('/textos/activo/<int:id>', methods=['PUT'])
@@ -114,32 +207,69 @@ def mostrar_texto_activo():
 def stream_texto_activo():
     def event_stream():
         while True:
-            db.session.expire_all()  # Limpiar la caché de SQLAlchemy
-            texto_activo = Texto.query.filter_by(activo=True).first()
-            if texto_activo:
-                data = {
-                    "id": texto_activo.id,
-                    "numero_de_nota": texto_activo.numero_de_nota,
-                    "titulo": texto_activo.titulo,
-                    "contenido": texto_activo.contenido,
-                    "material": texto_activo.material,
-                    "musica": texto_activo.musica,
-                    "activo": texto_activo.activo,
-                    "guion_id": texto_activo.guion_id,
-                    "graphs": [{
-                        "id": g.id,
-                        "primera_linea": g.primera_linea,
-                        "segunda_linea": g.segunda_linea,
-                        "entrevistado": g.entrevistado,
-                        "lugar": g.lugar
-                    } for g in texto_activo.graphs]
-                }
-                yield f"data: {json.dumps(data)}\n\n"
-            else:
-                yield "data: {}\n\n"
-            time.sleep(1)  # Esperar 1 segundo antes de enviar la siguiente actualización
+            try:
+                with current_app.app_context():
+                    db.session.expire_all()  # Limpiar la caché de SQLAlchemy
 
-    return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+                    # Cargar el texto activo con todas sus relaciones
+                    texto_activo = Texto.query.options(
+                        selectinload(Texto.graphs).options(
+                            selectinload(Graph.bajadas),
+                            joinedload(Graph.citas).joinedload(Cita.entrevistado)
+                        )
+                    ).filter_by(activo=True).first()
+
+                    if texto_activo:
+                        # Construir respuesta con la nueva estructura
+                        data = {
+                            "id": texto_activo.id,
+                            "numero_de_nota": texto_activo.numero_de_nota,
+                            "titulo": texto_activo.titulo,
+                            "contenido": texto_activo.contenido,
+                            "material": texto_activo.material,
+                            "musica": texto_activo.musica,
+                            "activo": texto_activo.activo,
+                            "guion_id": texto_activo.guion_id,
+                            "graphs": []
+                        }
+
+                        for graph in texto_activo.graphs:
+                            # Agrupar citas por entrevistado
+                            entrevistados = {}
+                            for cita in graph.citas:
+                                nombre = cita.entrevistado.nombre
+                                if nombre not in entrevistados:
+                                    entrevistados[nombre] = []
+                                entrevistados[nombre].append(cita.texto)
+
+                            graph_data = {
+                                "id": graph.id,
+                                "lugar": graph.lugar,
+                                "tema": graph.tema,
+                                "bajadas": [b.texto for b in graph.bajadas],
+                                "entrevistados": [
+                                    {
+                                        "nombre": nombre,
+                                        "citas": citas
+                                    } for nombre, citas in entrevistados.items()
+                                ]
+                            }
+                            data["graphs"].append(graph_data)
+
+                        yield f"data: {json.dumps(data)}\n\n"
+                    else:
+                        yield "data: {}\n\n"
+
+                    time.sleep(1)  # Intervalo de actualización
+
+            except Exception as e:
+                current_app.logger.error(f"Error en stream_texto_activo: {str(e)}")
+                yield "event: error\ndata: {}\n\n"
+                time.sleep(5)  # Esperar más antes de reintentar
+
+    return Response(stream_with_context(event_stream()),
+                    content_type='text/event-stream',
+                    headers={'X-Accel-Buffering': 'no'})  # Importante para Nginx
 
 
 @textos_bp.route('/obtener_textos_guion/<int:id>')
@@ -230,15 +360,46 @@ def editar_texto(id):
 @textos_bp.route('/textos/borrar/<int:id>', methods=['DELETE'])
 def borrar_texto(id):
     try:
-        texto = Texto.query.get(id)
-        if texto:
-            # No necesitas eliminar manualmente los Graph, la eliminación en cascada lo hará automáticamente
-            db.session.delete(texto)
-            db.session.commit()
-            return jsonify({"mensaje": "Texto eliminado"})
-        else:
+        # Cargamos el texto con todas las relaciones necesarias
+        texto = Texto.query.options(
+            selectinload(Texto.graphs).options(
+                selectinload(Graph.bajadas),
+                selectinload(Graph.citas),
+                selectinload(Graph.entrevistados)
+            )
+        ).get(id)
+
+        if not texto:
             return jsonify({"mensaje": "Texto no encontrado"}), 404
+
+        # Primero eliminamos manualmente las relaciones many-to-many
+        for graph in texto.graphs:
+            # Limpiar la relación graph_entrevistado
+            graph.entrevistados = []
+            # Eliminar citas asociadas
+            for cita in graph.citas:
+                db.session.delete(cita)
+            # Eliminar relaciones de bajadas
+            graph.bajadas = []
+
+        # Ahora podemos eliminar el texto (la cascada eliminará los graphs)
+        db.session.delete(texto)
+        db.session.commit()
+
+        return jsonify({"mensaje": "Texto eliminado correctamente"})
+
+    except IntegrityError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error de integridad al borrar texto {id}: {str(e)}")
+        return jsonify({
+            "mensaje": "Error de integridad referencial",
+            "error": str(e)
+        }), 500
+
     except Exception as e:
-        print(f"Error al borrar el texto: {e}")
-        db.session.rollback()  # Revertir la transacción en caso de error
-        return jsonify({"mensaje": "Error interno del servidor"}), 500
+        db.session.rollback()
+        current_app.logger.error(f"Error al borrar texto {id}: {str(e)}")
+        return jsonify({
+            "mensaje": "Error interno del servidor",
+            "error": str(e)
+        }), 500

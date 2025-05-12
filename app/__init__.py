@@ -8,7 +8,7 @@ migrate = Migrate()
 
 # Definir la lista de opciones de música
 MUSICA_OPCIONES = [
-    "Titulos", "Movil", "Deporte", "Ultimo momento", "Comunicacion", "Policial", "Tensión",
+    "Titulos", "Movil", "Deporte", "Ultimo momento", "Com.", "Policial", "Tensión",
     "Alegre", "Misterio", "Acción", "Nostálgica", "Épica", "Relajante", "Neutral",
     "Impacto", "Romántica", "Dramática"
 ]

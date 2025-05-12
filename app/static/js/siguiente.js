@@ -3,11 +3,15 @@ function convertirUrlsEnEnlaces(texto) {
     return texto.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
 }
 
-let previousContent = {
+const previousContent = {
     titulo: "",
+    numero_de_nota: "",
     contenido: "",
     material: "",
-    musica: ""
+    musica: "",
+    graphTema: "",
+    graphBajadas: [],
+    graphEntrevistados: []
 };
 
 function actualizarTextoActivo(data) {
@@ -17,8 +21,14 @@ function actualizarTextoActivo(data) {
     const materialElement = document.getElementById('texto-activo-material');
     const musicaElement = document.getElementById('texto-activo-musica');
 
-    if (data.titulo) {
-        // Actualizar solo si el contenido ha cambiado
+    // Nuevos elementos para graphs
+    const graphTemaElement = document.getElementById('graph-tema');
+    const graphBajadasElement = document.getElementById('graph-bajadas');
+    const graphEntrevistadosElement = document.getElementById('graph-entrevistados');
+
+
+    if (data && data.titulo) {
+        // Actualizar solo si el contenido ha cambiado (parte original)
         if (previousContent.titulo !== data.titulo) {
             tituloElement.textContent = `${data.titulo}`;
             previousContent.titulo = data.titulo;
@@ -43,28 +53,105 @@ function actualizarTextoActivo(data) {
             musicaElement.innerHTML = convertirUrlsEnEnlaces(data.musica || '').toUpperCase();
             previousContent.musica = data.musica;
         }
+
+        // Actualizar información de graphs si existe
+        if (data.graphs && data.graphs.length > 0) {
+            const graph = data.graphs[0]; // Tomamos el primer graph
+
+            // Actualizar tema
+            if (previousContent.graphTema !== graph.tema) {
+                graphTemaElement.textContent = graph.tema || '';
+                previousContent.graphTema = graph.tema;
+            }
+
+            // Actualizar bajadas si existen
+            if (graph.bajadas && graph.bajadas.length > 0) {
+                if (JSON.stringify(previousContent.graphBajadas) !== JSON.stringify(graph.bajadas)) {
+                    graphBajadasElement.innerHTML = '';
+                    graph.bajadas.forEach(bajada => {
+                        const li = document.createElement('li');
+                        li.textContent = bajada;
+                        graphBajadasElement.appendChild(li);
+                    });
+                    previousContent.graphBajadas = [...graph.bajadas];
+                }
+            } else {
+                // Limpiar si no hay bajadas
+                graphBajadasElement.innerHTML = '';
+                previousContent.graphBajadas = [];
+            }
+
+            // Actualizar entrevistados si existen
+            if (graph.entrevistados && graph.entrevistados.length > 0) {
+                if (JSON.stringify(previousContent.graphEntrevistados) !== JSON.stringify(graph.entrevistados)) {
+                    graphEntrevistadosElement.innerHTML = '';
+
+                    graph.entrevistados.forEach(entrevistado => {
+                        const entrevistadoDiv = document.createElement('div');
+                        entrevistadoDiv.className = 'entrevistado';
+
+                        const nombreH5 = document.createElement('h5');
+                        nombreH5.textContent = entrevistado.nombre;
+                        entrevistadoDiv.appendChild(nombreH5);
+
+                        if (entrevistado.citas && entrevistado.citas.length > 0) {
+                            const citasUl = document.createElement('ul');
+                            entrevistado.citas.forEach(cita => {
+                                const li = document.createElement('li');
+                                li.textContent = cita;
+                                citasUl.appendChild(li);
+                            });
+                            entrevistadoDiv.appendChild(citasUl);
+                        }
+
+                        graphEntrevistadosElement.appendChild(entrevistadoDiv);
+                    });
+
+                    previousContent.graphEntrevistados = [...graph.entrevistados];
+                }
+            } else {
+                // Limpiar si no hay entrevistados
+                graphEntrevistadosElement.innerHTML = '';
+                previousContent.graphEntrevistados = [];
+            }
+        } else {
+            // Limpiar todo de graphs si no hay graphs
+            graphTemaElement.textContent = '';
+            graphBajadasElement.innerHTML = '';
+            graphEntrevistadosElement.innerHTML = '';
+
+            previousContent.graphTema = '';
+            previousContent.graphBajadas = [];
+            previousContent.graphEntrevistados = [];
+        }
     } else {
-        if (previousContent.titulo !== "") {
-            tituloElement.textContent = "No hay un texto activo seleccionado.";
-            previousContent.titulo = "";
-        }
+        // Limpiar todo si no hay data
+        tituloElement.textContent = "No hay un texto activo seleccionado.";
+        contenidoElement.innerHTML = "";
+        materialElement.innerHTML = "";
+        musicaElement.innerHTML = "";
 
-        if (previousContent.contenido !== "") {
-            contenidoElement.innerHTML = "";
-            previousContent.contenido = "";
-        }
+        // Limpiar los elementos de graph
+        graphTemaElement.textContent = "";
+        graphBajadasElement.innerHTML = "";
+        graphEntrevistadosElement.innerHTML = "";
 
-        if (previousContent.material !== "") {
-            materialElement.innerHTML = "";
-            previousContent.material = "";
-        }
+        // Actualizar previousContent para todo
+        previousContent.titulo = "";
+        previousContent.numero_de_nota = "";
+        previousContent.contenido = "";
+        previousContent.material = "";
+        previousContent.musica = "";
+        previousContent.graphTema = "";
+        previousContent.graphBajadas = [];
+        previousContent.graphEntrevistados = [];
     }
 }
 
 // Suscribirse a las actualizaciones del servidor
 const eventSource = new EventSource('/stream_texto_activo');
 
-eventSource.onmessage = function(event) {
+eventSource.onmessage = function (event) {
     const data = JSON.parse(event.data);
     actualizarTextoActivo(data);
 };

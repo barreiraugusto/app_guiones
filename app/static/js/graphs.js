@@ -1,88 +1,57 @@
+// Función para guardar un Graph sin cerrar
 async function guardarGraph(event) {
     event.preventDefault();
 
-    // Obtener los valores del formulario
+    // Obtener los valores básicos del formulario
     const graphId = document.getElementById('graph_id').value;
     const textoId = document.getElementById('texto_id').value;
     const lugar = document.getElementById('lugar').value;
     const tema = document.getElementById('tema').value;
-    const entrevistado = document.getElementById('entrevistado').value;
-    const primeraLinea = document.getElementById('primera_linea').value;
-    const segundaLinea = document.getElementById('segunda_linea').value;
 
-    try {
-        const url = graphEditando ? `/graphs/${graphEditando}` : '/graphs';
-        const method = graphEditando ? 'PUT' : 'POST';
+    // Guardar la selección actual del texto
+    const textoSeleccionado = document.getElementById('texto_id').value;
 
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                texto_id: textoId,
-                lugar: lugar,
-                tema: tema,
-                entrevistado: entrevistado,
-                primera_linea: primeraLinea,
-                segunda_linea: segundaLinea,
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Error al guardar el graph');
+    // Recolectar todas las bajadas
+    const bajadas = [];
+    document.querySelectorAll('.bajada-input').forEach(input => {
+        if (input.value.trim()) {
+            bajadas.push(input.value.trim().toUpperCase());
         }
+    });
 
-        // Cerrar el modal
-        $('#formularioGraphModal').modal('hide');
+    // Recolectar todos los entrevistados con sus citas
+    const entrevistados = [];
+    document.querySelectorAll('.entrevistado-group').forEach(group => {
+        const nombre = group.querySelector('.entrevistado-nombre').value.trim();
+        if (nombre) {
+            const citas = [];
+            group.querySelectorAll('.cita-texto').forEach(input => {
+                if (input.value.trim()) {
+                    citas.push(input.value.trim().toUpperCase());
+                }
+            });
 
-        const result = await response.json();
-        Swal.fire({
-            icon: 'success',
-            title: result.mensaje || "Graph guardado correctamente",
-            showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 1000, // El mensaje desaparecerá después de 2 segundos
-        });
-
-        // Limpiar el formulario solo si se está editando
-        if (graphEditando) {
-            cancelarEdicionGraph(); // Limpiar el formulario y restablecer el botón
+            // Solo agregar entrevistado si tiene nombre o citas
+            if (nombre || citas.length > 0) {
+                entrevistados.push({
+                    nombre: nombre.toUpperCase(),
+                    citas: citas
+                });
+            }
         }
-        // Si no se está editando, no borrar los datos del formulario
+    });
 
-        // Recargar la lista de graphs
-        const guion_id = document.getElementById('guion_id').value;
-        if (guion_id) {
-            await seleccionarGuion(guion_id); // Recargar la tabla de textos y graphs
-        }
-    } catch (error) {
+    // Validaciones básicas
+    if (bajadas.length === 0) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'Hubo un error al guardar el graph. Por favor, inténtalo de nuevo.',
-            showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 3000, // El mensaje desaparecerá después de 3 segundos
+            text: 'Debe agregar al menos una bajada',
+            showConfirmButton: false,
+            timer: 3000,
         });
+        return;
     }
-}
-
-// Función para guardar un Graph sin cerrar
-async function agregarNoCerrar(event) {
-    event.preventDefault();
-
-    // Obtener los valores del formulario
-    const graphId = document.getElementById('graph_id').value;
-    const textoId = document.getElementById('texto_id').value;
-    const lugar = document.getElementById('lugar').value;
-    const tema = document.getElementById('tema').value;
-    const entrevistado = document.getElementById('entrevistado').value;
-    const primeraLinea = document.getElementById('primera_linea').value;
-    const segundaLinea = document.getElementById('segunda_linea').value;
-
-    // Guardar la selección actual de los elementos <select>
-    const lugarSeleccionado = document.getElementById('lugar').value;
-    const temaSeleccionado = document.getElementById('tema').value;
-    const entrevistadoSeleccionado = document.getElementById('entrevistado').value;
 
     try {
         const url = graphEditando ? `/graphs/${graphEditando}` : '/graphs';
@@ -95,19 +64,22 @@ async function agregarNoCerrar(event) {
             },
             body: JSON.stringify({
                 texto_id: textoId,
-                lugar: lugar,
-                tema: tema,
-                entrevistado: entrevistado,
-                primera_linea: primeraLinea,
-                segunda_linea: segundaLinea,
+                lugar: lugar.toUpperCase(),
+                tema: tema ? tema.toUpperCase() : null,
+                bajadas: bajadas,
+                entrevistados: entrevistados
             }),
         });
 
         if (!response.ok) {
-            throw new Error('Error al guardar el graph');
+            const errorData = await response.json();
+            throw new Error(errorData.mensaje || 'Error al guardar el graph');
         }
 
+        // Cerrar el modal y recargar
+        $('#formularioGraphModal').modal('hide');
         const result = await response.json();
+
         Swal.fire({
             icon: 'success',
             title: result.mensaje || "Graph guardado correctamente",
@@ -118,15 +90,15 @@ async function agregarNoCerrar(event) {
         // Recargar la lista de graphs
         const guion_id = document.getElementById('guion_id').value;
         if (guion_id) {
-            await seleccionarGuion(guion_id); // Recargar la tabla de textos y graphs
+            await seleccionarGuion(guion_id);
         }
 
-        // Restaurar la selección de los elementos <select> después de recargar
-        document.getElementById('texto_id').value = textoId;
+        // Restaurar la selección del texto
+        document.getElementById('texto_id').value = textoSeleccionado;
 
         // Limpiar el formulario solo si se está editando
         if (graphEditando) {
-            cancelarEdicionGraph(); // Limpiar el formulario y restablecer el botón
+            cancelarEdicionGraph();
         }
     } catch (error) {
         Swal.fire({
@@ -139,61 +111,242 @@ async function agregarNoCerrar(event) {
     }
 }
 
-// Función para editar un graph
-async function editarGraph(id) {
+// Función para guardar un Graph sin cerrar
+async function agregarNoCerrar(event) {
+    event.preventDefault();
+
+    // Obtener los valores básicos del formulario
+    const graphId = document.getElementById('graph_id').value;
+    const textoId = document.getElementById('texto_id').value;
+    const lugar = document.getElementById('lugar').value;
+    const tema = document.getElementById('tema').value;
+
+    // Guardar la selección actual del texto
+    const textoSeleccionado = document.getElementById('texto_id').value;
+
+    // Recolectar todas las bajadas
+    const bajadas = [];
+    document.querySelectorAll('.bajada-input').forEach(input => {
+        if (input.value.trim()) {
+            bajadas.push(input.value.trim().toUpperCase());
+        }
+    });
+
+    // Recolectar todos los entrevistados con sus citas
+    const entrevistados = [];
+    document.querySelectorAll('.entrevistado-group').forEach(group => {
+        const nombre = group.querySelector('.entrevistado-nombre').value.trim();
+        if (nombre) {
+            const citas = [];
+            group.querySelectorAll('.cita-texto').forEach(input => {
+                if (input.value.trim()) {
+                    citas.push(input.value.trim().toUpperCase());
+                }
+            });
+
+            // Solo agregar entrevistado si tiene nombre o citas
+            if (nombre || citas.length > 0) {
+                entrevistados.push({
+                    nombre: nombre.toUpperCase(),
+                    citas: citas
+                });
+            }
+        }
+    });
+
+    // Validaciones básicas
+    if (bajadas.length === 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Debe agregar al menos una bajada',
+            showConfirmButton: false,
+            timer: 3000,
+        });
+        return;
+    }
+
     try {
-        // Obtener los datos del graph desde el servidor
-        const response = await fetch(`/graphs/${id}`);
-        if (!response.ok) throw new Error('Error al cargar el graph');
-        const graph = await response.json();
+        const url = graphEditando ? `/graphs/${graphEditando}` : '/graphs';
+        const method = graphEditando ? 'PUT' : 'POST';
 
-        // Rellenar el formulario con los datos del graph
-        document.getElementById('graph_id').value = graph.id;
-        document.getElementById('texto_id').value = graph.texto_id;
-        document.getElementById('lugar').value = graph.lugar;
-        document.getElementById('tema').value = graph.tema;
-        document.getElementById('entrevistado').value = graph.entrevistado;
-        document.getElementById('primera_linea').value = graph.primera_linea;
-        document.getElementById('segunda_linea').value = graph.segunda_linea;
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                texto_id: textoId,
+                lugar: lugar.toUpperCase(),
+                tema: tema ? tema.toUpperCase() : null,
+                bajadas: bajadas,
+                entrevistados: entrevistados
+            }),
+        });
 
-        // 2. Actualizar el select de textos (¡ESTE ES EL PASO CLAVE!)
-        const selectTexto = document.getElementById('texto_id');
-
-        // Opción A: Si ya tiene opciones cargadas
-        if (selectTexto.options.length > 1) {
-            selectTexto.value = graph.texto_id;
-        }
-        // Opción B: Si necesita cargar opciones primero
-        else {
-            await cargarTextosEnSelect(); // Tu función existente
-            selectTexto.value = graph.texto_id;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.mensaje || 'Error al guardar el graph');
         }
 
-        // Cambiar el botón de "Agregar Graph" a "Guardar"
-        document.getElementById('botonGuardarGraph').textContent = 'Guardar';
+        const result = await response.json();
 
-        // Mostrar el botón de cancelar
-        document.getElementById('botonCancelarGraph').style.display = 'inline';
+        Swal.fire({
+            icon: 'success',
+            title: result.mensaje || "Graph guardado correctamente",
+            showConfirmButton: false,
+            timer: 1000,
+        });
 
-        // Guardar el ID del graph que se está editando
-        graphEditando = id;
+        // Recargar la lista de graphs
+        const guion_id = document.getElementById('guion_id').value;
+        if (guion_id) {
+            await seleccionarGuion(guion_id);
+        }
 
-        // Abrir el modal
-        $('#formularioGraphModal').modal('show');
+        // Restaurar la selección del texto
+        document.getElementById('texto_id').value = textoSeleccionado;
+
+        // Limpiar el formulario solo si se está editando
+        if (graphEditando) {
+            cancelarEdicionGraph();
+        }
     } catch (error) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message || 'Hubo un error al cargar el graph. Por favor, inténtalo de nuevo.',
+            text: error.message || 'Hubo un error al guardar el graph. Por favor, inténtalo de nuevo.',
             showConfirmButton: false,
             timer: 3000,
         });
     }
 }
 
+// Función para editar un graph (versión completa con actualización automática)
+async function editarGraph(id) {
+    try {
+        // 1. Obtener datos del graph
+        const response = await fetch(`/graphs/${id}`);
+        if (!response.ok) throw new Error('Error al cargar el graph');
+        const graph = await response.json();
+
+        // 2. Rellenar formulario (código existente)
+        document.getElementById('graph_id').value = graph.id;
+        document.getElementById('texto_id').value = graph.texto_id;
+        document.getElementById('lugar').value = graph.lugar || '';
+        document.getElementById('tema').value = graph.tema || '';
+
+        // Limpiar y poblar bajadas
+        const bajadasContainer = document.getElementById('bajadas-container');
+        bajadasContainer.innerHTML = '';
+        graph.bajadas.forEach(bajada => {
+            const div = document.createElement('div');
+            div.className = 'input-group mb-2';
+            div.innerHTML = `
+                <input type="text" class="form-control bajada-input" 
+                       value="${bajada}" 
+                       placeholder="Texto de la bajada" required>
+                <button class="btn btn-outline-danger" type="button" onclick="removerBajada(this)">
+                    ×
+                </button>
+            `;
+            bajadasContainer.appendChild(div);
+        });
+
+        // Limpiar y poblar entrevistados
+        const entrevistadosContainer = document.getElementById('entrevistados-container');
+        entrevistadosContainer.innerHTML = '';
+        graph.entrevistados.forEach(entrevistado => {
+            const div = document.createElement('div');
+            div.className = 'entrevistado-group mb-3 p-2 border rounded';
+            const citasHTML = entrevistado.citas.map(cita => `
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control cita-texto" 
+                           value="${cita}" 
+                           placeholder="Cita textual">
+                    <button class="btn btn-outline-danger" type="button" onclick="removerCita(this)">
+                        ×
+                    </button>
+                </div>
+            `).join('');
+
+            div.innerHTML = `
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control entrevistado-nombre" 
+                           value="${entrevistado.nombre}" 
+                           placeholder="Nombre del entrevistado" required>
+                </div>
+                <div class="citas-container">
+                    ${citasHTML}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarCita(this)">
+                    <i class="fas fa-plus"></i> Añadir cita
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger float-end" onclick="removerEntrevistado(this)">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            `;
+            entrevistadosContainer.appendChild(div);
+        });
+
+        // 3. Configurar el guardado con actualización automática
+        const formulario = document.getElementById('formularioGraph');
+        const oldSubmit = formulario.onsubmit;
+
+        formulario.onsubmit = async function (event) {
+            // Ejecutar guardado normal
+            if (oldSubmit) await oldSubmit(event);
+
+            // Actualizar la vista si el guardado fue exitoso
+            const graphElement = document.querySelector(`[data-graph-id="${id}"]`);
+            if (graphElement) {
+                // Actualizar lugar
+                const lugarElement = graphElement.querySelector('.graph-lugar');
+                if (lugarElement) {
+                    lugarElement.textContent = document.getElementById('lugar').value.toUpperCase();
+                }
+
+                // Actualizar tema
+                const temaElement = graphElement.querySelector('.graph-tema');
+                if (temaElement) {
+                    temaElement.textContent = document.getElementById('tema').value?.toUpperCase() || 'Sin tema';
+                }
+
+                // Actualizar conteo de bajadas
+                const bajadasCountElement = graphElement.querySelector('.graph-bajadas-count');
+                if (bajadasCountElement) {
+                    const bajadasCount = document.querySelectorAll('.bajada-input').length;
+                    bajadasCountElement.textContent = `${bajadasCount} bajada(s)`;
+                }
+
+                // Mostrar feedback visual
+                graphElement.classList.add('updated-highlight');
+                setTimeout(() => {
+                    graphElement.classList.remove('updated-highlight');
+                }, 1000);
+            }
+        };
+
+        // 4. Mostrar interfaz
+        document.getElementById('botonGuardarGraph').textContent = 'Guardar';
+        document.getElementById('botonCancelarGraph').style.display = 'inline';
+        graphEditando = id;
+        $('#formularioGraphModal').modal('show');
+
+    } catch (error) {
+        console.error("Error al editar graph:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            showConfirmButton: false,
+            timer: 3000
+        });
+    }
+}
+
 // Función para eliminar un graph
 async function eliminarGraph(id) {
-    // Mostrar un cuadro de confirmación con SweetAlert2
     const result = await Swal.fire({
         title: '¿Estás seguro?',
         text: "¡No podrás revertir esta acción!",
@@ -205,42 +358,37 @@ async function eliminarGraph(id) {
         cancelButtonText: 'Cancelar',
     });
 
-    // Si el usuario confirma la acción
     if (result.isConfirmed) {
         try {
             const response = await fetch(`/graphs/${id}`, {
                 method: 'DELETE'
             });
 
-            // Verifica si la respuesta es exitosa
             if (!response.ok) {
-                const errorData = await response.json(); // Lee el mensaje de error del servidor
+                const errorData = await response.json();
                 throw new Error(errorData.mensaje || "Error al eliminar el graph");
             }
 
-            const result = await response.json(); // Lee la respuesta del servidor
-
-            // Mostrar mensaje de éxito con SweetAlert2
+            const result = await response.json();
             Swal.fire({
                 icon: 'success',
                 title: result.mensaje || "Graph eliminado correctamente",
-                showConfirmButton: false, // No mostrar el botón "Aceptar"
-                timer: 1000, // El mensaje desaparecerá después de 2 segundos
+                showConfirmButton: false,
+                timer: 1000,
             });
 
             // Recargar la lista de graphs
             const guion_id = document.getElementById('guion_id').value;
             if (guion_id) {
-                await seleccionarGuion(guion_id); // Recargar la tabla de textos y graphs
+                await seleccionarGuion(guion_id);
             }
         } catch (error) {
-            // Mostrar mensaje de error con SweetAlert2
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: error.message || 'Hubo un error al eliminar el graph. Por favor, inténtalo de nuevo.',
-                showConfirmButton: false, // No mostrar el botón "Aceptar"
-                timer: 3000, // El mensaje desaparecerá después de 3 segundos
+                showConfirmButton: false,
+                timer: 3000,
             });
         }
     }
@@ -252,14 +400,117 @@ function cancelarEdicionGraph() {
     document.getElementById('formularioGraph').reset();
     document.getElementById('graph_id').value = '';
 
+    // Limpiar contenedores dinámicos
+    document.getElementById('bajadas-container').innerHTML = '';
+    document.getElementById('entrevistados-container').innerHTML = '';
+
+    // Agregar campos vacíos por defecto
+    agregarBajada();
+    agregarEntrevistado();
+
     // Restablecer el botón a "Agregar Graph"
     document.getElementById('botonGuardarGraph').textContent = 'Agregar Graph';
     document.getElementById('botonCancelarGraph').style.display = 'none';
 
     // Restablecer la variable de edición
     graphEditando = null;
+
     // Cerrar el modal
     $('#formularioGraphModal').modal('hide');
+}
+
+// Función para agregar nueva bajada
+function agregarBajada() {
+    const container = document.getElementById('bajadas-container');
+    const newBajada = document.createElement('div');
+    newBajada.className = 'input-group mb-2';
+    newBajada.innerHTML = `
+        <input type="text" class="form-control bajada-input" placeholder="Texto de la bajada (max 255 caracteres)" maxlength="255">
+        <div class="input-group-append">
+            <button class="btn btn-outline-danger" type="button" onclick="removerBajada(this)">×</button>
+        </div>
+    `;
+    container.appendChild(newBajada);
+}
+
+// Función para remover bajada
+function removerBajada(button) {
+    if (document.querySelectorAll('.bajada-input').length > 1) {
+        button.closest('.input-group').remove();
+    } else {
+        alert('Debe haber al menos una bajada');
+    }
+}
+
+// Función para agregar nuevo entrevistado
+function agregarEntrevistado() {
+    const container = document.getElementById('entrevistados-container');
+    const newEntrevistado = document.createElement('div');
+    newEntrevistado.className = 'entrevistado-group mb-3 p-2 border rounded';
+    newEntrevistado.innerHTML = `
+        <div class="input-group mb-2">
+            <input type="text" class="form-control entrevistado-nombre" placeholder="Nombre del entrevistado">
+        </div>
+        <div class="citas-container">
+            <div class="input-group mb-2">
+                <input type="text" class="form-control cita-texto" placeholder="Cita textual (max 255 caracteres)" maxlength="255">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-danger" type="button" onclick="removerCita(this)">×</button>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarCita(this)">
+            <i class="fas fa-plus"></i> Añadir otra cita
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger float-right" onclick="removerEntrevistado(this)">
+            <i class="fas fa-trash"></i> Eliminar entrevistado
+        </button>
+    `;
+    container.appendChild(newEntrevistado);
+}
+
+// Función para agregar nueva cita a un entrevistado
+function agregarCita(button) {
+    const citasContainer = button.previousElementSibling;
+    const newCita = document.createElement('div');
+    newCita.className = 'input-group mb-2';
+    newCita.innerHTML = `
+        <input type="text" class="form-control cita-texto" placeholder="Cita textual (max 255 caracteres)" maxlength="255">
+        <div class="input-group-append">
+            <button class="btn btn-outline-danger" type="button" onclick="removerCita(this)">×</button>
+        </div>
+    `;
+    citasContainer.appendChild(newCita);
+}
+
+// Función para remover cita
+function removerCita(button) {
+    const inputGroup = button.closest('.input-group');
+    const citasContainer = inputGroup.parentElement;
+    const todasLasCitas = citasContainer.querySelectorAll('.input-group');
+
+    // Permitir eliminar siempre, dejando al menos un campo vacío si es la última
+    if (todasLasCitas.length > 1) {
+        inputGroup.remove();
+    } else {
+        // Resetear la última cita en lugar de eliminarla
+        const input = inputGroup.querySelector('input');
+        input.value = '';
+        input.placeholder = "Cita textual (opcional)";
+        input.focus();
+
+        // Opcional: cambiar estilo para indicar que es opcional
+        inputGroup.classList.add('border-light');
+    }
+}
+
+// Función para remover entrevistado
+function removerEntrevistado(button) {
+    if (document.querySelectorAll('.entrevistado-group').length > 1) {
+        button.closest('.entrevistado-group').remove();
+    } else {
+        alert('Debe haber al menos un entrevistado');
+    }
 }
 
 async function ExportarGraphsXML() {

@@ -1,14 +1,16 @@
 import json
 import os
 import time
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request, render_template
 from flask import Response, stream_with_context
 from flask import current_app
 
+from sqlalchemy.orm import joinedload, selectinload
 from .. import db
-from ..models import Graph, Texto, Guion
+from ..models import Graph, Texto, Guion, Entrevistado, Bajada, Cita
 from ..config_manager import display_config, save_config
 
 graphs_bp = Blueprint('graphs', __name__)
@@ -17,80 +19,228 @@ graphs_bp = Blueprint('graphs', __name__)
 @graphs_bp.route('/graphs', methods=['POST'])
 def crear_graph():
     data = request.json
-    if not data or 'primera_linea' not in data or 'segunda_linea' not in data or 'entrevistado' not in data or 'lugar' not in data or 'texto_id' not in data:
-        return jsonify({"mensaje": "Datos incompletos"}), 400
+    if not data or 'lugar' not in data or 'texto_id' not in data or 'bajadas' not in data:
+        return jsonify({"mensaje": "Datos incompletos: se requieren lugar, texto_id y bajadas"}), 400
 
-    nuevo_graph = Graph(
-        primera_linea=data['primera_linea'].upper(),
-        segunda_linea=data['segunda_linea'].upper(),
-        entrevistado=data['entrevistado'].upper(),
-        lugar=data['lugar'].upper(),
-        tema=data['tema'].upper(),
-        texto_id=data['texto_id']
-    )
-    db.session.add(nuevo_graph)
-    db.session.commit()
-    return jsonify({"mensaje": "Graph creado", "id": nuevo_graph.id}), 201
+    try:
+        # Crear el graph principal
+        nuevo_graph = Graph(
+            lugar=data['lugar'],
+            tema=data.get('tema'),
+            texto_id=data['texto_id'],
+            activo=True
+        )
+        db.session.add(nuevo_graph)
+        db.session.flush()
+
+        # Crear las bajadas (requeridas)
+        for texto_bajada in data['bajadas']:
+            bajada = Bajada(texto=texto_bajada)
+            nuevo_graph.bajadas.append(bajada)
+
+        # Crear entrevistados y citas (opcional)
+        if 'entrevistados' in data and data['entrevistados']:
+            for entrevistado_data in data['entrevistados']:
+                # Solo crear si hay nombre
+                if entrevistado_data.get('nombre'):
+                    entrevistado = Entrevistado(nombre=entrevistado_data.get('nombre', ''))
+                    db.session.add(entrevistado)
+
+                    # Verificar si hay citas
+                    tiene_citas = 'citas' in entrevistado_data and any(cita.strip() for cita in entrevistado_data['citas'])
+
+                    if tiene_citas:
+                        # Agregar citas existentes
+                        for cita_texto in entrevistado_data['citas']:
+                            if cita_texto.strip():
+                                cita = Cita(
+                                    texto=cita_texto,
+                                    entrevistado=entrevistado,
+                                    graph=nuevo_graph
+                                )
+                                db.session.add(cita)
+                    else:
+                        # Agregar cita por defecto "Sin cita"
+                        cita = Cita(
+                            texto="Sin cita",
+                            entrevistado=entrevistado,
+                            graph=nuevo_graph
+                        )
+                        db.session.add(cita)
+
+        db.session.commit()
+        return jsonify({"mensaje": "Graph creado", "id": nuevo_graph.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"mensaje": f"Error al crear el graph: {str(e)}"}), 500
 
 
 @graphs_bp.route('/graphs/<int:id>', methods=['PUT'])
 def actualizar_graph(id):
     data = request.json
     graph = Graph.query.get(id)
-    if graph:
-        graph.primera_linea = data.get('primera_linea', graph.primera_linea)
-        graph.segunda_linea = data.get('segunda_linea', graph.segunda_linea)
-        graph.entrevistado = data.get('entrevistado', graph.entrevistado)
+
+    if not graph:
+        return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+    try:
+        # Actualizar campos básicos
         graph.lugar = data.get('lugar', graph.lugar)
         graph.tema = data.get('tema', graph.tema)
+
+        # Eliminar y recrear bajadas (requeridas)
+        graph.bajadas = []
+        for texto_bajada in data['bajadas']:
+            bajada = Bajada(texto=texto_bajada)
+            graph.bajadas.append(bajada)
+
+        # Eliminar citas existentes
+        Cita.query.filter_by(graph_id=id).delete()
+
+        # Manejar entrevistados (opcional)
+        if 'entrevistados' in data and data['entrevistados']:
+            for entrevistado_data in data['entrevistados']:
+                # Solo procesar si hay nombre
+                if entrevistado_data.get('nombre'):
+                    entrevistado = Entrevistado.query.filter_by(
+                        nombre=entrevistado_data.get('nombre', '')).first()
+
+                    if not entrevistado:
+                        entrevistado = Entrevistado(nombre=entrevistado_data.get('nombre', ''))
+                        db.session.add(entrevistado)
+
+                    # Verificar si hay citas
+                    tiene_citas = 'citas' in entrevistado_data and any(cita.strip() for cita in entrevistado_data['citas'])
+
+                    if tiene_citas:
+                        # Agregar citas existentes
+                        for cita_texto in entrevistado_data['citas']:
+                            if cita_texto.strip():
+                                cita = Cita(
+                                    texto=cita_texto,
+                                    entrevistado=entrevistado,
+                                    graph=graph
+                                )
+                                db.session.add(cita)
+                    else:
+                        # Agregar cita por defecto "Sin cita"
+                        cita = Cita(
+                            texto="Sin cita",
+                            entrevistado=entrevistado,
+                            graph=graph
+                        )
+                        db.session.add(cita)
+
         db.session.commit()
         return jsonify({"mensaje": "Graph actualizado"})
-    else:
-        return jsonify({"mensaje": "Graph no encontrado"}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"mensaje": f"Error al actualizar el graph: {str(e)}"}), 500
 
 
 @graphs_bp.route('/graphs/<int:id>', methods=['DELETE'])
 def eliminar_graph(id):
     graph = Graph.query.get(id)
-    if graph:
+    if not graph:
+        return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+    try:
+        # Eliminar todas las citas asociadas primero
+        Cita.query.filter_by(graph_id=id).delete()
+
+        # Eliminar las bajadas asociadas
+        for bajada in graph.bajadas:
+            db.session.delete(bajada)
+
+        # Eliminar entrevistados que no estén asociados a otros graphs
+        for cita in graph.citas:
+            entrevistado = cita.entrevistado
+            # Verificar si el entrevistado tiene otras citas
+            if Cita.query.filter_by(entrevistado_id=entrevistado.id).count() == 0:
+                db.session.delete(entrevistado)
+
+        # Finalmente eliminar el graph
         db.session.delete(graph)
         db.session.commit()
-        return jsonify({"mensaje": "Graph eliminado"})
-    else:
-        return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+        return jsonify({"mensaje": "Graph eliminado correctamente"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"mensaje": f"Error al eliminar el graph: {str(e)}"}), 500
 
 
 @graphs_bp.route('/graphs/<int:id>', methods=['GET'])
 def obtener_graph(id):
-    graph = Graph.query.get(id)
-    if graph:
+    try:
+        graph = db.session.query(Graph).options(
+            selectinload(Graph.bajadas),
+            joinedload(Graph.citas).joinedload(Cita.entrevistado)
+        ).get(id)
+
+        if not graph:
+            return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+        # Procesar entrevistados sin duplicados
+        entrevistados_dict = {}
+        for cita in graph.citas:
+            nombre = cita.entrevistado.nombre
+            if nombre not in entrevistados_dict:
+                entrevistados_dict[nombre] = []
+            if cita.texto not in entrevistados_dict[nombre]:  # Evitar citas duplicadas
+                entrevistados_dict[nombre].append(cita.texto)
+
         return jsonify({
             "id": graph.id,
-            "primera_linea": graph.primera_linea,
-            "segunda_linea": graph.segunda_linea,
-            "entrevistado": graph.entrevistado,
-            "lugar": graph.lugar,
-            "tema": graph.tema,
-            "texto_id": graph.texto_id
+            "lugar": graph.lugar or "",
+            "tema": graph.tema or "",
+            "texto_id": graph.texto_id,
+            "activo": graph.activo,
+            "bajadas": [b.texto for b in graph.bajadas],
+            "entrevistados": [
+                {
+                    "nombre": nombre,
+                    "citas": citas
+                } for nombre, citas in entrevistados_dict.items()
+            ]
         })
-    else:
-        return jsonify({"mensaje": "Graph no encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @graphs_bp.route('/textos/<int:texto_id>/graphs', methods=['GET'])
 def obtener_graphs_por_texto(texto_id):
-    texto = db.session.get(Texto, texto_id)
+    texto = Texto.query.get(texto_id)
     if not texto:
         return jsonify({"mensaje": "Texto no encontrado"}), 404
+
     graphs = Graph.query.filter_by(texto_id=texto_id).all()
-    return jsonify([{
-        "id": g.id,
-        "primera_linea": g.primera_linea,
-        "segunda_linea": g.segunda_linea,
-        "entrevistado": g.entrevistado,
-        "lugar": g.lugar,
-        "tema": g.tema
-    } for g in graphs])
+    graphs_data = []
+
+    for graph in graphs:
+        # Obtener bajadas
+        bajadas = [b.texto for b in graph.bajadas]
+
+        # Obtener entrevistados y citas
+        entrevistados_dict = {}
+        for cita in graph.citas:
+            if cita.entrevistado.nombre not in entrevistados_dict:
+                entrevistados_dict[cita.entrevistado.nombre] = []
+            entrevistados_dict[cita.entrevistado.nombre].append(cita.texto)
+
+        entrevistados = [{"nombre": nombre, "citas": citas}
+                         for nombre, citas in entrevistados_dict.items()]
+
+        graphs_data.append({
+            "id": graph.id,
+            "lugar": graph.lugar,
+            "tema": graph.tema,
+            "bajadas": bajadas,
+            "entrevistados": entrevistados,
+            "activo": graph.activo
+        })
+
+    return jsonify(graphs_data)
 
 
 @graphs_bp.route('/stream_graphs')
@@ -98,25 +248,44 @@ def stream_graphs():
     def event_stream():
         while True:
             try:
-                # Usar with para manejo adecuado de la sesión
                 with current_app.app_context():
-                    # Consulta modificada - LIMIT con valor literal
-                    graph_activo = db.session.query(Graph).filter_by(activo=True).limit(1).first()
+                    # Obtener el graph activo
+                    graph_activo = Graph.query.filter_by(activo=True).first()
 
+                    # Configuración live
                     live_config = display_config.get('live', {
                         'show': True,
                         'text': 'VIVO',
                         'position': 'top-right'
                     })
 
+                    # Preparar datos básicos
                     data = {
                         "activo": bool(graph_activo),
-                        "primera_linea": graph_activo.primera_linea if graph_activo else "",
-                        "segunda_linea": graph_activo.segunda_linea if graph_activo else "",
                         "show_live": live_config['show'],
                         "live_text": live_config['text'],
                         "live_position": live_config['position']
                     }
+
+                    # Si hay un graph activo, agregar sus datos
+                    if graph_activo:
+                        # Obtener la primera bajada (si existe)
+                        primera_bajada = graph_activo.bajadas[0].texto if graph_activo.bajadas else ""
+
+                        # Obtener el primer entrevistado y su primera cita (si existen)
+                        primer_entrevistado = ""
+                        primera_cita = ""
+                        if graph_activo.citas:
+                            primer_entrevistado = graph_activo.citas[0].entrevistado.nombre
+                            primera_cita = graph_activo.citas[0].texto
+
+                        data.update({
+                            "bajada": primera_bajada,
+                            "entrevistado": primer_entrevistado,
+                            "cita": primera_cita,
+                            "lugar": graph_activo.lugar,
+                            "tema": graph_activo.tema
+                        })
 
                     yield f"data: {json.dumps(data)}\n\n"
                     time.sleep(1)
@@ -312,7 +481,6 @@ def update_display_config():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-
 _CONFIG_CACHE = None
 _LAST_LOAD_TIME = None
 _CACHE_EXPIRY = timedelta(seconds=5)  # Refrescar caché cada 5 segundos
@@ -344,7 +512,6 @@ def get_display_config():
     except Exception as e:
         current_app.logger.error(f"Error loading config: {str(e)}")
         return jsonify({}), 500
-
 
 
 @graphs_bp.route('/stream_display_config')
@@ -413,4 +580,3 @@ def stream_display_config():
             'X-Accel-Buffering': 'no'
         }
     )
-

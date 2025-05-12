@@ -83,6 +83,7 @@
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
+    <script src="{{ url_for('static', filename='js/actualiza_tiempos.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ver_guion.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jspdf.umd.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/html2canvas.min.js') }}"></script>
@@ -94,7 +95,7 @@
             <!-- Logo o nombre de la aplicación (opcional) -->
             <a class="navbar-brand" href="#">Guiones</a>
             <div class="d-flex">
-                <button class="btn btn-warning mr-2" onclick="exportarAPDF()">Exportar</button>
+{#                <button class="btn btn-warning mr-2" onclick="exportarAPDF()">Exportar</button>#}
                 <a href="/listado_guiones">
                     <button class="btn btn-primary mr-2">Guiones</button>
                 </a>
@@ -111,23 +112,22 @@
         </div>
         <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
         <div class="table-responsive">
-            <table class="table" id="tablaTextos" style="table-layout: fixed; width: 100%;">
+            <table class="table-bordered" id="tablaTextos" style="table-layout: fixed; width: 100%;">
                 <thead class="thead-light">
-                {#            <tr>#}
-                {#                <th></th>#}
-                {#                <th></th>#}
-                {#                <th></th>#}
-                {#                <th>Duracion total:</th>#}
-                {#                <th><span id="tiempo_total"></span></th>#}
-                {#                <th></th>#}
-                {#            </tr>#}
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th colspan="2">Duracion total:</th>
+                    <th><span id="tiempo_total"></span></th>
+                </tr>
                 <tr>
                     <th scope="col" style="width: 5%">Nº</th>
                     <th scope="col" style="width: 10%">Descripcion/Seccion</th>
-                    <th scope="col" style="width: 50%">Graf/Copete</th>
-                    <th scope="col" style="width: 20%">Codigo</th>
-                    <th scope="col" style="width: 10%">Musica</th>
-                    {#                <th scope="col" style="width: 5%">Duracion</th>#}
+                    <th scope="col" style="width: 45%">Graf/Copete</th>
+                    <th scope="col" style="width: 25%">Codigo</th>
+                    <th scope="col" style="width: 5%">Musica</th>
+                    <th scope="col" style="width: 10%">Duracion</th>
                 </tr>
                 </thead>
                 <tbody>
