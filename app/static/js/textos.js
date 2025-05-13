@@ -219,19 +219,107 @@ function cancelarEdicion() {
 }
 
 async function setTextoActivo(id) {
-    await fetch(`/textos/activo/${id}`, {
-        method: 'PUT'
-    });
-    const guion_id = localStorage.getItem('guionSeleccionado');
-    seleccionarGuion(guion_id);
+    try {
+        // 1. Guardar el texto activo antes de cambiar
+        localStorage.setItem('ultimoTextoActivo', id.toString());
+
+        // 2. Mostrar feedback inmediato en la UI
+        const filas = document.querySelectorAll('tr[data-texto-id]');
+        filas.forEach(fila => {
+            fila.classList.remove('bg-warning', 'highlight');
+        });
+
+        const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
+        if (filaActual) {
+            filaActual.classList.add('bg-warning', 'highlight');
+        }
+
+        // 3. Hacer la petición al servidor
+        const response = await fetch(`/textos/activo/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+
+        if (!response.ok) throw new Error(await response.text() || 'Error al activar texto');
+
+        // 4. Recargar manteniendo el foco
+        const guion_id = document.getElementById('guion_id').value || localStorage.getItem('guionSeleccionado');
+        await seleccionarGuion(guion_id);
+
+        // 5. Scroll a la posición del texto
+        setTimeout(() => {
+            const textoElement = document.querySelector(`tr[data-texto-id="${id}"]`);
+            if (textoElement) {
+                textoElement.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            }
+        }, 100);
+
+    } catch (error) {
+        console.error("Error en setTextoActivo:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo activar el texto',
+            timer: 2000
+        });
+
+        // Revertir cambios visuales en caso de error
+        const filas = document.querySelectorAll('tr[data-texto-id]');
+        filas.forEach(fila => fila.classList.remove('bg-warning', 'highlight'));
+    }
 }
 
 async function setTextoEmitido(id) {
-    await fetch(`/textos/emitido/${id}`, {
-        method: 'PUT'
-    });
-    const guion_id = document.getElementById('guion_id').value;
-    seleccionarGuion(guion_id);
+    try {
+        // 1. Mostrar feedback inmediato en la UI
+        const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
+        if (filaActual) {
+            filaActual.classList.add('bg-secondary', 'highlight');
+            filaActual.querySelector('button[onclick*="setTextoEmitido"]')?.classList.add('disabled');
+        }
+
+        // 2. Hacer la petición al servidor
+        const response = await fetch(`/textos/emitido/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+
+        if (!response.ok) throw new Error(await response.text() || 'Error al marcar texto como emitido');
+
+        // 3. Recargar manteniendo el contexto
+        const guion_id = document.getElementById('guion_id').value || localStorage.getItem('guionSeleccionado');
+        await seleccionarGuion(guion_id);
+
+        // 4. Scroll a la posición del texto
+        setTimeout(() => {
+            const textoElement = document.querySelector(`tr[data-texto-id="${id}"]`);
+            if (textoElement) {
+                textoElement.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            }
+        }, 100);
+
+    } catch (error) {
+        console.error("Error en setTextoEmitido:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo marcar el texto como emitido',
+            timer: 2000
+        });
+
+        // Revertir cambios visuales en caso de error
+        const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
+        if (filaActual) {
+            filaActual.classList.remove('bg-secondary', 'highlight');
+            filaActual.querySelector('button[onclick*="setTextoEmitido"]')?.classList.remove('disabled');
+        }
+    }
 }
 
 // Función para cargar textos en el <select>

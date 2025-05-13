@@ -331,7 +331,8 @@
                 </div>
                 <div class="modal-footer">
                     <!-- Botón para enviar el formulario -->
-                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph" onclick="guardarGraph(event)">
+                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph"
+                            onclick="guardarGraph(event)">
                         Guardar y cerrar
                     </button>
                     <button type="button" class="btn btn-outline-success" onclick="agregarNoCerrar(event)"
@@ -462,6 +463,17 @@
                 }
             }
         };
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', function () {
+            const id = localStorage.getItem('guionSeleccionado');
+            if (id) {
+                seleccionarGuion(id);
+            } else {
+                console.log("No hay guión seleccionado en el almacenamiento local");
+                // Opcional: Cargar un guión por defecto o mostrar mensaje
+            }
+        });
 
     </script>
 {% endblock body %}

@@ -42,16 +42,16 @@ async function guardarGraph(event) {
     });
 
     // Validaciones básicas
-    if (bajadas.length === 0) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Debe agregar al menos una bajada',
-            showConfirmButton: false,
-            timer: 3000,
-        });
-        return;
-    }
+    // if (bajadas.length === 0) {
+    //     Swal.fire({
+    //         icon: 'error',
+    //         title: 'Error',
+    //         text: 'Debe agregar al menos una bajada',
+    //         showConfirmButton: false,
+    //         timer: 3000,
+    //     });
+    //     return;
+    // }
 
     try {
         const url = graphEditando ? `/graphs/${graphEditando}` : '/graphs';
