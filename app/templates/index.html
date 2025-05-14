@@ -2,21 +2,27 @@
 {% block title %}SIGPRO{% endblock %}
 {% block extra_style %}
     <style>
-        .menu-fixed-right {
+        /* Estilos para desktop (por defecto) */
+        .menu-container {
             position: fixed;
             right: 0;
             top: 50%;
             transform: translateY(-50%);
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
         }
 
-        .menu-card-right {
+        .menu-card {
             border-radius: 15px 0 0 15px;
             box-shadow: -5px 5px 15px rgba(0, 0, 0, 0.1);
             border-right: none;
+            width: 15rem;
+            background-color: rgba(255, 255, 255, 0.9); /* Fondo semitransparente */
         }
 
-        .menu-card-right .btn {
+        .menu-card .btn {
             border-radius: 12px 0 0 12px !important;
             border-right: none;
             text-align: left;
@@ -24,24 +30,94 @@
             transition: all 0.2s ease;
         }
 
-        .menu-card-right .btn-lg {
+        .menu-card .btn:hover {
+            transform: translateX(-5px);
+        }
+
+        .menu-card .btn-lg {
             padding: 0.8rem 1.5rem;
             font-size: 1.1rem;
+        }
+
+        .logo-container {
+            display: none; /* Oculto en desktop por defecto */
         }
 
         body {
             background: url('{{ url_for('static', filename='img/sigpro-back-ca.png') }}') no-repeat center center fixed;
             background-color: #F2F2F2FF;
-            background-size: 50% auto; /* Ajusta al 50% del ancho del contenedor */
+            background-size: 50% auto;
+            min-height: 100vh;
+        }
+
+        /* Estilos para móviles */
+        @media only screen and (max-width: 768px) {
+            .menu-container {
+                position: relative;
+                top: auto;
+                right: auto;
+                transform: none;
+                width: 100%;
+                align-items: center;
+                margin-top: 20px;
+                padding: 0 15px;
+            }
+
+            .menu-card {
+                border-radius: 15px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                width: 100%;
+                max-width: 300px;
+                margin-top: 10px;
+            }
+
+            .menu-card .btn {
+                border-radius: 12px !important;
+                text-align: center;
+                padding: 0.8rem 1.5rem;
+            }
+
+            .logo-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                margin: 20px 0;
+                padding: 0 15px;
+            }
+
+            .logo-container img {
+                max-width: 200px;
+                height: auto;
+                object-fit: contain;
+            }
+
+            body {
+                background-size: contain;
+                background-position: top center;
+                padding-top: 20px;
+                background-image: none; /* Ocultamos el fondo en móviles si es necesario */
+            }
+
+            /* Opcional: agregar un fondo sólido en móviles */
+            @media only screen and (max-width: 480px) {
+                body {
+                    background-color: #f8f9fa;
+                }
+            }
         }
     </style>
 {% endblock extra_style %}
 {% block body %}
+    <!-- Logo visible solo en móviles -->
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='img/sigpro-back-ca.png') }}" alt="SIGPRO Logo" class="img-fluid">
+    </div>
+
     <!-- Contenedor del menú -->
-    <div class="menu-fixed-right">
-        <div class="card menu-card-right pb-4 pl-4 pt-4 pr-0" style="width: 15rem;">
+    <div class="menu-container">
+        <div class="card menu-card pb-4 pl-4 pt-4 pr-4">
             <div class="card-body p-0">
-                {#                <h4 class="card-title mb-4 text-secondary ps-2">SIGPRO</h4>#}
                 <button class="btn btn-outline-primary btn-block btn-lg mb-3"
                         onclick="window.location.href='/principal'">
                     Control de Guiones
