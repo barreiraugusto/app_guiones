@@ -176,7 +176,9 @@ async function seleccionarGuion(id) {
 
         // 5. Obtener datos
         const response = await fetch(`/guiones/${id}`);
+
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
         const guion = await response.json();
 
         // 6. Ordenar textos
@@ -309,6 +311,8 @@ async function seleccionarGuion(id) {
             }
         }
 
+        new ClipboardJS('.btn-copiar');
+
         // 10. Restaurar posición/scroll
         requestAnimationFrame(() => {
             if (textoActivoId) {
@@ -322,9 +326,27 @@ async function seleccionarGuion(id) {
             }
         });
 
+        // 12. Actualizar tiempo total
+        actualizarTiempoTotal(id);
+
     } catch (error) {
         console.error("Error en seleccionarGuion:", error);
-        // Tu manejo de errores existente
+        const tbody = document.querySelector('#tablaTextos tbody') || document.body;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger py-3">
+                    <i class="fas fa-exclamation-triangle"></i> ${error.message || 'Error al cargar el guión'}
+                </td>
+            </tr>
+        `;
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo cargar el guión',
+            showConfirmButton: false,
+            timer: 3000
+        });
     }
 }
 
