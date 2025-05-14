@@ -181,6 +181,8 @@ async function seleccionarGuion(id) {
 
         const guion = await response.json();
 
+        await cargarTextosEnSelect();
+
         // 6. Ordenar textos
         guion.textos?.sort((a, b) => (parseInt(a.numero_de_nota) || 0) - (parseInt(b.numero_de_nota) || 0));
 
@@ -206,7 +208,7 @@ async function seleccionarGuion(id) {
                 <td>${t.duracion}</td>
                 <td>
                     <div class="btn-group">
-                        <button type="button" class="btn btn-outline-warning" onclick="setTextoActivo(${t.id})">
+                        <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})">
                             <i class="fas fa-arrow-right"></i>
                         </button>
                         <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})">

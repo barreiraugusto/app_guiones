@@ -21,11 +21,8 @@ function actualizarTextoActivo(data) {
     const materialElement = document.getElementById('texto-activo-material');
     const musicaElement = document.getElementById('texto-activo-musica');
 
-    // Nuevos elementos para graphs
-    const graphTemaElement = document.getElementById('graph-tema');
-    const graphBajadasElement = document.getElementById('graph-bajadas');
-    const graphEntrevistadosElement = document.getElementById('graph-entrevistados');
-
+    // Elementos contenedores para múltiples graphs
+    const graphsContainerElement = document.getElementById('graphs-container'); // Asegúrate de tener este contenedor en tu HTML
 
     if (data && data.titulo) {
         // Actualizar solo si el contenido ha cambiado (parte original)
@@ -56,36 +53,41 @@ function actualizarTextoActivo(data) {
 
         // Actualizar información de graphs si existe
         if (data.graphs && data.graphs.length > 0) {
-            const graph = data.graphs[0]; // Tomamos el primer graph
+            // Limpiar el contenedor de graphs
+            graphsContainerElement.innerHTML = '';
 
-            // Actualizar tema
-            if (previousContent.graphTema !== graph.tema) {
-                graphTemaElement.textContent = graph.tema || '';
-                previousContent.graphTema = graph.tema;
-            }
+            // Iterar sobre todos los graphs
+            data.graphs.forEach((graph, index) => {
+                // Crear un contenedor para cada graph
+                const graphElement = document.createElement('div');
+                graphElement.className = 'graph-container';
 
-            // Actualizar bajadas si existen
-            if (graph.bajadas && graph.bajadas.length > 0) {
-                if (JSON.stringify(previousContent.graphBajadas) !== JSON.stringify(graph.bajadas)) {
-                    graphBajadasElement.innerHTML = '';
+                // Crear elementos para este graph específico
+                const graphTemaElement = document.createElement('h4');
+                graphTemaElement.className = 'graph-tema';
+                graphTemaElement.textContent = graph.tema || `Graph ${index + 1}`;
+                graphElement.appendChild(graphTemaElement);
+
+                // Crear elemento para bajadas
+                const graphBajadasElement = document.createElement('ul');
+                graphBajadasElement.className = 'graph-bajadas';
+
+                // Actualizar bajadas si existen
+                if (graph.bajadas && graph.bajadas.length > 0) {
                     graph.bajadas.forEach(bajada => {
                         const li = document.createElement('li');
                         li.textContent = bajada;
                         graphBajadasElement.appendChild(li);
                     });
-                    previousContent.graphBajadas = [...graph.bajadas];
                 }
-            } else {
-                // Limpiar si no hay bajadas
-                graphBajadasElement.innerHTML = '';
-                previousContent.graphBajadas = [];
-            }
+                graphElement.appendChild(graphBajadasElement);
 
-            // Actualizar entrevistados si existen
-            if (graph.entrevistados && graph.entrevistados.length > 0) {
-                if (JSON.stringify(previousContent.graphEntrevistados) !== JSON.stringify(graph.entrevistados)) {
-                    graphEntrevistadosElement.innerHTML = '';
+                // Crear elemento para entrevistados
+                const graphEntrevistadosElement = document.createElement('div');
+                graphEntrevistadosElement.className = 'graph-entrevistados';
 
+                // Actualizar entrevistados si existen
+                if (graph.entrevistados && graph.entrevistados.length > 0) {
                     graph.entrevistados.forEach(entrevistado => {
                         const entrevistadoDiv = document.createElement('div');
                         entrevistadoDiv.className = 'entrevistado';
@@ -106,23 +108,19 @@ function actualizarTextoActivo(data) {
 
                         graphEntrevistadosElement.appendChild(entrevistadoDiv);
                     });
-
-                    previousContent.graphEntrevistados = [...graph.entrevistados];
                 }
-            } else {
-                // Limpiar si no hay entrevistados
-                graphEntrevistadosElement.innerHTML = '';
-                previousContent.graphEntrevistados = [];
-            }
+                graphElement.appendChild(graphEntrevistadosElement);
+
+                // Agregar el graph al contenedor principal
+                graphsContainerElement.appendChild(graphElement);
+            });
+
+            // Actualizar previousContent para graphs
+            previousContent.graphs = [...data.graphs];
         } else {
             // Limpiar todo de graphs si no hay graphs
-            graphTemaElement.textContent = '';
-            graphBajadasElement.innerHTML = '';
-            graphEntrevistadosElement.innerHTML = '';
-
-            previousContent.graphTema = '';
-            previousContent.graphBajadas = [];
-            previousContent.graphEntrevistados = [];
+            graphsContainerElement.innerHTML = '';
+            previousContent.graphs = [];
         }
     } else {
         // Limpiar todo si no hay data
@@ -130,11 +128,7 @@ function actualizarTextoActivo(data) {
         contenidoElement.innerHTML = "";
         materialElement.innerHTML = "";
         musicaElement.innerHTML = "";
-
-        // Limpiar los elementos de graph
-        graphTemaElement.textContent = "";
-        graphBajadasElement.innerHTML = "";
-        graphEntrevistadosElement.innerHTML = "";
+        graphsContainerElement.innerHTML = "";
 
         // Actualizar previousContent para todo
         previousContent.titulo = "";
@@ -142,9 +136,7 @@ function actualizarTextoActivo(data) {
         previousContent.contenido = "";
         previousContent.material = "";
         previousContent.musica = "";
-        previousContent.graphTema = "";
-        previousContent.graphBajadas = [];
-        previousContent.graphEntrevistados = [];
+        previousContent.graphs = [];
     }
 }
 
