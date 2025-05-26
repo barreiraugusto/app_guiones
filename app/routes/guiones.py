@@ -66,24 +66,21 @@ def obtener_guion(id):
             }
 
             for graph in texto.graphs:
-                # Combinar entrevistados de ambas relaciones
-                todos_entrevistados = {}
+                # Usamos defaultdict para acumular citas por entrevistado
+                from collections import defaultdict
+                entrevistados_dict = defaultdict(list)
 
-                # 1. Entrevistados con citas
+                # 1. Procesar citas con entrevistados
                 for cita in graph.citas:
-                    if cita.entrevistado.nombre.strip():
-                        todos_entrevistados[cita.entrevistado.id] = {
-                            "nombre": cita.entrevistado.nombre,
-                            "citas": [cita.texto] if cita.texto.strip() else ["Sin cita"]
-                        }
+                    if cita.entrevistado and cita.entrevistado.nombre.strip():
+                        nombre = cita.entrevistado.nombre
+                        if cita.texto and cita.texto.strip():
+                            entrevistados_dict[nombre].append(cita.texto)
 
-                # 2. Entrevistados sin citas (relación directa)
+                # 2. Procesar entrevistados sin citas
                 for entrevistado in graph.entrevistados:
-                    if entrevistado.id not in todos_entrevistados and entrevistado.nombre.strip():
-                        todos_entrevistados[entrevistado.id] = {
-                            "nombre": entrevistado.nombre,
-                            "citas": ["Sin cita"]
-                        }
+                    if entrevistado.nombre.strip() and entrevistado.nombre not in entrevistados_dict:
+                        entrevistados_dict[entrevistado.nombre] = ["Sin cita"]
 
                 graph_data = {
                     "id": graph.id,
@@ -91,7 +88,12 @@ def obtener_guion(id):
                     "tema": graph.tema,
                     "activo": graph.activo,
                     "bajadas": [b.texto for b in graph.bajadas],
-                    "entrevistados": list(todos_entrevistados.values())
+                    "entrevistados": [
+                        {
+                            "nombre": nombre,
+                            "citas": citas
+                        } for nombre, citas in entrevistados_dict.items()
+                    ]
                 }
                 texto_data["graphs"].append(graph_data)
 
