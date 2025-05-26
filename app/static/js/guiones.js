@@ -247,7 +247,7 @@ async function seleccionarGuion(id) {
                             bajadasContent = `
                                     <div class="mb-2">
                                         <strong>Bajadas:</strong>
-                                        <ul>${g.bajadas.map(b => `<li>${b}</li>`).join('')}</ul>
+                                        <ul>${g.bajadas.slice().reverse().map(b => `<li>${b}</li>`).join('')}</ul>
                                     </div>
                                 `;
                         }
