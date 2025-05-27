@@ -68,10 +68,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     filaGraph.setAttribute('data-graph-parent', t.id);
                     filaGraph.className = 'graph-row';
 
-                    // Procesar bajadas
-                    const bajadasContent = g.bajadas && g.bajadas.length > 0 ?
-                        `<ul class="mb-0">${g.bajadas.map(b => `<li>${b}</li>`).join('')}</ul>` :
-                        '<p class="mb-0">No hay bajadas</p>';
+                    // Procesar bajadas (solo si existen)
+                    let bajadasContent = '';
+
+                        bajadasContent = `
+                            <div class="mb-2">
+                                <ul>${g.bajadas.map(b => `<li>${b}</li>`).join('')}</ul>
+                            </div>
+                        `;
+
 
                     // Procesar entrevistados y citas
                     let entrevistadosContent = '';
@@ -83,6 +88,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                         `).join('');
                     }
+
+
 
                     filaGraph.innerHTML = `
                         <td></td>

@@ -48,6 +48,18 @@
             }
         }
 
+        .big-checkbox {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            min-height: 18px;
+            margin-top: 0;
+        }
+
+        .form-check-label {
+            margin-left: 5px;
+        }
+
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
@@ -112,7 +124,6 @@
                 <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
                     <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
                         <h4 class="m-0">Agregar nota</h4>
-
                         <button class="btn btn-success" type="submit" id="botonGuardarTexto">Agregar</button>
                     </div>
                     <div class="card-body">
@@ -158,18 +169,28 @@
                                     <textarea class="form-control" id="material" name="material"></textarea>
                                 </div>
                             </div>
+
                             <div class="col-lg-2 col-sm-12">
                                 <!-- Campo para la musica -->
                                 <div class="form-group">
                                     <label for="musica">Música:</label>
                                     <select class="form-control" id="musica" name="musica">
-                                        <option value="">Selecciona una opción</option>  <!-- Opción vacía -->
+                                        <option value="">Selecciona una opción</option>
                                         {% for opcion in musica_opciones %}
                                             <option value="{{ opcion }}">{{ opcion }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
+
+{#                            <div class="col-lg-2 col-sm-12 d-flex align-items-center">#}
+{#                                <!-- Checkbox Grabar -->#}
+{#                                <div class="form-group form-check ">#}
+{#                                    <input type="checkbox" class="form-check-input big-checkbox" id="grabar"#}
+{#                                           name="grabar">#}
+{#                                    <label class="form-check-label" for="grabar">Grabar</label>#}
+{#                                </div>#}
+{#                            </div>#}
                         </div>
                         <!-- Campo para el contenido -->
                         <div class="form-group">
@@ -221,7 +242,6 @@
                             <tr>
                                 <th scope="col" style="width: 5%">Nº</th>
                                 <th scope="col" style="width: 15%">Descrip./Seccion</th>
-                                {#                    <th scope="col">Graf/Copete</th>#}
                                 <th scope="col" style="width: 50%">Codigo</th>
                                 <th scope="col" style="width: 5%">Musica</th>
                                 <th scope="col" style="width: 10%">Duracion</th>

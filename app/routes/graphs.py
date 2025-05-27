@@ -47,7 +47,8 @@ def crear_graph():
                     db.session.add(entrevistado)
 
                     # Verificar si hay citas
-                    tiene_citas = 'citas' in entrevistado_data and any(cita.strip() for cita in entrevistado_data['citas'])
+                    tiene_citas = 'citas' in entrevistado_data and any(
+                        cita.strip() for cita in entrevistado_data['citas'])
 
                     if tiene_citas:
                         # Agregar citas existentes
@@ -110,7 +111,8 @@ def actualizar_graph(id):
                         db.session.add(entrevistado)
 
                     # Verificar si hay citas
-                    tiene_citas = 'citas' in entrevistado_data and any(cita.strip() for cita in entrevistado_data['citas'])
+                    tiene_citas = 'citas' in entrevistado_data and any(
+                        cita.strip() for cita in entrevistado_data['citas'])
 
                     if tiene_citas:
                         # Agregar citas existentes
@@ -180,14 +182,20 @@ def obtener_graph(id):
         if not graph:
             return jsonify({"mensaje": "Graph no encontrado"}), 404
 
+        citas_ordenadas = sorted(graph.citas, key=lambda cita: cita.id)
+        bajadas_ordenadas = sorted(graph.bajadas, key=lambda bajada: bajada.id)
+
+        print(bajadas_ordenadas)
+
         # Procesar entrevistados sin duplicados
         entrevistados_dict = {}
-        for cita in graph.citas:
+        for cita in citas_ordenadas:
             nombre = cita.entrevistado.nombre
             if nombre not in entrevistados_dict:
                 entrevistados_dict[nombre] = []
             if cita.texto not in entrevistados_dict[nombre]:  # Evitar citas duplicadas
                 entrevistados_dict[nombre].append(cita.texto)
+
 
         return jsonify({
             "id": graph.id,
@@ -195,7 +203,7 @@ def obtener_graph(id):
             "tema": graph.tema or "",
             "texto_id": graph.texto_id,
             "activo": graph.activo,
-            "bajadas": [b.texto for b in graph.bajadas],
+            "bajadas": [b.texto for b in bajadas_ordenadas],
             "entrevistados": [
                 {
                     "nombre": nombre,
@@ -217,9 +225,11 @@ def obtener_graphs_por_texto(texto_id):
     graphs = Graph.query.filter_by(texto_id=texto_id).all()
     graphs_data = []
 
+    bajadas_ordenadas = sorted(graphs.bajadas, key=lambda bajada: bajada.id)
+
     for graph in graphs:
         # Obtener bajadas
-        bajadas = [b.texto for b in graph.bajadas]
+        bajadas = [b.texto for b in bajadas_ordenadas]
 
         # Obtener entrevistados y citas
         entrevistados_dict = {}

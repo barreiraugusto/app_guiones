@@ -192,6 +192,7 @@ async function seleccionarGuion(id) {
         // 8. Poblar tabla
         let textoActivoEncontrado = false;
         for (const t of guion.textos || []) {
+            console.log(t)
             const filaTexto = document.createElement('tr');
             filaTexto.classList.add('bg-light');
             filaTexto.setAttribute('data-texto-id', t.id);
@@ -200,7 +201,6 @@ async function seleccionarGuion(id) {
             else if (t.activo) filaTexto.classList.replace('bg-light', 'bg-warning');
 
             filaTexto.innerHTML = `
-                <!-- Tu estructura de fila existente -->
                 <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
                 <td><strong>${t.titulo}</strong></td>
                 <td>${convertirUrlsEnEnlaces(t.material || '')}</td>
@@ -212,27 +212,43 @@ async function seleccionarGuion(id) {
                             <i class="fas fa-arrow-right"></i>
                         </button>
                         <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             `;
             tbody.appendChild(filaTexto);
 
-            // 9. Procesar graphs (tu implementación existente)
+            // 9. Procesar graphs con ordenamiento de bajadas y citas
             if (Array.isArray(t.graphs) && t.graphs.length > 0) {
                 t.graphs.forEach((g, index) => {
                     try {
                         const tieneLugar = g.lugar && g.lugar.trim() !== "";
                         const tieneTema = g.tema && g.tema.trim() !== "";
-                        const tieneBajadas = Array.isArray(g.bajadas) && g.bajadas.length > 0;
-                        const tieneEntrevistados = Array.isArray(g.entrevistados) && g.entrevistados.length > 0;
+
+                        console.log(g)
+
+                        // Ordenar bajadas por ID
+                        const bajadasOrdenadas = [...(g.bajadas || [])].sort((a, b) => (a.id || 0) - (b.id || 0));
+                        const tieneBajadas = bajadasOrdenadas.length > 0;
+
+                        console.log(bajadasOrdenadas);
+
+                        // Ordenar entrevistados y sus citas por ID
+                        const entrevistadosOrdenados = [...(g.entrevistados || [])]
+                            .sort((a, b) => (a.id || 0) - (b.id || 0))
+                            .map(e => ({
+                                ...e,
+                                citas: [...(e.citas || [])].sort((a, b) => (a.id || 0) - (b.id || 0))
+                            }));
+
+                        const tieneEntrevistados = entrevistadosOrdenados.length > 0;
 
                         // Si no hay ningún dato relevante, no renderizar el Graph
                         if (!tieneLugar && !tieneTema && !tieneBajadas && !tieneEntrevistados) {
@@ -241,69 +257,69 @@ async function seleccionarGuion(id) {
 
                         const filaGraph = document.createElement('tr');
 
-                        // Procesar bajadas (solo si existen)
+                        // Procesar bajadas ordenadas - CORRECCIÓN: usar la propiedad correcta
                         let bajadasContent = '';
                         if (tieneBajadas) {
                             bajadasContent = `
-                                    <div class="mb-2">
-                                        <strong>Bajadas:</strong>
-                                        <ul>${g.bajadas.slice().reverse().map(b => `<li>${b}</li>`).join('')}</ul>
-                                    </div>
-                                `;
+                            <div class="mb-2">
+                                <strong>Bajadas:</strong>
+                                <ul>${bajadasOrdenadas.map(b => `<li>${b.texto || b}</li>`).join('')}</ul>
+                            </div>
+                        `;
                         }
 
-                        // Procesar entrevistados y citas
+                        // Procesar entrevistados y citas ordenadas
                         let entrevistadosContent = '';
-                        if (g.entrevistados && g.entrevistados.length > 0) {
-                            entrevistadosContent = g.entrevistados.map(e => `
-                            <div class="mb-2">
-                                <strong>${e.nombre}:</strong>
-                                <ul class="mb-0">${e.citas.map(c => `<li>${c}</li>`).join('')}</ul>
-                            </div>
-                        `).join('');
+                        if (tieneEntrevistados) {
+                            entrevistadosContent = entrevistadosOrdenados.map(e => `
+                                <div class="mb-2">
+                                    <strong>${e.nombre}:</strong>
+                                    <ul class="mb-0">${e.citas.map(c => `<li>${c}</li>`).join('')}</ul>
+                                </div>
+                            `).join('');
                         }
 
                         // Texto para copiar (solo incluir campos con datos)
                         const textoParaCopiar = [
                             tieneLugar ? `${g.lugar}` : null,
                             tieneTema ? `${g.tema}` : null,
-                            tieneBajadas ? `${g.bajadas.map(b => `${b}`).join('\n')}` : null,
-                            tieneEntrevistados ? `${g.entrevistados.map(e =>
-                                `${e.nombre}\n${(e.citas || []).map(c => `${c}`).join('\n')}`
+                            tieneBajadas ? `${bajadasOrdenadas.map(b => `${b.texto}`).join('\n')}` : null,
+                            tieneEntrevistados ? `${entrevistadosOrdenados.map(e =>
+                                `${e.nombre}\n${e.citas.map(c => `${c}`).join('\n')}`
                             ).join('\n')}` : null
                         ].filter(Boolean).join('\n\n');
 
                         filaGraph.innerHTML = `
-                                <td></td>
-                                <td></td>
-                                <td class="bg-light p-0" colspan="4">
-                                    <details>
-                                        <summary class="bg-light" style="cursor: pointer;">
-                                            <strong>Graph ${index + 1}</strong>
-                                        </summary>
-                                        <div class="p-3">
-                                            ${tieneLugar ? `<div class="mb-2"><strong>Lugar:</strong> ${g.lugar}</div>` : ''}
-                                            ${tieneTema ? `<div class="mb-2"><strong>Tema:</strong> ${g.tema}</div>` : ''}
-                                            ${bajadasContent}
-                                            ${entrevistadosContent}
-                                            <div class="btn-group btn-group-sm mt-2">
-                                                <button class="btn btn-outline-info" onclick="editarGraph(${g.id})">
-                                                    <i class="fas fa-edit"></i> Editar
+                            <td></td>
+                            <td></td>
+                            <td class="bg-light p-0" colspan="4">
+                                <details>
+                                    <summary class="bg-light" style="cursor: pointer;">
+                                        <strong>Graph ${index + 1}</strong>
+                                    </summary>
+                                    <div class="p-3">
+                                        ${tieneLugar ? `<div class="mb-2"><strong>Lugar:</strong> ${g.lugar}</div>` : ''}
+                                        ${tieneTema ? `<div class="mb-2"><strong>Tema:</strong> ${g.tema}</div>` : ''}
+                                        ${bajadasContent}
+                                        ${entrevistadosContent}
+                                        <div class="btn-group btn-group-sm mt-2">
+                                            <button class="btn btn-outline-info" onclick="editarGraph(${g.id})">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                            ${textoParaCopiar.trim() !== '' ? `
+                                                <button class="btn btn-outline-primary btn-copiar" 
+                                                        data-clipboard-text="${textoParaCopiar.replace(/"/g, '&quot;')}">
+                                                    <i class="fas fa-copy"></i> Copiar
                                                 </button>
-                                                <button class="btn btn-outline-danger" onclick="eliminarGraph(${g.id})">
-                                                    <i class="fas fa-trash"></i> Eliminar
-                                                </button>
-                                                ${textoParaCopiar.trim() !== '' ? `
-                                                    <button class="btn btn-outline-primary btn-copiar" 
-                                                            data-clipboard-text="${textoParaCopiar.replace(/"/g, '&quot;')}">
-                                                        <i class="fas fa-copy"></i> Copiar
-                                                    </button>
-                                                ` : ''}
-                                            </div>
+                                            ` : ''}
                                         </div>
-                                    </details>
-                                </td>
-                            `;
+                                    </div>
+                                </details>
+                            </td>
+                        `;
 
                         tbody.appendChild(filaGraph);
                     } catch (graphError) {
@@ -313,6 +329,7 @@ async function seleccionarGuion(id) {
             }
         }
 
+        // Inicializar ClipboardJS para los botones de copiar
         new ClipboardJS('.btn-copiar');
 
         // 10. Restaurar posición/scroll
@@ -328,7 +345,7 @@ async function seleccionarGuion(id) {
             }
         });
 
-        // 12. Actualizar tiempo total
+        // 11. Actualizar tiempo total
         actualizarTiempoTotal(id);
 
     } catch (error) {

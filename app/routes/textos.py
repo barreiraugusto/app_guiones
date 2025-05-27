@@ -44,19 +44,13 @@ def stream_textos():
                         }
 
                         for g in t.graphs:
-                            # Usamos un defaultdict para agrupar citas por entrevistado
-                            from collections import defaultdict
-                            entrevistados_dict = defaultdict(list)
-
-                            # Asegurarnos de que las citas están cargadas
-                            if g.citas:
-                                for cita in g.citas:
-                                    # Verificar que la cita y el entrevistado existen
-                                    if cita and cita.entrevistado:
-                                        nombre = cita.entrevistado.nombre
-                                        texto = cita.texto
-                                        if texto:  # Solo agregar si hay texto
-                                            entrevistados_dict[nombre].append(texto)
+                            # Agrupar citas por entrevistado
+                            entrevistados = {}
+                            for cita in g.citas:
+                                nombre = cita.entrevistado.nombre
+                                if nombre not in entrevistados:
+                                    entrevistados[nombre] = []
+                                entrevistados[nombre].append(cita.texto)
 
                             graph_data = {
                                 "id": g.id,
@@ -68,14 +62,12 @@ def stream_textos():
                                     {
                                         "nombre": nombre,
                                         "citas": citas
-                                    } for nombre, citas in entrevistados_dict.items()
+                                    } for nombre, citas in entrevistados.items()
                                 ]
                             }
                             texto_data["graphs"].append(graph_data)
 
                         data.append(texto_data)
-
-                    data.append(texto_data)
 
                     yield f"data: {json.dumps(data)}\n\n"
                     time.sleep(10)  # Esperar 10 segundos antes de enviar la siguiente actualización
@@ -85,9 +77,9 @@ def stream_textos():
                 yield "event: error\ndata: {}\n\n"
                 time.sleep(5)  # Esperar antes de reintentar
 
-            return Response(stream_with_context(event_stream()),
-                            content_type='text/event-stream',
-                            headers={'X-Accel-Buffering': 'no'})
+    return Response(stream_with_context(event_stream()),
+                    content_type='text/event-stream',
+                    headers={'X-Accel-Buffering': 'no'})
 
 
 @textos_bp.route('/textos', methods=['GET', 'POST'])
@@ -250,11 +242,13 @@ def stream_texto_activo():
                                     entrevistados[nombre] = []
                                 entrevistados[nombre].append(cita.texto)
 
+                            bajadas_ordenadas = sorted(graph.bajadas, key=lambda b: b.id)
+
                             graph_data = {
                                 "id": graph.id,
                                 "lugar": graph.lugar,
                                 "tema": graph.tema,
-                                "bajadas": [b.texto for b in graph.bajadas],
+                                "bajadas": [b.texto for b in bajadas_ordenadas],
                                 "entrevistados": [
                                     {
                                         "nombre": nombre,

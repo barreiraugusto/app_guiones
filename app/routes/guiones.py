@@ -71,7 +71,8 @@ def obtener_guion(id):
                 entrevistados_dict = defaultdict(list)
 
                 # 1. Procesar citas con entrevistados
-                for cita in graph.citas:
+                citas_ordenadas = sorted(graph.citas, key=lambda c: c.id)
+                for cita in citas_ordenadas:
                     if cita.entrevistado and cita.entrevistado.nombre.strip():
                         nombre = cita.entrevistado.nombre
                         if cita.texto and cita.texto.strip():
@@ -82,12 +83,14 @@ def obtener_guion(id):
                     if entrevistado.nombre.strip() and entrevistado.nombre not in entrevistados_dict:
                         entrevistados_dict[entrevistado.nombre] = ["Sin cita"]
 
+                bajadas_ordenadas = sorted(graph.bajadas, key=lambda b: b.id)
+
                 graph_data = {
                     "id": graph.id,
                     "lugar": graph.lugar,
                     "tema": graph.tema,
                     "activo": graph.activo,
-                    "bajadas": [b.texto for b in graph.bajadas],
+                    "bajadas": [b.texto for b in bajadas_ordenadas],
                     "entrevistados": [
                         {
                             "nombre": nombre,
