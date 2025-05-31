@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 tbody.appendChild(filaTexto);
             }
 
-            // Convertir URLs en material
+            // Convertir URLs en materialf
             const materialContent = convertirUrlsEnEnlaces(t.material || '');
 
             // Actualizar contenido del texto
