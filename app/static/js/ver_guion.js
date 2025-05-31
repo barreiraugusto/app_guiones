@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
         textosFiltrados.forEach(t => {
             let filaTexto = tbody.querySelector(`tr[data-texto-id="${t.id}"]`);
             const numGraphs = t.graphs ? t.graphs.length : 0;
-            const rowspanValue = numGraphs > 0 ? numGraphs + 1 : 2; // +1 para incluir la fila del texto
+            const rowspanValue = numGraphs > 0 ? numGraphs + 1 : 1; // +1 para incluir la fila del texto
 
             if (!filaTexto) {
                 filaTexto = document.createElement('tr');
