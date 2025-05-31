@@ -36,8 +36,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Actualizar o agregar filas
         textosFiltrados.forEach(t => {
             let filaTexto = tbody.querySelector(`tr[data-texto-id="${t.id}"]`);
-            const numGraphs = t.graphs ? t.graphs.length : 0;
-            const rowspanValue = numGraphs > 0 ? numGraphs + 1 : 2; // +1 para incluir la fila del texto
 
             if (!filaTexto) {
                 filaTexto = document.createElement('tr');
@@ -50,57 +48,66 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Actualizar contenido del texto
             filaTexto.innerHTML = `
-            <td rowspan="${rowspanValue}" class="text-center"><h3>${t.numero_de_nota}</h3></td>
-            <td><strong>${t.titulo}</strong></td>
-            <td>${t.contenido || ''}</td>
-            <td>${materialContent}</td>
-        `;
+                <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
+                <td><strong>${t.titulo}</strong></td>
+                <td>${t.contenido || ''}</td>
+                <td>${materialContent}</td>
+                <td>${t.musica || ''}</td>
+                <td>${t.duracion || ''}</td>
+            `;
 
             // Procesar graphs del texto
             if (t.graphs && t.graphs.length > 0) {
                 // Eliminar graphs existentes de este texto
                 document.querySelectorAll(`tr[data-graph-parent="${t.id}"]`).forEach(el => el.remove());
 
-                // Ordenar los graphs por ID antes de procesarlos
-                const graphsOrdenados = [...t.graphs].sort((a, b) => (a.id || 0) - (b.id || 0)).reverse();
-
-                // Agregar nuevos graphs (ordenados por ID)
-                graphsOrdenados.forEach((g, index) => {
+                // Agregar nuevos graphs (siempre desplegados)
+                t.graphs.forEach((g, index) => {
                     const filaGraph = document.createElement('tr');
                     filaGraph.setAttribute('data-graph-id', g.id);
                     filaGraph.setAttribute('data-graph-parent', t.id);
                     filaGraph.className = 'graph-row';
 
-                    // Ordenar bajadas por ID (ascendente)
-                    const bajadasOrdenadas = [...(g.bajadas || [])].sort((a, b) => (a.id || 0) - (b.id || 0)).reverse();
+                    // Procesar bajadas (solo si existen)
+                    let bajadasContent = '';
 
-                    // Procesar bajadas (sin viñetas)
-                    let bajadasContent = bajadasOrdenadas ? bajadasOrdenadas.map(b => `${b.texto || b}</br>`).join('') : '';
+                        bajadasContent = `
+                            <div class="mb-2">
+                                <ul>${g.bajadas.map(b => `<li>${b}</li>`).join('')}</ul>
+                            </div>
+                        `;
 
-                    // Procesar entrevistados y citas (sin viñetas)
+
+                    // Procesar entrevistados y citas
                     let entrevistadosContent = '';
                     if (g.entrevistados && g.entrevistados.length > 0) {
                         entrevistadosContent = g.entrevistados.map(e => `
-                        <div class="m-0">
-                            <strong>${e.nombre}</strong>
-                            <div class="m-0">${e.citas.join('<br>')}</div>
-                        </div>
-                    `).join('');
-                            }
+                            <div class="mb-2">
+                                <strong>${e.nombre}:</strong>
+                                <ul class="mb-0">${e.citas.map(c => `<li>${c}</li>`).join('')}</ul>
+                            </div>
+                        `).join('');
+                    }
 
-                            filaGraph.innerHTML = `
-                    <td></td>
-                    <td colspan="2" class="p-3">
-                        <div class="m-0">${g.lugar || ''}</div>
-                        <div class="m-0">${g.tema ? `*${g.tema}` : ''}</div>
-                        <div class="m-0">
-                            ${bajadasContent}
-                        </div>
-                        <div class="m-0">
-                            ${entrevistadosContent || ''}
-                        </div>
-                    </td>
-                `;
+
+
+                    filaGraph.innerHTML = `
+                        <td></td>
+                        <td></td>
+                        <td colspan="4" class="p-3 bg-light">
+                            <div class="mb-2"><strong>Graph ${index + 1}</strong></div>
+                            <div class="mb-2"><strong>Lugar:</strong> ${g.lugar || 'N/A'}</div>
+                            <div class="mb-2"><strong>Tema:</strong> ${g.tema || 'N/A'}</div>
+                            <div class="mb-2">
+                                <strong>Bajadas:</strong>
+                                ${bajadasContent}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Entrevistados:</strong>
+                                ${entrevistadosContent || '<p class="mb-0">No hay entrevistados</p>'}
+                            </div>
+                        </td>
+                    `;
 
                     filaTexto.insertAdjacentElement('afterend', filaGraph);
                 });

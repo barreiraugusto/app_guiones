@@ -177,7 +177,7 @@ async function seleccionarGuion(id) {
         // 5. Obtener datos
         const response = await fetch(`/guiones/${id}`);
 
-        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        // if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
 
         const guion = await response.json();
 
@@ -283,10 +283,18 @@ async function seleccionarGuion(id) {
                         const textoParaCopiar = [
                             tieneLugar ? `${g.lugar}` : null,
                             tieneTema ? `${g.tema}` : null,
-                            tieneBajadas ? `${bajadasOrdenadas.map(b => `${b.texto}`).join('\n')}` : null,
-                            tieneEntrevistados ? `${entrevistadosOrdenados.map(e =>
-                                `${e.nombre}\n${e.citas.map(c => `${c}`).join('\n')}`
-                            ).join('\n')}` : null
+                            tieneBajadas ? bajadasOrdenadas.map(b => {
+                                // Si b es un objeto con propiedad texto, usamos eso, sino usamos b directamente
+                                return typeof b === 'object' ? b.texto : b;
+                            }).join('\n') : null,
+                            tieneEntrevistados ? entrevistadosOrdenados.map(e => {
+                                const nombre = e.nombre || 'Entrevistado';
+                                const citas = e.citas ? e.citas.map(c => {
+                                    // Si c es un objeto con propiedad texto, usamos eso, sino usamos c directamente
+                                    return typeof c === 'object' ? c.texto : c;
+                                }).join('\n') : '';
+                                return `${nombre}\n${citas}`;
+                            }).join('\n\n') : null
                         ].filter(Boolean).join('\n\n');
 
                         filaGraph.innerHTML = `
