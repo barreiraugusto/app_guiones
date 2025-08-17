@@ -60,6 +60,7 @@ def obtener_guion(id):
                 "contenido": texto.contenido,
                 "musica": texto.musica,
                 "material": texto.material,
+                "grabar": texto.grabar,
                 "activo": texto.activo,
                 "emitido": texto.emitido,
                 "graphs": []

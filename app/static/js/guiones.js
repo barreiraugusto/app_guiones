@@ -210,7 +210,10 @@ async function seleccionarGuion(id) {
                         <h3 class="m-0">${t.numero_de_nota}</h3>
                     </div>
                 </td>
-                <td><strong>${t.titulo}</strong></td>
+                <td>
+                    <strong>${t.titulo}</strong>
+                    ${t.grabar ? '<div class="text-danger small font-weight-bold">GRABAR</div>' : ''}
+                </td>
                 <td>${convertirUrlsEnEnlaces(t.material || '')}</td>
                 <td>${t.musica}</td>
                 <td>${t.duracion}</td>

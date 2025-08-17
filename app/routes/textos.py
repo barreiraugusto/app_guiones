@@ -38,6 +38,7 @@ def stream_textos():
                             "duracion": t.duracion,
                             "material": t.material,
                             "activo": t.activo,
+                            "grabar": t.grabar,
                             "emitido": t.emitido,
                             "guion_id": t.guion_id,
                             "graphs": []
@@ -97,6 +98,7 @@ def textos():
                 contenido=data.get('contenido', ''),
                 musica=data.get('musica', ''),
                 material=data.get('material', ''),
+                grabar=data.get('grabar', False),
                 guion_id=data.get('guion_id')
             )
             db.session.add(nuevo_texto)
@@ -125,6 +127,7 @@ def textos():
                 "contenido": t.contenido,
                 "musica": t.musica,
                 "material": t.material,
+                "grabar": t.grabar,
                 "activo": t.activo,
                 "guion_id": t.guion_id,
                 "graphs": []
@@ -170,7 +173,8 @@ def textos_por_guion(guion_id):
         "duracion": t.duracion,
         "contenido": t.contenido,
         "musica": t.musica,
-        "material": t.material
+        "material": t.material,
+        "grabar": t.grabar
     } for t in textos])
 
 
@@ -284,6 +288,7 @@ def obtener_textos_guion(id):
             "contenido": t.contenido,
             "musica": t.musica,
             "material": t.material,
+            "grabar": t.grabar,
             "numero_de_nota": t.numero_de_nota,
             "activo": t.activo
         } for t in guion.textos])
@@ -303,6 +308,7 @@ def obtener_texto(id):
             "contenido": texto.contenido,
             "musica": texto.musica,
             "material": texto.material,
+            "grabar": texto.grabar,
             "activo": texto.activo
         })
     else:
@@ -311,9 +317,7 @@ def obtener_texto(id):
 
 @textos_bp.route('/tiempos/<int:id>', methods=['GET'])
 def obtener_tiempos(id):
-    print(f"el id es {id}")
     texto = Texto.query.filter_by(guion_id=id)
-    print(f"el texto es: {texto}")
     if not texto:
         return jsonify({"mensaje": "Texto no encontrado"}), 404
     # Obtener todos los textos del mismo guion
@@ -338,7 +342,6 @@ def obtener_tiempos(id):
     horas, resto = divmod(total_segundos, 3600)
     minutos, segundos = divmod(resto, 60)
     duracion_total = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
-    print(f"Duracion total: {duracion_total}")
     return jsonify({"duracion_total": duracion_total})
 
 
@@ -353,6 +356,7 @@ def editar_texto(id):
         texto.contenido = data.get('contenido', texto.contenido)
         texto.musica = data.get('musica', texto.musica)
         texto.material = data.get('material', texto.material)
+        texto.grabar = data.get('grabar', texto.grabar)
         db.session.commit()
         return jsonify({"mensaje": "Texto actualizado"})
     else:

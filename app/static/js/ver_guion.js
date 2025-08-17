@@ -51,7 +51,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Actualizar contenido del texto
             filaTexto.innerHTML = `
             <td rowspan="${rowspanValue}" class="text-center"><h3>${t.numero_de_nota}</h3></td>
-            <td><strong>${t.titulo}</strong></td>
+            <td>
+                <strong>${t.titulo}</strong>
+                ${t.grabar ? '<div class="text-danger small font-weight-bold">GRABAR</div>' : ''}
+            </td>
             <td>${t.contenido || ''}</td>
             <td>${materialContent}</td>
         `;

@@ -58,6 +58,7 @@ async function guardarTexto(event) {
     const contenido = quill.root.innerHTML; // Obtener el contenido de Quill
     const material = document.getElementById('material').value;
     const musica = document.getElementById('musica').value;
+    const grabar = document.getElementById('grabar').checked;
     // 2. Lógica para restaurar el guion seleccionado y cargar los textos
     const guion_id = localStorage.getItem('guionSeleccionado');
     if (guion_id) {
@@ -67,6 +68,8 @@ async function guardarTexto(event) {
     try {
         const url = textoEditando ? `/textos/editar/${textoEditando}` : '/textos';
         const method = textoEditando ? 'PUT' : 'POST';
+
+        console.log('Valor de grabar al guardar:', document.getElementById('grabar').checked);
 
         const response = await fetch(url, {
             method: method,
@@ -80,6 +83,7 @@ async function guardarTexto(event) {
                 contenido: contenido,
                 musica: musica,
                 material: material,
+                grabar: grabar,
                 guion_id: guion_id
             })
         });
@@ -129,6 +133,7 @@ async function editarTexto(event, id) {
     const texto = await response.json();
 
     // Rellenar el formulario con los datos del texto
+    document.getElementById('grabar').checked = texto.grabar || false;
     document.getElementById('numero_de_nota').value = texto.numero_de_nota;
     document.getElementById('titulo').value = texto.titulo;
     document.getElementById('duracion').value = texto.duracion;
