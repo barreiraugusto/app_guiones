@@ -34,8 +34,7 @@ async function guardarGraph(event) {
             // Solo agregar entrevistado si tiene nombre o citas
             if (nombre || citas.length > 0) {
                 entrevistados.push({
-                    nombre: nombre.toUpperCase(),
-                    citas: citas
+                    nombre: nombre.toUpperCase(), citas: citas
                 });
             }
         }
@@ -58,11 +57,9 @@ async function guardarGraph(event) {
         const method = graphEditando ? 'PUT' : 'POST';
 
         const response = await fetch(url, {
-            method: method,
-            headers: {
+            method: method, headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+            }, body: JSON.stringify({
                 texto_id: textoId,
                 lugar: lugar.toUpperCase(),
                 tema: tema ? tema.toUpperCase() : null,
@@ -147,8 +144,7 @@ async function agregarNoCerrar(event) {
             // Solo agregar entrevistado si tiene nombre o citas
             if (nombre || citas.length > 0) {
                 entrevistados.push({
-                    nombre: nombre.toUpperCase(),
-                    citas: citas
+                    nombre: nombre.toUpperCase(), citas: citas
                 });
             }
         }
@@ -171,11 +167,9 @@ async function agregarNoCerrar(event) {
         const method = graphEditando ? 'PUT' : 'POST';
 
         const response = await fetch(url, {
-            method: method,
-            headers: {
+            method: method, headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+            }, body: JSON.stringify({
                 texto_id: textoId,
                 lugar: lugar.toUpperCase(),
                 tema: tema ? tema.toUpperCase() : null,
@@ -336,11 +330,7 @@ async function editarGraph(id) {
     } catch (error) {
         console.error("Error al editar graph:", error);
         Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message,
-            showConfirmButton: false,
-            timer: 3000
+            icon: 'error', title: 'Error', text: error.message, showConfirmButton: false, timer: 3000
         });
     }
 }
@@ -516,8 +506,7 @@ function removerEntrevistado(button) {
 async function ExportarGraphsXML() {
     try {
         const response = await fetch(`/generar_xml`, {
-            method: 'PUT',
-            headers: {
+            method: 'PUT', headers: {
                 'Content-Type': 'application/json',
             }
         });
@@ -537,11 +526,27 @@ async function ExportarGraphsXML() {
 
     } catch (error) {
         Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message,
-            showConfirmButton: true
+            icon: 'error', title: 'Error', text: error.message, showConfirmButton: true
         });
     }
+}
+
+
+function abrirModalGraph(textoId) {
+    // Limpiar el formulario primero
+    cancelarEdicionGraph();
+
+    // Establecer el texto seleccionado
+    document.getElementById('texto_id').value = textoId;
+
+    // Buscar y seleccionar la opción correspondiente en el select
+    const select = document.getElementById('texto_id');
+    const option = select.querySelector(`option[value="${textoId}"]`);
+    if (option) {
+        option.selected = true;
+    }
+
+    // Abrir el modal
+    $('#formularioGraphModal').modal('show');
 }
 

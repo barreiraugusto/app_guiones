@@ -1,112 +1,217 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobreimpresos</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black;
-            overflow: hidden;
-        }
+{% extends "base.html" %}
+{% block extratitle %} - Control de Sobreimpresos{% endblock %}
 
-        .overlay {
-            position: absolute;
-            bottom: 10%;
-            left: 5%;
-            width: 90%;
-            height: auto;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-        }
+{% block extra_style %}
+<style>
+    .sobreimpreso-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+        z-index: 1050;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .sobreimpreso-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 800px;
+    }
+    .bajada-item {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .bajada-item:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+    }
+    .bajada-active {
+        background-color: #e7f5ff;
+        border-color: #4dabf7;
+    }
+    .bajada-text {
+        font-size: 1.2rem;
+    }
+    .control-panel {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
 
-        .logo-container {
-            display: inline-block;
-            aspect-ratio: 1/1;
-            background-color: #001f3f;
-            border: 1px solid #c0c0c0;
-            border-radius: 0;
-            padding: 0px;
-            box-sizing: border-box;
-        }
-
-        .logo {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: contain;
-        }
-
-        .text-container {
-            width: 70%;
-            height: auto;
-            background-color: #001f3f;
-            border: 1px solid #c0c0c0;
-            border-radius: 0;
-            padding: 10px;
-            box-sizing: border-box;
-            margin-left: 10px;
-            text-transform: uppercase;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .text-container .line1 {
-            font-size: 20px;
-            color: #40e0d0;
-            font-weight: bold;
-        }
-
-        .text-container .line2 {
-            font-size: 24px;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-<div class="overlay">
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='mosca.gif') }}" alt="Logo Animado" class="logo">
+{% block body %}
+<div class="container mt-4">
+    <h2>Control de Sobreimpresos</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="m-0">Bajadas Disponibles</h4>
+        </div>
+        <div class="card-body">
+            <div id="bajadas-list">
+                <!-- Las bajadas se cargarán aquí dinámicamente -->
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Cargando bajadas...</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="text-container">
-        <div class="line1" id="primera_linea">Línea 1 de Texto</div>
-        <div class="line2" id="segunda_linea">Línea 2 de Texto</div>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h4 class="m-0">Controles</h4>
+        </div>
+        <div class="card-body control-panel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="font-size">Tamaño de fuente:</label>
+                        <input type="range" class="form-control-range" id="font-size" min="16" max="72" value="24">
+                    </div>
+                    <div class="form-group">
+                        <label for="text-color">Color de texto:</label>
+                        <input type="color" class="form-control" id="text-color" value="#ffffff">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="bg-color">Color de fondo:</label>
+                        <input type="color" class="form-control" id="bg-color" value="#000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duración (segundos):</label>
+                        <input type="number" class="form-control" id="duration" min="1" value="5">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button id="show-bajada" class="btn btn-primary mr-2">Mostrar Bajada</button>
+                <button id="hide-bajada" class="btn btn-danger">Ocultar Bajada</button>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- Contenedor para mostrar la bajada en pantalla completa -->
+<div id="sobreimpreso-display" class="d-none">
+    <div class="sobreimpreso-container">
+        <div class="sobreimpreso-content">
+            <div id="current-bajada" class="text-center p-4"></div>
+            <div class="text-center mt-3">
+                <button id="close-display" class="btn btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
 <script>
-    function actualizarSobreimpresos(primera_linea, segunda_linea) {
-        fetch('/actualizar_sobreimpresos', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                primera_linea: primera_linea,
-                segunda_linea: segunda_linea
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    let currentBajada = null;
+    let displayTimeout = null;
+    
+    // Cargar las bajadas desde el servidor
+    function loadBajadas() {
+        fetch('/api/bajadas')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('bajadas-list');
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="alert alert-info">No hay bajadas disponibles</div>';
+                    return;
+                }
+                
+                data.forEach(bajada => {
+                    const item = document.createElement('div');
+                    item.className = 'bajada-item';
+                    item.dataset.id = bajada.id;
+                    item.innerHTML = `
+                        <div class="bajada-text">${bajada.texto}</div>
+                        <small class="text-muted">ID: ${bajada.id} | Graph: ${bajada.graph_id}</small>
+                    `;
+                    
+                    item.addEventListener('click', function() {
+                        document.querySelectorAll('.bajada-item').forEach(el => {
+                            el.classList.remove('bajada-active');
+                        });
+                        this.classList.add('bajada-active');
+                        currentBajada = bajada;
+                    });
+                    
+                    container.appendChild(item);
+                });
             })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la solicitud');
-            }
-            return response.json();
-        })
-        .then(data => {
-            window.location.href = `/sobreimpresos?primera_linea=${encodeURIComponent(data.primera_linea)}&segunda_linea=${encodeURIComponent(data.segunda_linea)}`;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+            .catch(error => {
+                console.error('Error al cargar bajadas:', error);
+                document.getElementById('bajadas-list').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error al cargar las bajadas. Intente recargar la página.
+                    </div>
+                `;
+            });
     }
+    
+    // Mostrar la bajada seleccionada
+    function showBajada() {
+        if (!currentBajada) {
+            alert('Por favor seleccione una bajada primero');
+            return;
+        }
+        
+        const display = document.getElementById('sobreimpreso-display');
+        const content = document.getElementById('current-bajada');
+        
+        // Aplicar estilos
+        const fontSize = document.getElementById('font-size').value;
+        const textColor = document.getElementById('text-color').value;
+        const bgColor = document.getElementById('bg-color').value;
+        const duration = document.getElementById('duration').value * 1000;
+        
+        content.innerHTML = currentBajada.texto;
+        content.style.fontSize = `${fontSize}px`;
+        content.style.color = textColor;
+        content.style.backgroundColor = bgColor;
+        content.style.padding = '20px';
+        content.style.borderRadius = '8px';
+        content.style.display = 'inline-block';
+        
+        // Mostrar el sobreimpreso
+        display.classList.remove('d-none');
+        
+        // Ocultar automáticamente después de la duración seleccionada
+        if (displayTimeout) clearTimeout(displayTimeout);
+        displayTimeout = setTimeout(hideBajada, duration);
+    }
+    
+    // Ocultar la bajada
+    function hideBajada() {
+        document.getElementById('sobreimpreso-display').classList.add('d-none');
+        if (displayTimeout) clearTimeout(displayTimeout);
+    }
+    
+    // Event listeners
+    document.getElementById('show-bajada').addEventListener('click', showBajada);
+    document.getElementById('hide-bajada').addEventListener('click', hideBajada);
+    document.getElementById('close-display').addEventListener('click', hideBajada);
+    
+    // Cargar las bajadas al inicio
+    loadBajadas();
+});
 </script>
-</body>
-</html>
+{% endblock %}

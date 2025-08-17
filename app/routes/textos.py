@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request, render_template, stream_with_cont
 
 from sqlalchemy.orm import joinedload, selectinload
 from .. import db
-from ..models import Texto, Guion, Graph, Cita
+from ..models import Texto, Guion, Graph, Cita, Bajada
 
 textos_bp = Blueprint('textos', __name__)
 
@@ -405,3 +405,81 @@ def borrar_texto(id):
             "mensaje": "Error interno del servidor",
             "error": str(e)
         }), 500
+
+
+@textos_bp.route('/textos/actualizar-orden', methods=['PUT'])
+def actualizar_orden_textos():
+    data = request.json
+    guion_id = data['guion_id']
+    nuevos_orden = data['nuevos_orden']
+
+    try:
+        # Obtener todos los textos del guion
+        textos = Texto.query.filter_by(guion_id=guion_id).all()
+
+        # Crear un diccionario para acceso rápido por ID
+        textos_dict = {t.id: t for t in textos}
+
+        # Actualizar los números de nota según el nuevo orden
+        for nuevo_numero, texto_id in enumerate(nuevos_orden, start=1):
+            if texto_id in textos_dict:
+                textos_dict[texto_id].numero_de_nota = nuevo_numero
+
+        db.session.commit()
+        return jsonify({"mensaje": "Orden actualizado correctamente"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"mensaje": f"Error al actualizar el orden: {str(e)}"}), 500
+
+
+@textos_bp.route('/api/bajadas', methods=['GET'])
+def get_bajadas():
+    try:
+        bajadas = Bajada.query.options(
+            joinedload(Bajada.graphs)
+        ).all()
+
+        result = []
+        for bajada in bajadas:
+            for graph in bajada.graphs:
+                result.append({
+                    'id': bajada.id,
+                    'texto': bajada.texto,
+                    'graph_id': graph.id,
+                    'graph_lugar': graph.lugar,
+                    'graph_tema': graph.tema
+                })
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@textos_bp.route('/api/show_bajada/<int:bajada_id>', methods=['POST'])
+def show_bajada(bajada_id):
+    try:
+        bajada = Bajada.query.get_or_404(bajada_id)
+        # Aquí pondrías el código para enviar la bajada a tu sistema de gráficos
+        # Por ejemplo:
+        # enviar_a_pantalla({
+        #     'content': {'texto': bajada.texto},
+        #     'layout': {'position': 'center'}
+        # })
+
+        return jsonify({
+            'success': True,
+            'message': f'Bajada "{bajada.texto}" mostrada en pantalla'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@textos_bp.route('/api/bajadas')
+def get_all_bajadas():
+    bajadas = Bajada.query.all()
+    return jsonify([{
+        'id': b.id,
+        'texto': b.texto,
+        'graph_id': b.graphs[0].id if b.graphs else None
+    } for b in bajadas])

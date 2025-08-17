@@ -23,3 +23,6 @@ def principal():
 @main_bp.route('/control_live')
 def control_live():
     return render_template('control_live.html')
+
+
+

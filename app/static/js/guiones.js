@@ -138,7 +138,10 @@ function cancelarEdicionGiones() {
     guionEditando = null;
 }
 
+let guionActual = null;
+
 async function seleccionarGuion(id) {
+    guionActual = id;
     try {
         // 1. Guardar estado actual antes de cambios
         const tablaContainer = document.getElementById('tablaTextos');
@@ -192,7 +195,6 @@ async function seleccionarGuion(id) {
         // 8. Poblar tabla
         let textoActivoEncontrado = false;
         for (const t of guion.textos || []) {
-            console.log(t)
             const filaTexto = document.createElement('tr');
             filaTexto.classList.add('bg-light');
             filaTexto.setAttribute('data-texto-id', t.id);
@@ -200,8 +202,14 @@ async function seleccionarGuion(id) {
             if (t.emitido) filaTexto.classList.replace('bg-light', 'bg-secondary');
             else if (t.activo) filaTexto.classList.replace('bg-light', 'bg-warning');
 
+            filaTexto.classList.add('texto-principal');
+            filaTexto.dataset.id = t.id;
             filaTexto.innerHTML = `
-                <td class="bg-secondary text-white text-center"><h3>${t.numero_de_nota}</h3></td>
+                <td class="bg-secondary text-white text-center handle" style="cursor: move;">
+                    <div style="display: inline-block; padding: 5px 10px;">
+                        <h3 class="m-0">${t.numero_de_nota}</h3>
+                    </div>
+                </td>
                 <td><strong>${t.titulo}</strong></td>
                 <td>${convertirUrlsEnEnlaces(t.material || '')}</td>
                 <td>${t.musica}</td>
@@ -217,6 +225,9 @@ async function seleccionarGuion(id) {
                         <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})">
                             <i class="fas fa-edit"></i>
                         </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="abrirModalGraph(${t.id})">
+                        <i class="fas fa-plus"></i>
+                        </button>
                         <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -224,6 +235,8 @@ async function seleccionarGuion(id) {
                 </td>
             `;
             tbody.appendChild(filaTexto);
+
+            inicializarSortable();
 
             // 9. Procesar graphs con ordenamiento de bajadas y citas
             if (Array.isArray(t.graphs) && t.graphs.length > 0) {
@@ -256,6 +269,7 @@ async function seleccionarGuion(id) {
                         }
 
                         const filaGraph = document.createElement('tr');
+                        filaGraph.classList.add('graph-asociado');
 
                         // Procesar bajadas ordenadas - CORRECCIÓN: usar la propiedad correcta
                         let bajadasContent = '';
@@ -445,5 +459,69 @@ async function cargarGuionesEnSelect() {
     const guionSeleccionado = localStorage.getItem('guionSeleccionado');
     if (guionSeleccionado) {
         select.value = guionSeleccionado;
+    }
+}
+
+
+function inicializarSortable() {
+    const tbody = document.getElementById('tbodyTextos');
+
+    if (tbody) {
+        new Sortable(tbody, {
+            animation: 150,
+            handle: '.handle',
+            filter: '.graph-asociado', // Ignorar filas de graphs
+            draggable: 'tr.texto-principal', // Solo arrastrar filas de texto
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: async function (evt) {
+                // Solo procesar si el elemento arrastrado es un texto (no un graph)
+                if (evt.item.classList.contains('texto-principal')) {
+                    const textosIds = Array.from(document.querySelectorAll('tr.texto-principal'))
+                        .map(tr => parseInt(tr.dataset.id));
+
+                    await actualizarNumerosNota(textosIds);
+
+                    // Opcional: Resaltar la fila movida
+                    evt.item.classList.add('updated-highlight');
+                    setTimeout(() => {
+                        evt.item.classList.remove('updated-highlight');
+                    }, 1000);
+                }
+            }
+        });
+    }
+}
+
+// Función para actualizar los números de nota
+async function actualizarNumerosNota(textosIds) {
+    try {
+        const response = await fetch('/textos/actualizar-orden', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                guion_id: guionActual,
+                nuevos_orden: textosIds
+            })
+        });
+
+        if (!response.ok) throw new Error('Error al actualizar el orden');
+
+        // Recargar solo si es necesario
+        if (guionActual) {
+            await seleccionarGuion(guionActual);
+        }
+    } catch (error) {
+        console.error('Error al actualizar orden:', error);
+        // Mostrar error pero no recargar para no perder la posición
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo guardar el nuevo orden',
+            showConfirmButton: false,
+            timer: 2000
+        });
     }
 }

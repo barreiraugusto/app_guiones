@@ -26,11 +26,13 @@ def create_app():
     from .routes.textos import textos_bp
     from .routes.graphs import graphs_bp
     from .routes.reloj import reloj_bp
+    from .routes.sobre import sobreimpresos_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(guiones_bp)
     app.register_blueprint(textos_bp)
     app.register_blueprint(graphs_bp)
     app.register_blueprint(reloj_bp)
+    app.register_blueprint(sobreimpresos_bp, url_prefix='/sobreimpresos')
 
     return app
