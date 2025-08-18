@@ -180,11 +180,18 @@ def textos_por_guion(guion_id):
 
 @textos_bp.route('/textos/activo/<int:id>', methods=['PUT'])
 def setTextoActivo(id):
+    # Desactivar todos los textos primero
     Texto.query.update({Texto.activo: False})
+
+    # Activar el texto seleccionado y sus graphs
     texto = Texto.query.get(id)
-    texto.activo = True
+    if texto:
+        texto.activo = True
+        for graph in texto.graphs:
+            graph.activo = True
+
     db.session.commit()
-    return jsonify({"mensaje": "Texto activo actualizado"})
+    return jsonify({"mensaje": "Texto y graphs asociados activados"})
 
 
 @textos_bp.route('/textos/emitido/<int:id>', methods=['PUT'])

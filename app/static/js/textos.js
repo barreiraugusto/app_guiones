@@ -225,21 +225,40 @@ function cancelarEdicion() {
 
 async function setTextoActivo(id) {
     try {
-        // 1. Guardar el texto activo antes de cambiar
-        localStorage.setItem('ultimoTextoActivo', id.toString());
+        // 1. Guardar posición del scroll
+        const tablaContainer = document.querySelector('#tablaTextos tbody');
+        const scrollPosition = tablaContainer.scrollTop;
 
-        // 2. Mostrar feedback inmediato en la UI
-        const filas = document.querySelectorAll('tr[data-texto-id]');
-        filas.forEach(fila => {
-            fila.classList.remove('bg-warning', 'highlight');
+         // 2. Actualizar todos los textos que tengan bg-warning
+        document.querySelectorAll('tr.texto-principal.bg-warning').forEach(tr => {
+            // Solo cambiar si no es el texto que vamos a activar
+            if (tr.dataset.textoId !== id.toString()) {
+                tr.classList.remove('bg-warning', 'activo');
+
+                // Verificar si está emitido para aplicar el color correcto
+                if (tr.classList.contains('emitido')) {
+                    tr.classList.add('bg-secondary');
+                } else {
+                    tr.classList.add('bg-light');
+                }
+            }
         });
 
+        // 3. Activar el nuevo texto
         const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
         if (filaActual) {
-            filaActual.classList.add('bg-warning', 'highlight');
+            // Remover todas las clases de estado primero
+            filaActual.classList.remove('bg-light', 'bg-secondary', 'bg-warning');
+
+            // Aplicar clases según estado
+            if (filaActual.classList.contains('emitido')) {
+                filaActual.classList.add('bg-secondary', 'activo');
+            } else {
+                filaActual.classList.add('bg-warning', 'activo');
+            }
         }
 
-        // 3. Hacer la petición al servidor
+        // 4. Actualizar en el servidor
         const response = await fetch(`/textos/activo/${id}`, {
             method: 'PUT',
             headers: {
@@ -250,17 +269,13 @@ async function setTextoActivo(id) {
 
         if (!response.ok) throw new Error(await response.text() || 'Error al activar texto');
 
-        // 4. Recargar manteniendo el foco
-        const guion_id = document.getElementById('guion_id').value || localStorage.getItem('guionSeleccionado');
-        await seleccionarGuion(guion_id);
+        // 5. Actualizar graphs asociados
+        actualizarEstadoGraphs(id, 'activo');
 
-        // 5. Scroll a la posición del texto
-        setTimeout(() => {
-            const textoElement = document.querySelector(`tr[data-texto-id="${id}"]`);
-            if (textoElement) {
-                textoElement.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-            }
-        }, 100);
+        // 6. Restaurar posición del scroll
+        requestAnimationFrame(() => {
+            tablaContainer.scrollTop = scrollPosition;
+        });
 
     } catch (error) {
         console.error("Error en setTextoActivo:", error);
@@ -270,23 +285,24 @@ async function setTextoActivo(id) {
             text: error.message || 'No se pudo activar el texto',
             timer: 2000
         });
-
-        // Revertir cambios visuales en caso de error
-        const filas = document.querySelectorAll('tr[data-texto-id]');
-        filas.forEach(fila => fila.classList.remove('bg-warning', 'highlight'));
     }
 }
 
 async function setTextoEmitido(id) {
     try {
-        // 1. Mostrar feedback inmediato en la UI
         const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
         if (filaActual) {
-            filaActual.classList.add('bg-secondary', 'highlight');
-            filaActual.querySelector('button[onclick*="setTextoEmitido"]')?.classList.add('disabled');
+            // Cambiar estado visual inmediatamente
+            if (filaActual.classList.contains('bg-secondary')) {
+                filaActual.classList.remove('bg-secondary');
+                filaActual.classList.add('bg-light');
+            } else {
+                filaActual.classList.remove('bg-light', 'bg-warning');
+                filaActual.classList.add('bg-secondary');
+            }
         }
 
-        // 2. Hacer la petición al servidor
+        // Actualizar en el servidor
         const response = await fetch(`/textos/emitido/${id}`, {
             method: 'PUT',
             headers: {
@@ -297,17 +313,8 @@ async function setTextoEmitido(id) {
 
         if (!response.ok) throw new Error(await response.text() || 'Error al marcar texto como emitido');
 
-        // 3. Recargar manteniendo el contexto
-        const guion_id = document.getElementById('guion_id').value || localStorage.getItem('guionSeleccionado');
-        await seleccionarGuion(guion_id);
-
-        // 4. Scroll a la posición del texto
-        setTimeout(() => {
-            const textoElement = document.querySelector(`tr[data-texto-id="${id}"]`);
-            if (textoElement) {
-                textoElement.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-            }
-        }, 100);
+        // Actualizar graphs asociados
+        actualizarEstadoGraphs(id, 'emitido');
 
     } catch (error) {
         console.error("Error en setTextoEmitido:", error);
@@ -317,13 +324,24 @@ async function setTextoEmitido(id) {
             text: error.message || 'No se pudo marcar el texto como emitido',
             timer: 2000
         });
+    }
+}
 
-        // Revertir cambios visuales en caso de error
-        const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
-        if (filaActual) {
-            filaActual.classList.remove('bg-secondary', 'highlight');
-            filaActual.querySelector('button[onclick*="setTextoEmitido"]')?.classList.remove('disabled');
+function actualizarEstadoGraphs(textoId, estado) {
+    const filaTexto = document.querySelector(`tr[data-texto-id="${textoId}"]`);
+    if (!filaTexto) return;
+
+    // Encontrar todos los graphs asociados (filas siguientes hasta el próximo texto)
+    let nextSibling = filaTexto.nextElementSibling;
+    while (nextSibling && nextSibling.classList.contains('graph-asociado')) {
+        if (estado === 'activo') {
+            nextSibling.querySelector('details').style.backgroundColor = '#fff3cd';
+        } else if (estado === 'emitido') {
+            nextSibling.querySelector('details').style.backgroundColor = '#e2e3e5';
+        } else {
+            nextSibling.querySelector('details').style.backgroundColor = '#f8f9fa';
         }
+        nextSibling = nextSibling.nextElementSibling;
     }
 }
 
@@ -375,3 +393,27 @@ function convertirUrlsEnEnlaces(texto) {
     const urlRegex = /https?:\/\/[^\s]+/g;
     return texto.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
 }
+
+function inicializarEstadosTextos() {
+    document.querySelectorAll('tr.texto-principal').forEach(tr => {
+        // Limpiar clases de estado primero
+        tr.classList.remove('bg-light', 'bg-warning', 'bg-secondary', 'activo', 'emitido');
+
+        // Establecer estado inicial basado en datos
+        const esActivo = tr.classList.contains('activo');
+        const esEmitido = tr.classList.contains('emitido');
+
+        if (esActivo && esEmitido) {
+            tr.classList.add('bg-secondary', 'activo', 'emitido');
+        } else if (esActivo) {
+            tr.classList.add('bg-warning', 'activo');
+        } else if (esEmitido) {
+            tr.classList.add('bg-secondary', 'emitido');
+        } else {
+            tr.classList.add('bg-light');
+        }
+    });
+}
+
+// Llamar esta función al cargar la página
+document.addEventListener('DOMContentLoaded', inicializarEstadosTextos);

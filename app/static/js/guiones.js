@@ -144,9 +144,13 @@ async function seleccionarGuion(id) {
     guionActual = id;
     try {
         // 1. Guardar estado actual antes de cambios
-        const tablaContainer = document.getElementById('tablaTextos');
         const textoActivoId = localStorage.getItem('ultimoTextoActivo');
+        const tablaContainer = document.querySelector('#tablaTextos tbody');
         const scrollPosition = tablaContainer.scrollTop;
+        const elementoVisible = document.elementFromPoint(
+            window.innerWidth / 2,
+            window.innerHeight / 2
+        );
 
         // Obtener ID (prioridad: parámetro > localStorage > null)
         const guionId = id || localStorage.getItem('guionSeleccionado');
@@ -359,14 +363,13 @@ async function seleccionarGuion(id) {
 
         // 10. Restaurar posición/scroll
         requestAnimationFrame(() => {
-            if (textoActivoId) {
-                const filaActiva = document.querySelector(`[data-texto-id="${textoActivoId}"]`);
-                if (filaActiva) {
-                    filaActiva.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-                    filaActiva.classList.add('highlight');
-                }
-            } else {
-                tablaContainer.scrollTop = scrollPosition;
+            tablaContainer.scrollTop = scrollPosition;
+
+            // Opcional: Resaltar brevemente el elemento actualizado
+            if (elementoVisible && elementoVisible.closest('tr')) {
+                const fila = elementoVisible.closest('tr');
+                fila.classList.add('updated-highlight');
+                setTimeout(() => fila.classList.remove('updated-highlight'), 1000);
             }
         });
 
@@ -468,32 +471,89 @@ async function cargarGuionesEnSelect() {
 
 function inicializarSortable() {
     const tbody = document.getElementById('tbodyTextos');
+    if (!tbody) return;
 
-    if (tbody) {
-        new Sortable(tbody, {
-            animation: 150,
-            handle: '.handle',
-            filter: '.graph-asociado', // Ignorar filas de graphs
-            draggable: 'tr.texto-principal', // Solo arrastrar filas de texto
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            onEnd: async function (evt) {
-                // Solo procesar si el elemento arrastrado es un texto (no un graph)
-                if (evt.item.classList.contains('texto-principal')) {
-                    const textosIds = Array.from(document.querySelectorAll('tr.texto-principal'))
-                        .map(tr => parseInt(tr.dataset.id));
+    const textoPrincipalSelector = 'tr.texto-principal';
+    const graphAsociadoClass = 'graph-asociado';
+    let isUpdating = false;
 
-                    await actualizarNumerosNota(textosIds);
-
-                    // Opcional: Resaltar la fila movida
-                    evt.item.classList.add('updated-highlight');
-                    setTimeout(() => {
-                        evt.item.classList.remove('updated-highlight');
-                    }, 1000);
-                }
+    new Sortable(tbody, {
+        animation: 150,
+        handle: '.handle',
+        filter: '.' + graphAsociadoClass,
+        draggable: textoPrincipalSelector,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onStart: function(evt) {
+            if (isUpdating) return false;
+            evt.item._graphs = [];
+            let next = evt.item.nextElementSibling;
+            while (next && next.classList.contains(graphAsociadoClass)) {
+                evt.item._graphs.push(next);
+                next = next.nextElementSibling;
             }
-        });
-    }
+        },
+        onEnd: async function(evt) {
+            if (isUpdating || !evt.item.classList.contains('texto-principal')) return;
+            isUpdating = true;
+
+            // Animación suave para mover los graphs
+            if (evt.item._graphs?.length > 0) {
+                const targetPosition = evt.newIndex + 1;
+                const animationPromises = [];
+
+                evt.item._graphs.forEach((graph, i) => {
+                    const newPosition = targetPosition + i;
+                    animationPromises.push(new Promise(resolve => {
+                        const currentRect = graph.getBoundingClientRect();
+                        tbody.insertBefore(graph, tbody.children[newPosition]);
+                        const newRect = graph.getBoundingClientRect();
+
+                        const invertX = currentRect.left - newRect.left;
+                        const invertY = currentRect.top - newRect.top;
+
+                        const animation = graph.animate([
+                            { transform: `translate(${invertX}px, ${invertY}px)` },
+                            { transform: 'translate(0, 0)' }
+                        ], {
+                            duration: 150,
+                            easing: 'ease-out'
+                        });
+
+                        animation.onfinish = resolve;
+                    }));
+                });
+
+                await Promise.all(animationPromises);
+            }
+
+            // Actualización optimizada de números
+            const updateNumbers = () => {
+                const textos = tbody.querySelectorAll(textoPrincipalSelector);
+                const textosIds = [];
+
+                textos.forEach((tr, index) => {
+                    textosIds.push(parseInt(tr.dataset.id));
+                    const numElement = tr.querySelector('.handle h3');
+                    if (numElement) {
+                        numElement.textContent = index + 1;
+                    }
+                });
+
+                return textosIds;
+            };
+
+            const textosIds = updateNumbers();
+
+            try {
+                await actualizarNumerosNota(textosIds);
+            } catch (error) {
+                console.error('Error updating numbers:', error);
+            } finally {
+                isUpdating = false;
+            }
+        }
+    });
 }
 
 // Función para actualizar los números de nota

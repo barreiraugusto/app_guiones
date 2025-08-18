@@ -6,8 +6,9 @@
             padding-top: 70px;
         }
 
+        /* Cards */
         .card-guion {
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .card-guion:hover {
@@ -15,6 +16,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
+        /* Responsive */
         @media (max-width: 992px) {
             .navbar-collapse {
                 max-height: calc(100vh - 60px);
@@ -34,20 +36,7 @@
             }
         }
 
-        .updated-highlight {
-            animation: highlight-fade 1s;
-            background-color: rgba(40, 167, 69, 0.1);
-        }
-
-        @keyframes highlight-fade {
-            0% {
-                background-color: rgba(40, 167, 69, 0.3);
-            }
-            100% {
-                background-color: transparent;
-            }
-        }
-
+        /* Form elements */
         .big-checkbox {
             width: 18px;
             height: 18px;
@@ -60,40 +49,13 @@
             margin-left: 5px;
         }
 
-        .texto-principal {
-            background-color: #f8f9fa;
-            border-left: 4px solid transparent;
-        }
-
-        .texto-principal.activo {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-
-        .texto-principal.emitido {
-            background-color: #e2e3e5;
-            border-left: 4px solid #6c757d;
-        }
-
-        .graph-container {
-            border-radius: 0 0.25rem 0.25rem 0;
-        }
-
-        .graph-asociado td {
-            border-top: none;
-            padding-top: 0;
-        }
-
+        /* Buttons */
         .btn-copiar {
             transition: all 0.2s;
         }
 
         .btn-copiar:hover {
             transform: scale(1.1);
-        }
-
-        .align-middle {
-            vertical-align: middle !important;
         }
 
         .btn-outline-primary {
@@ -107,6 +69,7 @@
             border-color: #0d6efd;
         }
 
+        /* Drag and drop */
         .handle {
             cursor: move;
             transition: all 0.2s;
@@ -116,42 +79,93 @@
             background-color: rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* Mantener los estilos originales del número */
-        .bg-secondary.text-white {
-            background-color: #6c757d !important;
-            color: white !important;
-        }
-
-        /* Asegurar que el hover no afecte el texto */
         .handle:hover h3 {
             color: white !important;
         }
 
+
+        /* Graph states */
+        .graph-asociado {
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .graph-asociado td {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .graph-asociado details {
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+            border-left: 4px solid transparent;
+        }
+
+        .texto-principal.activo + .graph-asociado details {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .texto-principal.emitido + .graph-asociado details {
+            background-color: #e2e3e5;
+            border-left-color: #6c757d;
+        }
+
+        /* Sortable styles */
         .sortable-ghost {
             opacity: 0.6;
             background: #c8ebfb;
         }
 
-        .sortable-chosen {
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .sortable-ghost.texto-principal {
+            opacity: 0.8;
         }
 
-        .texto-principal.sortable-drag {
-            background-color: white;
-            border: 1px dashed #0d6efd;
-        }
-
-        .updated-highlight {
-            animation: highlight-fade 2s;
+        .sortable-ghost.graph-asociado {
+            background: #e1f5fe;
         }
 
         .sortable-ghost td.bg-secondary {
             background-color: #5a6268 !important;
         }
 
+        .sortable-chosen {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
         .sortable-chosen td.bg-secondary {
             background-color: #545b62 !important;
             box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .sortable-drag {
+            opacity: 1 !important;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .texto-principal.sortable-drag {
+            border: 1px dashed #0d6efd;
+        }
+
+        /* Table layout */
+        #tablaTextos tbody {
+            display: block;
+            overflow-y: auto;
+            max-height: calc(100vh - 300px);
+        }
+
+        .graph-container {
+            border-radius: 0 0.25rem 0.25rem 0;
+        }
+
+        .align-middle {
+            vertical-align: middle !important;
+        }
+
+        /* Animations */
+        .updated-highlight {
+            animation: highlight-fade 2s;
+            background-color: rgba(40, 167, 69, 0.1);
         }
 
         @keyframes highlight-fade {
@@ -163,6 +177,12 @@
             }
         }
 
+
+        /* Color utilities - Moved to bottom for specificity */
+        .bg-secondary.text-white {
+            background-color: #6c757d !important;
+            color: white !important;
+        }
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
