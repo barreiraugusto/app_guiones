@@ -4,35 +4,40 @@ async function cargarGuiones() {
         if (!response.ok) throw new Error('Error al cargar los guiones');
         const guiones = await response.json();
 
-        // Cargar los guiones en tarjetas Bootstrap en una columna
-        const contenedor = document.getElementById('listaGuiones');
-        contenedor.innerHTML = '';
+        // Cargar los guiones en el modal
+        const contenedorModal = document.getElementById('listaGuionesModal');
+        contenedorModal.innerHTML = '';
+
         guiones.forEach(g => {
-            const cardWrapper = document.createElement('div');
-            cardWrapper.className = 'mb-3'; // Margen inferior entre tarjetas
-            cardWrapper.innerHTML = `
-        <div class="card card-guion">
-            <div class="card-body">
-                <h6 class="card-title">${g.nombre}</h6>
-<!--                <p class="card-text">${g.descripcion}</p>-->
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-success" onclick="seleccionarGuion(${g.id})">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <button class="btn btn-outline-info" onclick="editarGuion(${g.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" onclick="borrarGuion(${g.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+            const item = document.createElement('a');
+            item.href = '#';
+            item.className = 'list-group-item list-group-item-action';
+            item.dataset.id = g.id;
+            item.innerHTML = `
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <h6 class="mb-1">${g.nombre}</h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-info" onclick="event.stopPropagation(); editarGuion(${g.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="event.stopPropagation(); borrarGuion(${g.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
-    `;
-            contenedor.appendChild(cardWrapper);
+                ${g.descripcion ? `<p class="mb-1 small text-muted">${g.descripcion}</p>` : ''}
+            `;
+
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                seleccionarGuion(g.id);
+                $('#seleccionarGuionModal').modal('hide');
+            });
+
+            contenedorModal.appendChild(item);
         });
 
-        // Cargar los guiones en el <select>
+        // Cargar los guiones en el <select> (se mantiene igual)
         const select = document.getElementById('guion_id');
         select.innerHTML = '<option value="">Seleccione un guion</option>';
         guiones.forEach(g => {
@@ -42,19 +47,40 @@ async function cargarGuiones() {
             select.appendChild(option);
         });
 
-        // Establecer el guion seleccionado si existe en localStorage
         const guionSeleccionado = localStorage.getItem('guionSeleccionado');
         if (guionSeleccionado) {
-            select.value = guionSeleccionado;
+            // Llamar a seleccionarGuion con el ID para cargar los datos
+            seleccionarGuion(guionSeleccionado);
+        } else {
+            // Si no hay guion seleccionado, limpiar la tabla
+            seleccionarGuion(null);
         }
+        return guiones; // Devolver la lista de guiones
     } catch (error) {
-        console.error("Error en cargarGuiones:", error); // Debug 4
+        console.error("Error en cargarGuiones:", error);
         Swal.fire({
-            icon: 'success',
-            title: result.mensaje || "Error al cargar los guiones",
-            showConfirmButton: false, // No mostrar el botón "Aceptar"
-            timer: 1000, // El mensaje desaparecerá después de 2 segundos
+            icon: 'error',
+            title: "Error al cargar los guiones",
+            showConfirmButton: false,
+            timer: 1000,
         });
+        throw error; // Relanzar el error para manejarlo arriba
+    }
+}
+
+// Función para filtrar guiones en el modal
+function filtrarGuiones() {
+    const input = document.getElementById('buscarGuion');
+    const filter = input.value.toLowerCase();
+    const items = document.getElementById('listaGuionesModal').getElementsByClassName('list-group-item');
+
+    for (let i = 0; i < items.length; i++) {
+        const title = items[i].getElementsByTagName('h6')[0];
+        if (title.textContent.toLowerCase().indexOf(filter) > -1) {
+            items[i].style.display = "";
+        } else {
+            items[i].style.display = "none";
+        }
     }
 }
 
@@ -92,6 +118,8 @@ async function guardarGuion(event) {
     const descripcion = document.getElementById('descripcionGuion').value;
 
     try {
+        let nuevoGuionId = null;
+
         if (guionEditando) {
             // Si se está editando un guion, enviar una solicitud PUT
             await fetch(`/guiones/${guionEditando}`, {
@@ -103,28 +131,49 @@ async function guardarGuion(event) {
             });
         } else {
             // Si no se está editando, enviar una solicitud POST para crear un nuevo guion
-            await fetch('/guiones', {
+            const response = await fetch('/guiones', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({nombre, descripcion})
             });
+
+            // Obtener la respuesta del servidor con el ID del nuevo guion
+            const result = await response.json();
+            nuevoGuionId = result.id;
         }
 
         // Limpiar el formulario y restablecer el botón
         cancelarEdicionGiones();
 
-        // Recargar la lista de guiones
-        cargarGuiones();
-        cargarGuionesEnSelect(); // Actualizar el <select>
+        // Recargar la lista de guiones y esperar a que termine
+        await cargarGuiones();
+        await cargarGuionesEnSelect(); // Actualizar el <select>
+
+        // Si es un nuevo guion, seleccionarlo automáticamente
+        if (nuevoGuionId) {
+            seleccionarGuion(nuevoGuionId);
+
+            // Mostrar mensaje de confirmación
+            Swal.fire({
+                icon: 'success',
+                title: 'Guion creado y seleccionado',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
 
         // Cerrar el modal
         $('#formularioGuionModal').modal('hide');
     } catch (error) {
         console.error('Error al guardar el guion:', error);
-        // Puedes mostrar un mensaje de error al usuario si lo deseas
-        alert('Hubo un error al guardar el guion. Por favor, inténtalo de nuevo.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Hubo un error al guardar el guion. Por favor, inténtalo de nuevo.',
+            showConfirmButton: true
+        });
     }
 }
 
@@ -141,6 +190,21 @@ function cancelarEdicionGiones() {
 let guionActual = null;
 
 async function seleccionarGuion(id) {
+    if (!id) {
+        const tbody = document.querySelector('#tablaTextos tbody');
+        const encabezado = document.getElementById("encabezado");
+
+        if (tbody) tbody.innerHTML = '';
+        if (encabezado) encabezado.textContent = 'Seleccione un guion';
+
+        // También puedes ocultar toda la tabla si prefieres
+        document.getElementById('tablaTextos').style.display = 'none';
+
+        // Actualizar información del guion seleccionado
+        document.getElementById('guionSeleccionadoInfo').textContent = 'Ningún guion seleccionado';
+
+        return;
+    }
     guionActual = id;
     try {
         // 1. Guardar estado actual antes de cambios
@@ -211,7 +275,7 @@ async function seleccionarGuion(id) {
             filaTexto.innerHTML = `
                 <td class="bg-secondary text-white text-center handle" style="cursor: move;">
                     <div style="display: inline-block; padding: 5px 10px;">
-                        <h3 class="m-0">${t.numero_de_nota}</h3>
+                        <h5 class="m-0">${t.numero_de_nota}</h5>
                     </div>
                 </td>
                 <td>
@@ -450,21 +514,29 @@ async function borrarGuion(id) {
 }
 
 async function cargarGuionesEnSelect() {
-    const response = await fetch('/guiones');
-    const guiones = await response.json();
-    const select = document.getElementById('guion_id');
-    select.innerHTML = '<option value="">Seleccione un guion</option>'; // Opción por defecto
-    guiones.forEach(g => {
-        const option = document.createElement('option');
-        option.value = g.id;
-        option.textContent = g.nombre;
-        select.appendChild(option);
-    });
+    try {
+        const response = await fetch('/guiones');
+        const guiones = await response.json();
+        const select = document.getElementById('guion_id');
+        select.innerHTML = '<option value="">Seleccione un guion</option>';
 
-    // Establecer el guion seleccionado si existe en localStorage
-    const guionSeleccionado = localStorage.getItem('guionSeleccionado');
-    if (guionSeleccionado) {
-        select.value = guionSeleccionado;
+        guiones.forEach(g => {
+            const option = document.createElement('option');
+            option.value = g.id;
+            option.textContent = g.nombre;
+            select.appendChild(option);
+        });
+
+        // Establecer el guion seleccionado si existe en localStorage
+        const guionSeleccionado = localStorage.getItem('guionSeleccionado');
+        if (guionSeleccionado) {
+            select.value = guionSeleccionado;
+        }
+
+        return guiones; // Devolver la lista de guiones
+    } catch (error) {
+        console.error('Error al cargar guiones en select:', error);
+        throw error;
     }
 }
 
@@ -484,7 +556,7 @@ function inicializarSortable() {
         draggable: textoPrincipalSelector,
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
-        onStart: function(evt) {
+        onStart: function (evt) {
             if (isUpdating) return false;
             evt.item._graphs = [];
             let next = evt.item.nextElementSibling;
@@ -493,7 +565,7 @@ function inicializarSortable() {
                 next = next.nextElementSibling;
             }
         },
-        onEnd: async function(evt) {
+        onEnd: async function (evt) {
             if (isUpdating || !evt.item.classList.contains('texto-principal')) return;
             isUpdating = true;
 
@@ -513,8 +585,8 @@ function inicializarSortable() {
                         const invertY = currentRect.top - newRect.top;
 
                         const animation = graph.animate([
-                            { transform: `translate(${invertX}px, ${invertY}px)` },
-                            { transform: 'translate(0, 0)' }
+                            {transform: `translate(${invertX}px, ${invertY}px)`},
+                            {transform: 'translate(0, 0)'}
                         ], {
                             duration: 150,
                             easing: 'ease-out'
@@ -588,3 +660,13 @@ async function actualizarNumerosNota(textosIds) {
         });
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const id = localStorage.getItem('guionSeleccionado');
+    if (id) {
+        seleccionarGuion(id);
+    } else {
+        // Limpiar la tabla si no hay guion seleccionado
+        seleccionarGuion(null);
+    }
+});

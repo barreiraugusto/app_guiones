@@ -95,7 +95,9 @@
             <!-- Logo o nombre de la aplicación (opcional) -->
             <a class="navbar-brand" href="#">Guiones</a>
             <div class="d-flex">
-                {#                <button class="btn btn-warning mr-2" onclick="exportarAPDF()">Exportar</button>#}
+                <button class="btn btn-warning mr-2" onclick="exportarAPDF()">Exportar PDF</button>
+                <!-- NUEVO BOTÓN PARA EXPORTAR TEXTO -->
+                <button class="btn btn-info mr-2" onclick="exportarTexto()">Exportar Texto</button>
                 <a href="/listado_guiones">
                     <button class="btn btn-primary mr-2">Guiones</button>
                 </a>
@@ -137,4 +139,120 @@
         <p>Generando PDF, por favor espera...</p>
         <div class="spinner"></div> <!-- Puedes reemplazar esto por un gif o algo más -->
     </div>
+
+
+    <script>
+        // Función para exportar a texto plano
+        async function exportarTexto() {
+            const guionId = document.getElementById('guion-data').getAttribute('data-guion-id');
+
+            // Mostrar loader
+            document.getElementById('loader').style.display = 'block';
+
+            try {
+                // Obtener los datos del guion
+                const response = await fetch(`/guiones/${guionId}/texto_completo`);
+                if (!response.ok) {
+                    throw new Error('Error al obtener los datos del guion');
+                }
+
+                const data = await response.json();
+
+                // ORDENAR las notas por número_de_nota antes de procesarlas
+                const textosOrdenados = data.textos.sort((a, b) => {
+                    // Convertir a números para ordenar numéricamente en lugar de alfabéticamente
+                    const numA = parseInt(a.numero_de_nota) || 0;
+                    const numB = parseInt(b.numero_de_nota) || 0;
+                    return numA - numB;
+                });
+
+                // Crear el contenido del texto
+                let contenidoTexto = '';
+
+                // Recorrer cada texto (nota) ORDENADA
+                textosOrdenados.forEach((texto, index) => {
+                    contenidoTexto += `---------------------- NOTA ${texto.numero_de_nota || index + 1} ----------------------------\n`;
+
+                    // Agregar todos los graphs de esta nota
+                    if (texto.graphs && texto.graphs.length > 0) {
+                        texto.graphs.forEach(graph => {
+                            // Lugar
+                            if (graph.lugar) {
+                                contenidoTexto += graph.lugar + '\n';
+                            }
+
+                            // Tema (si existe)
+                            if (graph.tema) {
+                                contenidoTexto += graph.tema + '\n';
+                            }
+
+                            // Bajadas
+                            if (graph.bajadas && graph.bajadas.length > 0) {
+                                graph.bajadas.forEach(bajada => {
+                                    contenidoTexto += bajada + '\n';
+                                });
+                            }
+
+                            // Entrevistados y citas
+                            if (graph.entrevistados && graph.entrevistados.length > 0) {
+                                graph.entrevistados.forEach(entrevistado => {
+                                    if (entrevistado.nombre) {
+                                        contenidoTexto += entrevistado.nombre + '\n';
+                                    }
+
+                                    if (entrevistado.citas && entrevistado.citas.length > 0) {
+                                        entrevistado.citas.forEach(cita => {
+                                            contenidoTexto += cita + '\n';
+                                        });
+                                    }
+                                });
+                            }
+
+                            contenidoTexto += '\n'; // Separador entre graphs
+                        });
+                    } else {
+                        contenidoTexto += '# No hay graphs para esta nota\n\n';
+                    }
+
+                    // Agregar el código de la nota
+                    contenidoTexto += 'CODIGO:\n';
+                    if (texto.material) {
+                        contenidoTexto += `"${texto.material}"\n`;
+                    } else {
+                        contenidoTexto += '# No hay código para esta nota\n';
+                    }
+
+                    contenidoTexto += '\n\n'; // Separador entre notas
+                });
+
+                const nombreArchivo = limpiarNombreArchivo(data.nombre);
+
+                // Crear y descargar el archivo
+                const blob = new Blob([contenidoTexto], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${nombreArchivo}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+            } catch (error) {
+                console.error('Error al exportar texto:', error);
+                alert('Error al exportar el texto: ' + error.message);
+            } finally {
+                // Ocultar loader
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        // Función para limpiar caracteres no válidos en nombres de archivo
+        function limpiarNombreArchivo(nombre) {
+            return nombre
+                .replace(/[<>:"/\\|?*]/g, '') // Eliminar caracteres no permitidos en nombres de archivo
+                .replace(/\s+/g, '_')         // Reemplazar espacios con guiones bajos
+                .trim();
+        }
+    </script>
 {% endblock body %}

@@ -18,10 +18,10 @@
         <div class="container-fluid">
             <!-- Logo o nombre de la aplicación (opcional) -->
             <a class="navbar-brand" href="#">Guiones</a>
-                <a href="/">
-                    <button class="btn btn-success">Menu</button>
-                </a>
-            </div>
+            <a href="/">
+                <button class="btn btn-success">Menu</button>
+            </a>
+        </div>
         </div>
     </nav>
     <div class="card shadow p-1 m-2 rounded">
@@ -47,8 +47,6 @@
                             <a href="{{ url_for('guiones.ver_guion', id=guion.id) }}">
                                 <button class="btn btn-outline-primary"><i class="fas fa-eye"></i></button>
                             </a>
-                            <button class="btn btn-outline-danger" onclick="borrarGuion({{ guion.id }})"><i
-                                    class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 {% endfor %}

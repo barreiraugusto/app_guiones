@@ -3,124 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ guion.nombre }}</title>
+    <title>{{ guion.nombre }} - PDF</title>
     <style>
         @page {
-            size: A4; /* Tamaño de la página (opcional) */
-            margin: 0.1cm; /* Márgenes de 0.5 cm en todos los lados */
+            size: A4;
+            margin: 1cm;
         }
 
         body {
             font-family: Arial, sans-serif;
-            padding-top: 20px;
-            margin: 0;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
         }
 
-        .card {
-            border: 0;
-            padding: 20px;
-            margin-bottom: 20px;
+        .header {
+            text-align: center;
+            margin-bottom: 10px; /* Reducido el margen inferior */
+            padding-bottom: 5px; /* Reducido el padding */
+            border-bottom: 2px solid #333;
         }
 
-        .card-header h2 {
-            padding: 0.75rem 1.25rem;
-            margin-bottom: 0;
-            background-color: rgba(0, 0, 0, 0.03);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        .header h1 {
+            font-size: 18px;
+            margin: 0 0 5px 0; /* Margen inferior reducido */
+            color: #2c3e50;
+            page-break-after: avoid; /* Evitar salto después del título */
         }
 
-        .card-header em {
-            font-size: 14px;
-            color: #666;
+        .header .descripcion {
+            font-style: italic;
+            color: #7f8c8d;
+            page-break-after: avoid; /* Evitar salto después de la descripción */
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            table-layout: fixed;
-            font-size: 12px;
+            margin-bottom: 15px;
+            page-break-inside: auto; /* Permitir saltos dentro de la tabla */
+        }
+
+        tr {
+            page-break-inside: avoid; /* Evitar que las filas se dividan */
+            page-break-after: auto;
         }
 
         th, td {
             border: 1px solid #ddd;
-            padding: 5px;
+            padding: 8px;
             text-align: left;
-            word-wrap: break-word;
-            overflow: hidden; /* Ocultar contenido que desborda */
-        }
-
-        /* Opcional: agregar tooltip para contenido cortado */
-        td:hover {
-            overflow: visible;
-            white-space: normal;
-            z-index: 100;
-            position: relative;
-            background: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .custom-cell {
-            background-color: #6c757d; /* bg-secondary */
-            color: #ffffff; /* text-white */
-            text-align: center; /* text-center */
-        }
-
-        .custom-bg-light {
-            background-color: #f8f9fa; /* Equivalente a bg-light */
+            vertical-align: top;
         }
 
         th {
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
+            font-weight: bold;
         }
 
+        .nota-numero {
+            font-weight: bold;
+            text-align: center;
+            background-color: #e9ecef;
+        }
+
+        .grabar {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .graph-container {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #007bff;
+            background-color: #f8f9fa;
+            page-break-inside: avoid; /* Evitar que los graphs se dividan */
+        }
+
+        .graph-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+
+        .bajadas, .entrevistados {
+            margin-left: 15px;
+        }
+
+        .bajadas ul, .entrevistados ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+
+        .codigo {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border: 1px solid #dee2e6;
+            margin-top: 5px;
+        }
+
+        .footer {
+            margin-top: 20px; /* Reducido el margen superior */
+            text-align: center;
+            font-size: 10px;
+            color: #6c757d;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            page-break-before: avoid; /* Evitar salto antes del footer */
+        }
+
+        /* ELIMINADO: Estilos de estados de las notas (activo, emitido) */
+        /* Se quita el coloreado para texto activo/emitido */
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+
+        /* Mejoras para evitar saltos de página no deseados */
+        .avoid-page-break {
+            page-break-inside: avoid;
+        }
+
+        .keep-together {
+            page-break-inside: avoid;
+        }
     </style>
 </head>
 <body>
-<div class="card">
-    <div class="card-header">
-        <h4>{{ guion.nombre }}</h4>
-        <em>{{ guion.descripcion }}</em>
+    <div class="header avoid-page-break">
+        <h1>{{ guion.nombre }}</h1>
+        {% if guion.descripcion %}
+        <div class="descripcion">{{ guion.descripcion }}</div>
+        {% endif %}
     </div>
-    <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
+
     <table>
         <thead>
-        <tr>
-            <th scope="col" style="width: 5%">Nº</th>
-            <th scope="col" style="width: 10%">Descripcion/Seccion</th>
-            <th scope="col" style="width: 50%">Graf/Copete</th>
-            <th scope="col" style="width: 20%">Codigo</th>
-            <th scope="col" style="width: 10%">Musica</th>
-        </tr>
+            <tr>
+                <th style="width: 5%">Nº</th>
+                <th style="width: 15%">Descripción/Sección</th>
+                <th style="width: 60%">Graf/Copete</th>
+                <th style="width: 20%">Código</th>
+            </tr>
         </thead>
         <tbody>
-        {% for texto in guion.textos %}
-            <tr>
-                <td class="custom-cell">{{ texto.numero_de_nota }}</td>
-                <td>{{ texto.titulo }}</td>
-                <td>{{ texto.contenido | safe }}</td>
-                <td>{{ texto.material }}</td>
-                <td>{{ texto.musica }}</td>
+            {% for texto in guion.textos %}
+            <!-- ELIMINADO: class="{% if texto.emitido %}emitido{% elif texto.activo %}activo{% endif %}" -->
+            <!-- Se quita el coloreado de filas -->
+            <tr class="keep-together">
+                <td class="nota-numero">{{ texto.numero_de_nota }}</td>
+                <td>
+                    <strong>{{ texto.titulo }}</strong>
+                    {% if texto.grabar %}
+                    <div class="grabar">GRABAR</div>
+                    {% endif %}
+                    {% if texto.musica %}
+                    <div><small>Música: {{ texto.musica }}</small></div>
+                    {% endif %}
+                    {% if texto.duracion and texto.duracion != '00:00' %}
+                    <div><small>Duración: {{ texto.duracion }}</small></div>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if texto.contenido %}
+                    <div>{{ texto.contenido|safe }}</div>
+                    {% endif %}
+
+                    {% if texto.graphs %}
+                        {% for graph in texto.graphs %}
+                        <div class="graph-container avoid-page-break">
+                            {% if graph.lugar %}
+                            <div class="graph-title">Lugar: {{ graph.lugar }}</div>
+                            {% endif %}
+
+                            {% if graph.tema %}
+                            <div><strong>Tema:</strong> {{ graph.tema }}</div>
+                            {% endif %}
+
+                            {% if graph.bajadas %}
+                            <div class="bajadas">
+                                <strong>Bajadas:</strong>
+                                <ul>
+                                    {% for bajada in graph.bajadas %}
+                                    <li>{{ bajada.texto }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if graph.citas %}
+                            <div class="entrevistados">
+                                <strong>Entrevistados:</strong>
+                                {% set entrevistados = {} %}
+                                {% for cita in graph.citas %}
+                                    {% if cita.entrevistado.nombre not in entrevistados %}
+                                        {% set _ = entrevistados.update({cita.entrevistado.nombre: []}) %}
+                                    {% endif %}
+                                    {% set _ = entrevistados[cita.entrevistado.nombre].append(cita.texto) %}
+                                {% endfor %}
+
+                                {% for nombre, citas in entrevistados.items() %}
+                                <div class="avoid-page-break">
+                                    <strong>{{ nombre }}:</strong>
+                                    <ul>
+                                        {% for cita in citas %}
+                                        <li>{{ cita }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if texto.material %}
+                    <div class="codigo">{{ texto.material }}</div>
+                    {% else %}
+                    <div class="text-muted">Sin código</div>
+                    {% endif %}
+                </td>
             </tr>
-            {% if texto.graphs %}
-                {% for graph in texto.graphs %}
-                    <tr>
-                        <td></td>
-                        <td class="custom-bg-light" colspan="4">
-                            <strong>Graph {{ loop.index }}</strong><br>
-                            <hr>
-                            <strong>Lugar:</strong> {{ graph.lugar }}<br>
-                            <strong>Tema:</strong> {{ graph.tema }}<br>
-                            <strong>Entrevistado:</strong> {{ graph.entrevistado }}<br>
-                            <strong>Primera Línea:</strong> {{ graph.primera_linea }}<br>
-                            <strong>Segunda Línea:</strong> {{ graph.segunda_linea }}<br>
-                        </td>
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        {% endfor %}
+            {% endfor %}
         </tbody>
     </table>
-</div>
+
+    <div class="footer">
+        Generado el {{ ahora.strftime('%d/%m/%Y %H:%M') }} | SIGPRO
+    </div>
 </body>
 </html>

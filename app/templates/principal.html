@@ -183,6 +183,60 @@
             background-color: #6c757d !important;
             color: white !important;
         }
+
+        /* Estilos para el modal de selección de guiones */
+        #listaGuionesModal {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .list-group-item {
+            transition: all 0.2s;
+        }
+
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Ajustes responsivos */
+        @media (max-width: 768px) {
+            #seleccionarGuionModal .modal-dialog {
+                margin: 10px;
+                width: calc(100% - 20px);
+            }
+        }
+
+        /* Estilos para los dropdowns del navbar */
+        .navbar .dropdown-menu {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: all 0.2s;
+        }
+
+        .navbar .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: #0056b3;
+        }
+
+        /* Ajustar espaciado en dispositivos móviles */
+        @media (max-width: 991px) {
+            .navbar .dropdown {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .navbar .dropdown .btn {
+                width: 100%;
+            }
+
+            .navbar .dropdown-menu {
+                width: 100%;
+            }
+        }
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
@@ -231,16 +285,38 @@
                         <div id="cronometro" class="h3 p-0 ml-2 mb-0 text-white">00:00:00</div>
                     </div>
 
-                    <!-- Botones originales -->
-                    <button type="button" class="btn btn-primary mr-2 mb-2 mb-lg-0" data-toggle="modal"
-                            data-target="#formularioGuionModal">
-                        Nuevo Guion
-                    </button>
-                    <button id="botonFlotante" class="btn btn-primary mr-2 mb-2 mb-lg-0">Agregar Nota</button>
-                    <button type="button" class="btn btn-primary mr-2 mb-2 mb-lg-0" data-toggle="modal"
-                            data-target="#formularioGraphModal">
-                        Agregar Graph
-                    </button>
+                    <!-- Dropdown para Guiones -->
+                    <div class="dropdown mr-2 mb-2 mb-lg-0">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownGuion"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Guion
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownGuion">
+                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGuionModal">
+                                <i class="fas fa-plus mr-1"></i> Nuevo
+                            </a>
+                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#seleccionarGuionModal">
+                                <i class="fas fa-folder-open mr-1"></i> Seleccionar
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown para Agregar -->
+                    <div class="dropdown mr-2 mb-2 mb-lg-0">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownAgregar"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Agregar
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownAgregar">
+                            {#                            <a class="dropdown-item" href="#" id="dropdownAgregarNota">#}
+                            {#                                <i class="fas fa-sticky-note mr-1"></i> Nota#}
+                            {#                            </a>#}
+                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGraphModal">
+                                <i class="fas fa-chart-bar mr-1"></i> Graph
+                            </a>
+                        </div>
+                    </div>
+
                     <button onclick="window.location.href='/'" class="btn btn-success">Menu</button>
                 </div>
             </div>
@@ -248,6 +324,18 @@
     </nav>
     <div class="row">
         <div class="col-lg-6 col-12 mt-lg-2 mt-4 pr-0">
+            <div class="card shadow rounded w-100" style="display: none;">
+                <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
+                    <h4 class="m-0">Guiones</h4>
+                    <button type="button" class="btn btn-light btn-sm" data-toggle="modal"
+                            data-target="#seleccionarGuionModal">
+                        <i class="fas fa-folder-open"></i> Seleccionar Guion
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p id="guionSeleccionadoInfo" class="text-muted">Ningún guion seleccionado</p>
+                </div>
+            </div>
             <!-- Formulario para agregar Notas -->
             <div id="formularioTextoContainer" class="card shadow p-1 rounded">
                 <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
@@ -257,7 +345,7 @@
                     </div>
                     <div class="card-body">
                         <!-- Fila aparte para el select -->
-                        <div class="row">
+                        <div class="row" style="display: none;">
                             <div class="col">
                                 <label for="guion_id">Guion:</label>
                                 <select class="form-control" id="guion_id">
@@ -324,7 +412,7 @@
                         <!-- Campo para el contenido -->
                         <div class="form-group">
                             <label for="contenido">Copete/Contenido:</label>
-                            <div id="contenido" style="height: 400px" class="form-control"></div>
+                            <div id="contenido" style="height: 300px" class="form-control"></div>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -345,17 +433,8 @@
         </div>
         <div class="col-lg-6 col-12 mt-lg-2 mt-4 d-flex flex-column gap-3">
             <div class="row p-1 rounded">
-                <!-- Lista de guiones -->
-                <div class="card shadow rounded w-100">
-                    <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
-                        <h4 class="m-0">Guiones</h4>
-                    </div>
-                    <div class="card-body">
-                        <div id="listaGuiones" class="container-fluid"></div>
-                    </div>
-                </div>
                 <!-- Guion -->
-                <div class="card shadow rounded w-100">
+                <div class="card shadow rounded">
                     <div class="card-body">
                         <h3 id="encabezado"></h3>
                         <table class="table table-responsive" id="tablaTextos">
@@ -514,6 +593,36 @@
                     <button type="submit" class="btn btn-outline-success" id="botonGuardarGuion" form="formularioGuion">
                         Crear Guion
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para selección de guiones -->
+    <div class="modal fade" id="seleccionarGuionModal" tabindex="-1" role="dialog"
+         aria-labelledby="seleccionarGuionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white bg-primary">
+                    <h5 class="modal-title" id="seleccionarGuionModalLabel">Seleccionar Guion</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="buscarGuion" placeholder="Buscar guion..."
+                               onkeyup="filtrarGuiones()">
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                    <div class="list-group" id="listaGuionesModal">
+                        <!-- Los guiones se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

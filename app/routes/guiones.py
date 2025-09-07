@@ -220,19 +220,29 @@ def borrar_guion(id):
 @guiones_bp.route('/exportar_pdf/<int:guion_id>')
 def exportar_pdf(guion_id):
     try:
-        # Obtener el guion de la base de datos
-        guion = Guion.query.get_or_404(guion_id)
+        from datetime import datetime
+
+        # Obtener el guion con todos sus textos y relaciones
+        guion = Guion.query.options(
+            joinedload(Guion.textos).joinedload(Texto.graphs).joinedload(Graph.bajadas),
+            joinedload(Guion.textos).joinedload(Texto.graphs).joinedload(Graph.citas).joinedload(Cita.entrevistado)
+        ).get_or_404(guion_id)
+
+        # Ordenar textos por número_de_nota
+        guion.textos = sorted(guion.textos, key=lambda x: x.numero_de_nota or 0)
+
+        # Obtener la fecha y hora actual
+        ahora = datetime.now()
 
         # Renderizar el template HTML con los datos del guion
-        html = render_template('guion_pdf.html', guion=guion)
+        html = render_template('guion_pdf.html', guion=guion, ahora=ahora)
 
         # Crear un objeto HTML con WeasyPrint
         pdf = HTML(string=html).write_pdf()
 
         # Limpiar el nombre del guion para usarlo como nombre de archivo
-        nombre_archivo = guion.nombre.replace("/", "_").replace("\\", "_").replace(":",
-                                                                                   "_")  # Reemplazar caracteres no válidos
-        nombre_archivo = nombre_archivo.replace(" ", "_")  # Reemplazar espacios con guiones bajos
+        nombre_archivo = guion.nombre.replace("/", "_").replace("\\", "_").replace(":", "_")
+        nombre_archivo = nombre_archivo.replace(" ", "_")
 
         # Crear una respuesta con el PDF
         response = make_response(pdf)
@@ -244,3 +254,63 @@ def exportar_pdf(guion_id):
         # Registrar el error y devolver una respuesta de error
         print(f"Error al generar el PDF: {e}")
         return "Error al generar el PDF", 500
+
+
+@guiones_bp.route('/guiones/<int:id>/texto_completo', methods=['GET'])
+def obtener_texto_completo_guion(id):
+    try:
+        guion = Guion.query.options(
+            joinedload(Guion.textos).joinedload(Texto.graphs).joinedload(Graph.bajadas),
+            joinedload(Guion.textos).joinedload(Texto.graphs).joinedload(Graph.citas).joinedload(Cita.entrevistado)
+        ).get(id)
+
+        if not guion:
+            return jsonify({"mensaje": "Guion no encontrado"}), 404
+
+        # Preparar los datos para la respuesta
+        datos_guion = {
+            "id": guion.id,
+            "nombre": guion.nombre,
+            "textos": []
+        }
+
+        for texto in guion.textos:
+            texto_data = {
+                "id": texto.id,
+                "numero_de_nota": texto.numero_de_nota,
+                "titulo": texto.titulo,
+                "material": texto.material,
+                "graphs": []
+            }
+
+            for graph in texto.graphs:
+                # Procesar bajadas
+                bajadas = [b.texto for b in graph.bajadas]
+
+                # Procesar entrevistados y citas
+                entrevistados_dict = {}
+                for cita in graph.citas:
+                    nombre = cita.entrevistado.nombre
+                    if nombre not in entrevistados_dict:
+                        entrevistados_dict[nombre] = []
+                    entrevistados_dict[nombre].append(cita.texto)
+
+                entrevistados = [{"nombre": nombre, "citas": citas}
+                                 for nombre, citas in entrevistados_dict.items()]
+
+                graph_data = {
+                    "id": graph.id,
+                    "lugar": graph.lugar,
+                    "tema": graph.tema,
+                    "bajadas": bajadas,
+                    "entrevistados": entrevistados
+                }
+
+                texto_data["graphs"].append(graph_data)
+
+            datos_guion["textos"].append(texto_data)
+
+        return jsonify(datos_guion)
+
+    except Exception as e:
+        return jsonify({"mensaje": f"Error al obtener el texto completo: {str(e)}"}), 500
