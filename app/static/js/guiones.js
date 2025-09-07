@@ -670,3 +670,302 @@ document.addEventListener('DOMContentLoaded', function () {
         seleccionarGuion(null);
     }
 });
+
+$(document).ready(function() {
+    $('#modalClonarNotas').on('shown.bs.modal', function () {
+        console.log('Modal visible, cargando datos...');
+        cargarNotasYGuiones();
+    });
+});
+
+// Variables globales
+let notasDisponibles = [];
+let guionesDisponibles = [];
+
+let modalCargado = false;
+
+$('#modalClonarNotas').on('show.bs.modal', function () {
+    if (!modalCargado) {
+        setTimeout(() => {
+            cargarNotasYGuiones();
+            modalCargado = true;
+        }, 300);
+    }
+});
+
+// Resetear cuando se cierra el modal
+$('#modalClonarNotas').on('hidden.bs.modal', function () {
+    modalCargado = false;
+
+    // Limpiar para la próxima vez
+    notasDisponibles = [];
+    guionesDisponibles = [];
+
+    const container = document.getElementById('listaNotasClonar');
+    const select = document.getElementById('guionDestinoClonar');
+
+    if (container) container.innerHTML = '';
+    if (select) select.innerHTML = '<option value="">Seleccionar guion destino</option>';
+});
+
+// Función para cargar notas del guion actual y otros guiones
+async function cargarNotasYGuiones() {
+    try {
+        const guionActualId = localStorage.getItem('guionSeleccionado');
+
+        if (!guionActualId) {
+            throw new Error('No hay ningún guion seleccionado. Por favor, selecciona un guion primero.');
+        }
+
+        // Ejecutar ambas peticiones en paralelo
+        const [notasResponse, guionesResponse] = await Promise.all([
+            fetch(`/guiones/${guionActualId}`),
+            fetch(`/guiones/obtener_guiones?excluir_actual=${guionActualId}`)
+        ]);
+
+        // Verificar respuestas
+        if (!notasResponse.ok) throw new Error(`Error al cargar notas: ${notasResponse.status}`);
+        if (!guionesResponse.ok) throw new Error(`Error al cargar guiones: ${guionesResponse.status}`);
+
+        // Procesar respuestas
+        const guionData = await notasResponse.json();
+        const guionesData = await guionesResponse.json();
+
+        // Asegurarnos de usar la propiedad correcta (textos con x)
+        notasDisponibles = guionData.textos || [];
+        guionesDisponibles = guionesData;
+
+        // Actualizar interfaz
+        actualizarListaNotas();
+        actualizarSelectGuiones();
+        actualizarResumen();
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarErrorEnModal(error.message);
+
+        // Mostrar error en la lista
+        const container = document.getElementById('listaNotasClonar');
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error:</strong> ${error.message}
+                </div>
+            `;
+        }
+
+        // Mostrar error en el select
+        const select = document.getElementById('guionDestinoClonar');
+        if (select) {
+            select.innerHTML = '<option value="">Error al cargar</option>';
+        }
+    }
+}
+
+// Función para probar las rutas manualmente
+async function probarRutas() {
+    try {
+        const guionActualId = localStorage.getItem('guionSeleccionado');
+        console.log('=== PRUEBA DE RUTAS ===');
+
+        // Probar ruta de guiones
+        console.log('Probando /guiones/obtener_guiones...');
+        const response = await fetch(`/guiones/obtener_guiones?excluir_actual=${guionActualId}`);
+        console.log('Status:', response.status);
+        console.log('Headers:', response.headers);
+        const data = await response.json().catch(e => console.log('No JSON response:', e));
+        console.log('Data:', data);
+
+    } catch (error) {
+        console.error('Error en prueba de rutas:', error);
+    }
+}
+
+// Actualizar lista de notas
+function actualizarListaNotas() {
+    const container = document.getElementById('listaNotasClonar');
+    if (!container) return;
+
+    if (notasDisponibles.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-info-circle"></i>
+                No hay notas disponibles en el guion actual.
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    notasDisponibles.forEach(nota => {
+        html += `
+            <div class="form-check">
+                <input class="form-check-input nota-checkbox" type="checkbox" 
+                       value="${nota.id}" id="nota-${nota.id}" onchange="actualizarResumen()">
+                <label class="form-check-label" for="nota-${nota.id}" style="cursor: pointer;">
+                    <strong>Nota ${nota.numero_de_nota}:</strong> ${nota.titulo}
+                    ${nota.graphs && nota.graphs.length > 0 ?
+            `<span class="badge badge-info ml-1">${nota.graphs.length} graph(s)</span>` : ''}
+                </label>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// Actualizar select de guiones destino
+function actualizarSelectGuiones() {
+    const select = document.getElementById('guionDestinoClonar');
+    if (!select) return;
+
+    if (guionesDisponibles.length === 0) {
+        select.innerHTML = '<option value="">No hay otros guiones disponibles</option>';
+        return;
+    }
+
+    let html = '<option value="">Seleccionar guion destino</option>';
+    guionesDisponibles.forEach(guion => {
+        html += `<option value="${guion.id}">${guion.nombre}</option>`;
+    });
+
+    select.innerHTML = html;
+    select.onchange = actualizarResumen;
+}
+
+// Mostrar error en el modal
+function mostrarErrorEnModal(mensaje) {
+    const errorDiv = document.getElementById('errorModal');
+    const errorText = document.getElementById('errorText');
+
+    if (errorDiv && errorText) {
+        errorText.textContent = mensaje;
+        errorDiv.classList.remove('d-none');
+    }
+}
+
+// Actualizar resumen y habilitar/deshabilitar botón
+function actualizarResumen() {
+    const notasSeleccionadas = document.querySelectorAll('.nota-checkbox:checked');
+    const guionDestinoId = document.getElementById('guionDestinoClonar').value;
+    const btnClonar = document.getElementById('btnClonarNotas');
+    const resumen = document.getElementById('resumenClonacion');
+
+    if (notasSeleccionadas.length > 0 && guionDestinoId) {
+        const guionDestino = guionesDisponibles.find(g => g.id == guionDestinoId);
+        resumen.innerHTML = `
+            <i class="fas fa-check-circle text-success"></i> 
+            <strong>Listo para clonar:</strong><br>
+            • ${notasSeleccionadas.length} nota(s) seleccionada(s)<br>
+            • Guion destino: <strong>${guionDestino.nombre}</strong>
+        `;
+        resumen.className = 'alert alert-success';
+        btnClonar.disabled = false;
+    } else {
+        if (notasSeleccionadas.length === 0) {
+            resumen.innerHTML = '<i class="fas fa-info-circle"></i> Selecciona al menos una nota para clonar.';
+        } else {
+            resumen.innerHTML = '<i class="fas fa-info-circle"></i> Selecciona un guion destino.';
+        }
+        resumen.className = 'alert alert-info';
+        btnClonar.disabled = true;
+    }
+}
+
+// Seleccionar/Deseleccionar todas las notas
+function seleccionarTodasNotas() {
+    document.querySelectorAll('.nota-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    actualizarResumen();
+}
+
+function deseleccionarTodasNotas() {
+    document.querySelectorAll('.nota-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    actualizarResumen();
+}
+
+// Función para clonar las notas
+async function clonarNotas() {
+    const notasSeleccionadas = Array.from(document.querySelectorAll('.nota-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+
+    const guionDestinoId = document.getElementById('guionDestinoClonar').value;
+
+    if (notasSeleccionadas.length === 0 || !guionDestinoId) {
+        alert('Selecciona al menos una nota y un guion destino');
+        return;
+    }
+
+    const guionActualId = localStorage.getItem('guionSeleccionado');
+    const guionDestino = guionesDisponibles.find(g => g.id == guionDestinoId);
+
+    // Mostrar confirmación
+    const confirmacion = await Swal.fire({
+        title: '¿Confirmar clonación?',
+        html: `¿Estás seguro de clonar <b>${notasSeleccionadas.length} nota(s)</b> al guion <b>${guionDestino.nombre}</b>?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, clonar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    // Mostrar loader
+    Swal.fire({
+        title: 'Clonando notas...',
+        text: 'Por favor espera',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        const response = await fetch(`/guiones/clonar_notas/${guionActualId}/${guionDestinoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                notas_seleccionadas: notasSeleccionadas
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                html: result.mensaje,
+                confirmButtonText: 'Aceptar'
+            });
+
+            // Cerrar modal
+            $('#modalClonarNotas').modal('hide');
+
+            // Si el guion destino es el actual, recargar
+            if (guionDestinoId === localStorage.getItem('guionSeleccionado')) {
+                seleccionarGuion(guionDestinoId);
+            }
+
+        } else {
+            throw new Error(result.error || 'Error desconocido');
+        }
+
+    } catch (error) {
+        console.error('Error al clonar notas:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al clonar las notas: ' + error.message
+        });
+    }
+}

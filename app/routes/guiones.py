@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from weasyprint import HTML
 
 from .. import db
-from ..models import Guion, Texto, Graph, Cita, graph_bajada
+from ..models import Guion, Texto, Graph, Cita, graph_bajada, Bajada, Entrevistado
 
 guiones_bp = Blueprint('guiones', __name__)
 
@@ -107,6 +107,113 @@ def obtener_guion(id):
 
     except Exception as e:
         return jsonify({"mensaje": "Error interno", "error": str(e)}), 500
+
+
+@guiones_bp.route('/guiones/obtener_guiones', methods=['GET'])
+def obtener_guiones():
+    """Obtener todos los guiones excepto el actual"""
+    try:
+        guion_actual_id = request.args.get('excluir_actual', type=int)
+        guiones = Guion.query.all()
+
+        resultado = []
+        for guion in guiones:
+            if guion.id != guion_actual_id:
+                resultado.append({
+                    'id': guion.id,
+                    'nombre': guion.nombre
+                })
+
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@guiones_bp.route('/guiones/clonar_notas/<int:guion_origen_id>/<int:guion_destino_id>', methods=['POST'])
+def clonar_notas(guion_origen_id, guion_destino_id):
+    """Clonar notas de un guion a otro directamente"""
+    try:
+        guion_origen = Guion.query.options(
+            joinedload(Guion.textos).joinedload(Texto.graphs).joinedload(Graph.bajadas),
+            joinedload(Guion.textos).joinedload(Texto.graphs).joinedload(Graph.citas).joinedload(Cita.entrevistado)
+        ).get_or_404(guion_origen_id)
+
+        guion_destino = Guion.query.get_or_404(guion_destino_id)
+
+        # Obtener IDs de notas seleccionadas del request
+        notas_seleccionadas_ids = request.json.get('notas_seleccionadas', [])
+
+        notas_clonadas = []
+
+        for texto in guion_origen.textos:
+            if str(texto.id) in notas_seleccionadas_ids:
+                # Clonar la nota
+                nueva_nota = Texto(
+                    numero_de_nota=texto.numero_de_nota,
+                    titulo=texto.titulo,
+                    contenido=texto.contenido,
+                    material=texto.material,
+                    grabar=texto.grabar,
+                    duracion=texto.duracion,
+                    musica=texto.musica,
+                    guion_id=guion_destino.id
+                )
+
+                db.session.add(nueva_nota)
+                db.session.flush()
+
+                # Clonar graphs
+                for graph in texto.graphs:
+                    nuevo_graph = Graph(
+                        lugar=graph.lugar,
+                        tema=graph.tema,
+                        texto_id=nueva_nota.id
+                    )
+
+                    db.session.add(nuevo_graph)
+                    db.session.flush()
+
+                    # Clonar bajadas
+                    for bajada in graph.bajadas:
+                        nueva_bajada = Bajada(texto=bajada.texto)
+                        nuevo_graph.bajadas.append(nueva_bajada)
+
+                    # Clonar entrevistados y citas
+                    for cita in graph.citas:
+                        # Buscar si el entrevistado ya existe en el sistema
+                        entrevistado_existente = Entrevistado.query.filter_by(
+                            nombre=cita.entrevistado.nombre
+                        ).first()
+
+                        if not entrevistado_existente:
+                            entrevistado_existente = Entrevistado(nombre=cita.entrevistado.nombre)
+                            db.session.add(entrevistado_existente)
+                            db.session.flush()
+
+                        nueva_cita = Cita(
+                            texto=cita.texto,
+                            entrevistado_id=entrevistado_existente.id,
+                            graph_id=nuevo_graph.id
+                        )
+                        db.session.add(nueva_cita)
+
+                notas_clonadas.append({
+                    'id_original': texto.id,
+                    'id_nuevo': nueva_nota.id,
+                    'titulo': nueva_nota.titulo,
+                    'numero_de_nota': nueva_nota.numero_de_nota
+                })
+
+        db.session.commit()
+
+        return jsonify({
+            'mensaje': f'Se clonaron {len(notas_clonadas)} notas al guion "{guion_destino.nombre}"',
+            'notas_clonadas': notas_clonadas
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 
 @guiones_bp.route('/guiones/<int:id>', methods=['PUT'])

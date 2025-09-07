@@ -237,6 +237,56 @@
                 width: 100%;
             }
         }
+
+        /* Estilos para la clonación de notas */
+        #listaNotasClonar .form-check {
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        #listaNotasClonar .form-check:hover {
+            background-color: #f8f9fa;
+        }
+
+        #listaNotasClonar .form-check:last-child {
+            border-bottom: none;
+        }
+
+        .nota-checkbox:checked + label {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #resumenClonacion {
+            font-size: 0.9rem;
+        }
+
+        /* Estilos para el modal de clonación */
+        #listaNotasClonar {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #listaNotasClonar .form-check {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        #listaNotasClonar .form-check:hover {
+            background-color: #f8f9fa;
+        }
+
+        #listaNotasClonar .form-check-input:checked + label {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #errorModal {
+            transition: all 0.3s ease;
+        }
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
@@ -284,6 +334,10 @@
                         <button id="detener" class="btn btn-danger btn-sm mr-2">Detener</button>
                         <div id="cronometro" class="h3 p-0 ml-2 mb-0 text-white">00:00:00</div>
                     </div>
+                    <button type="button" class="btn btn-info mr-2 mb-2 mb-lg-0" data-toggle="modal"
+                            data-target="#modalClonarNotas">
+                        <i class="fas fa-copy"></i> Clonar Notas
+                    </button>
 
                     <!-- Dropdown para Guiones -->
                     <div class="dropdown mr-2 mb-2 mb-lg-0">
@@ -623,6 +677,85 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para clonar notas -->
+    <div class="modal fade" id="modalClonarNotas" tabindex="-1" role="dialog" aria-labelledby="modalClonarNotasLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalClonarNotasLabel">Clonar Notas a otro Guion</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-info-circle"></i>
+                            Selecciona las notas a clonar y el guion destino
+                        </div>
+{#                        <div>#}
+{#                            <button class="btn btn-sm btn-outline-warning" onclick="cargarNotasYGuiones()">#}
+{#                                <i class="fas fa-sync"></i> Recargar#}
+{#                            </button>#}
+{#                            <button class="btn btn-sm btn-outline-danger" onclick="probarEndpointsNotas()">#}
+{#                                <i class="fas fa-bug"></i> Debug#}
+{#                            </button>#}
+{#                        </div>#}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><strong>Notas disponibles:</strong></label>
+                                <div id="listaNotasClonar"
+                                     style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                                    <div class="text-center py-3" id="loadingNotas">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                        <p class="mt-2">Cargando notas...</p>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="seleccionarTodasNotas()">
+                                        <i class="fas fa-check-square"></i> Seleccionar todas
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="deseleccionarTodasNotas()">
+                                        <i class="far fa-square"></i> Deseleccionar todas
+                                    </button>
+{#                                    <button class="btn btn-sm btn-outline-info" onclick="probarRutas()"#}
+{#                                            title="Diagnóstico">#}
+{#                                        <i class="fas fa-bug"></i> Diagnosticar#}
+{#                                    </button>#}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="guionDestinoClonar"><strong>Guion destino:</strong></label>
+                                <select class="form-control" id="guionDestinoClonar">
+                                    <option value="">Cargando guiones...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label><strong>Resumen:</strong></label>
+                                <div id="resumenClonacion" class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Selecciona notas y un guion destino para clonar.
+                                </div>
+                            </div>
+
+                            <button id="btnClonarNotas" class="btn btn-success btn-block" onclick="clonarNotas()"
+                                    disabled>
+                                <i class="fas fa-copy"></i> Clonar Notas Seleccionadas
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
