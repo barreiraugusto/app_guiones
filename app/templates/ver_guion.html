@@ -80,6 +80,24 @@
         #tablaTextos th:nth-child(5), #tablaTextos td:nth-child(5) {
             width: 5%;
         }
+
+        /* ===== ESTILOS PARA SEPARACIÓN DE NOTAS ===== */
+
+        /* Asegurar que las notas tengan un fondo blanco para contrastar con la línea */
+        #tablaTextos tbody tr[data-texto-id] {
+            background-color: white;
+        }
+
+        #tablaTextos tbody tr.graph-row {
+            background-color: white;
+        }
+
+        /* Mejorar el aspecto general de la tabla */
+        #tablaTextos {
+            border-spacing: 0 8px;
+        }
+
+
     </style>
 {% endblock extra_style %}
 {% block extra_script %}

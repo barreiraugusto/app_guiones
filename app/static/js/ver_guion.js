@@ -17,39 +17,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Función para actualizar la tabla
     function actualizarTabla(textos) {
-        const tbody = document.querySelector('#tablaTextos tbody');
-        const textosFiltrados = textos.filter(t => t.guion_id == guionId);
+    const tbody = document.querySelector('#tablaTextos tbody');
+    const textosFiltrados = textos.filter(t => t.guion_id == guionId);
 
-        // Ordenar los textos por "numero_de_nota"
-        textosFiltrados.sort((a, b) => a.numero_de_nota - b.numero_de_nota);
+    // Ordenar los textos por "numero_de_nota"
+    textosFiltrados.sort((a, b) => a.numero_de_nota - b.numero_de_nota);
 
-        // Crear un mapa de los textos actuales
-        const textosMap = new Map(textosFiltrados.map(t => [t.id, t]));
+    // Crear un mapa de los textos actuales
+    const textosMap = new Map(textosFiltrados.map(t => [t.id, t]));
 
-        // Eliminar filas que ya no están en los datos
-        document.querySelectorAll('#tablaTextos tr[data-texto-id]').forEach(fila => {
-            if (!textosMap.has(Number(fila.getAttribute('data-texto-id')))) {
-                fila.remove();
-            }
-        });
+    // Eliminar filas que ya no están en los datos (notas y separadores)
+    document.querySelectorAll('#tablaTextos tr[data-texto-id], #tablaTextos tr.linea-separadora').forEach(fila => {
+        if (fila.classList.contains('linea-separadora') ||
+            !textosMap.has(Number(fila.getAttribute('data-texto-id')))) {
+            fila.remove();
+        }
+    });
 
-        // Actualizar o agregar filas
-        textosFiltrados.forEach(t => {
-            let filaTexto = tbody.querySelector(`tr[data-texto-id="${t.id}"]`);
-            const numGraphs = t.graphs ? t.graphs.length : 0;
-            const rowspanValue = numGraphs > 0 ? numGraphs + 1 : 1; // +1 para incluir la fila del texto
+    // Actualizar o agregar filas
+    textosFiltrados.forEach((t, index) => {
+        let filaTexto = tbody.querySelector(`tr[data-texto-id="${t.id}"]`);
+        const numGraphs = t.graphs ? t.graphs.length : 0;
+        const rowspanValue = numGraphs > 0 ? numGraphs + 1 : 1;
 
-            if (!filaTexto) {
-                filaTexto = document.createElement('tr');
-                filaTexto.setAttribute('data-texto-id', t.id);
-                tbody.appendChild(filaTexto);
-            }
+        if (!filaTexto) {
+            filaTexto = document.createElement('tr');
+            filaTexto.setAttribute('data-texto-id', t.id);
+            tbody.appendChild(filaTexto);
+        }
 
-            // Convertir URLs en materialf
-            const materialContent = convertirUrlsEnEnlaces(t.material || '');
+        // Convertir URLs en material
+        const materialContent = convertirUrlsEnEnlaces(t.material || '');
 
-            // Actualizar contenido del texto
-            filaTexto.innerHTML = `
+        // Actualizar contenido del texto
+        filaTexto.innerHTML = `
             <td rowspan="${rowspanValue}" class="text-center"><h3>${t.numero_de_nota}</h3></td>
             <td>
                 <strong>${t.titulo}</strong>
@@ -59,39 +60,39 @@ document.addEventListener('DOMContentLoaded', function () {
             <td>${materialContent}</td>
         `;
 
-            // Procesar graphs del texto
-            if (t.graphs && t.graphs.length > 0) {
-                // Eliminar graphs existentes de este texto
-                document.querySelectorAll(`tr[data-graph-parent="${t.id}"]`).forEach(el => el.remove());
+        // Procesar graphs del texto
+        if (t.graphs && t.graphs.length > 0) {
+            // Eliminar graphs existentes de este texto
+            document.querySelectorAll(`tr[data-graph-parent="${t.id}"]`).forEach(el => el.remove());
 
-                // Ordenar los graphs por ID antes de procesarlos
-                const graphsOrdenados = [...t.graphs].sort((a, b) => (a.id || 0) - (b.id || 0)).reverse();
+            // Ordenar los graphs por ID antes de procesarlos
+            const graphsOrdenados = [...t.graphs].sort((a, b) => (a.id || 0) - (b.id || 0)).reverse();
 
-                // Agregar nuevos graphs (ordenados por ID)
-                graphsOrdenados.forEach((g, index) => {
-                    const filaGraph = document.createElement('tr');
-                    filaGraph.setAttribute('data-graph-id', g.id);
-                    filaGraph.setAttribute('data-graph-parent', t.id);
-                    filaGraph.className = 'graph-row';
+            // Agregar nuevos graphs (ordenados por ID)
+            graphsOrdenados.forEach((g, graphIndex) => {
+                const filaGraph = document.createElement('tr');
+                filaGraph.setAttribute('data-graph-id', g.id);
+                filaGraph.setAttribute('data-graph-parent', t.id);
+                filaGraph.className = 'graph-row';
 
-                    // Ordenar bajadas por ID (ascendente)
-                    const bajadasOrdenadas = [...(g.bajadas || [])].sort((a, b) => (a.id || 0) - (b.id || 0)).reverse();
+                // Ordenar bajadas por ID (ascendente)
+                const bajadasOrdenadas = [...(g.bajadas || [])].sort((a, b) => (a.id || 0) - (b.id || 0)).reverse();
 
-                    // Procesar bajadas (sin viñetas)
-                    let bajadasContent = bajadasOrdenadas ? bajadasOrdenadas.map(b => `${b.texto || b}</br>`).join('') : '';
+                // Procesar bajadas (sin viñetas)
+                let bajadasContent = bajadasOrdenadas ? bajadasOrdenadas.map(b => `${b.texto || b}</br>`).join('') : '';
 
-                    // Procesar entrevistados y citas (sin viñetas)
-                    let entrevistadosContent = '';
-                    if (g.entrevistados && g.entrevistados.length > 0) {
-                        entrevistadosContent = g.entrevistados.map(e => `
+                // Procesar entrevistados y citas (sin viñetas)
+                let entrevistadosContent = '';
+                if (g.entrevistados && g.entrevistados.length > 0) {
+                    entrevistadosContent = g.entrevistados.map(e => `
                         <div class="m-0">
                             <strong>${e.nombre}</strong>
                             <div class="m-0">${e.citas.join('<br>')}</div>
                         </div>
                     `).join('');
-                            }
+                }
 
-                            filaGraph.innerHTML = `
+                filaGraph.innerHTML = `
                     <td></td>
                     <td colspan="2" class="p-3">
                         <div class="m-0">${g.lugar || ''}</div>
@@ -105,11 +106,29 @@ document.addEventListener('DOMContentLoaded', function () {
                     </td>
                 `;
 
-                    filaTexto.insertAdjacentElement('afterend', filaGraph);
-                });
-            }
-        });
-    }
+                filaTexto.insertAdjacentElement('afterend', filaGraph);
+            });
+        }
+
+        // AGREGAR LÍNEA SEPARADORA OSCURA Y ANCHA DESPUÉS DE TODA LA NOTA (incluyendo graphs)
+        if (index < textosFiltrados.length - 1) {
+            // Usar setTimeout para asegurar que todos los elementos se hayan insertado
+            setTimeout(() => {
+                const lineaSeparadora = document.createElement('tr');
+                lineaSeparadora.className = 'linea-separadora';
+                lineaSeparadora.innerHTML = `
+                    <td colspan="4" style="height: 3px; background-color: #495057; border: none; padding: 0;"></td>
+                `;
+
+                // Encontrar la última fila de esta nota
+                const graphRows = tbody.querySelectorAll(`tr[data-graph-parent="${t.id}"]`);
+                const lastRow = graphRows.length > 0 ? graphRows[graphRows.length - 1] : filaTexto;
+
+                lastRow.insertAdjacentElement('afterend', lineaSeparadora);
+            }, 0);
+        }
+    });
+}
 
     actualizarTiempoTotal(guionId);
 
