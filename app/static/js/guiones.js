@@ -282,7 +282,7 @@ async function seleccionarGuion(id) {
                     <strong>${t.titulo}</strong>
                     ${t.grabar ? '<div class="text-danger small font-weight-bold">GRABAR</div>' : ''}
                 </td>
-                <td>${convertirUrlsEnEnlaces(t.material || '')}</td>
+                <td>${convertirUrlsYPreservarSaltos(t.material || '')}</td>
                 <td>${t.musica}</td>
                 <td>${t.duracion}</td>
                 <td>
@@ -671,7 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     $('#modalClonarNotas').on('shown.bs.modal', function () {
         console.log('Modal visible, cargando datos...');
         cargarNotasYGuiones();
@@ -968,4 +968,17 @@ async function clonarNotas() {
             text: 'Error al clonar las notas: ' + error.message
         });
     }
+}
+
+// Función para preservar saltos de línea (convertir \n a <br>)
+function preservarSaltosDeLinea(texto) {
+    if (!texto) return '';
+    return texto.replace(/\n/g, '<br>');
+}
+
+// Función combinada que convierte URLs y preserva saltos
+function convertirUrlsYPreservarSaltos(texto) {
+    if (!texto) return '';
+    const textoConSaltos = preservarSaltosDeLinea(texto);
+    return convertirUrlsEnEnlaces(textoConSaltos);
 }
