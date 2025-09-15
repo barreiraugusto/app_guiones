@@ -711,29 +711,46 @@ $('#modalClonarNotas').on('hidden.bs.modal', function () {
 // Función para cargar notas del guion actual y otros guiones
 async function cargarNotasYGuiones() {
     try {
+        console.log('Iniciando carga de notas y guiones...');
+
         const guionActualId = localStorage.getItem('guionSeleccionado');
+        console.log('Guion actual ID:', guionActualId);
 
         if (!guionActualId) {
-            throw new Error('No hay ningún guion seleccionado. Por favor, selecciona un guion primero.');
+            mostrarErrorEnModal('No hay ningún guion seleccionado');
+            return;
         }
 
-        // Ejecutar ambas peticiones en paralelo
-        const [notasResponse, guionesResponse] = await Promise.all([
-            fetch(`/guiones/${guionActualId}`),
-            fetch(`/guiones/obtener_guiones?excluir_actual=${guionActualId}`)
-        ]);
+        // Cargar notas del guion actual
+        console.log('Cargando notas del guion actual...');
+        const responseNotas = await fetch(`/guiones/${guionActualId}`);
 
-        // Verificar respuestas
-        if (!notasResponse.ok) throw new Error(`Error al cargar notas: ${notasResponse.status}`);
-        if (!guionesResponse.ok) throw new Error(`Error al cargar guiones: ${guionesResponse.status}`);
+        if (!responseNotas.ok) {
+            throw new Error(`Error HTTP: ${responseNotas.status}`);
+        }
 
-        // Procesar respuestas
-        const guionData = await notasResponse.json();
-        const guionesData = await guionesResponse.json();
+        const guionData = await responseNotas.json();
+        console.log('Datos del guion recibidos:', guionData);
 
-        // Asegurarnos de usar la propiedad correcta (textos con x)
-        notasDisponibles = guionData.textos || [];
-        guionesDisponibles = guionesData;
+        // ORDENAR LAS NOTAS POR NÚMERO DE NOTA (de menor a mayor)
+        notasDisponibles = (guionData.textos || []).sort((a, b) => {
+            const numA = parseInt(a.numero_de_nota) || 0;
+            const numB = parseInt(b.numero_de_nota) || 0;
+            return numA - numB; // Orden ascendente
+        });
+
+        console.log('Notas ordenadas:', notasDisponibles);
+
+        // Cargar otros guiones (excluyendo el actual)
+        console.log('Cargando otros guiones...');
+        const responseGuiones = await fetch(`/guiones/obtener_guiones?excluir_actual=${guionActualId}`);
+
+        if (!responseGuiones.ok) {
+            throw new Error(`Error HTTP: ${responseGuiones.status}`);
+        }
+
+        guionesDisponibles = await responseGuiones.json();
+        console.log('Guiones disponibles recibidos:', guionesDisponibles);
 
         // Actualizar interfaz
         actualizarListaNotas();
@@ -741,24 +758,22 @@ async function cargarNotasYGuiones() {
         actualizarResumen();
 
     } catch (error) {
-        console.error('Error:', error);
-        mostrarErrorEnModal(error.message);
+        console.error('Error completo al cargar datos:', error);
 
-        // Mostrar error en la lista
+        // Mostrar error en la interfaz
         const container = document.getElementById('listaNotasClonar');
         if (container) {
             container.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Error:</strong> ${error.message}
+                    Error al cargar los datos: ${error.message}
                 </div>
             `;
         }
 
-        // Mostrar error en el select
         const select = document.getElementById('guionDestinoClonar');
         if (select) {
-            select.innerHTML = '<option value="">Error al cargar</option>';
+            select.innerHTML = '<option value="">Error al cargar guiones</option>';
         }
     }
 }
@@ -787,6 +802,9 @@ function actualizarListaNotas() {
     const container = document.getElementById('listaNotasClonar');
     if (!container) return;
 
+    // Limpiar contenedor
+    container.innerHTML = '';
+
     if (notasDisponibles.length === 0) {
         container.innerHTML = `
             <div class="alert alert-warning">
@@ -797,6 +815,7 @@ function actualizarListaNotas() {
         return;
     }
 
+    // Crear HTML para las notas ordenadas
     let html = '';
     notasDisponibles.forEach(nota => {
         html += `
@@ -805,8 +824,8 @@ function actualizarListaNotas() {
                        value="${nota.id}" id="nota-${nota.id}" onchange="actualizarResumen()">
                 <label class="form-check-label" for="nota-${nota.id}" style="cursor: pointer;">
                     <strong>Nota ${nota.numero_de_nota}:</strong> ${nota.titulo}
-                    ${nota.graphs && nota.graphs.length > 0 ?
-            `<span class="badge badge-info ml-1">${nota.graphs.length} graph(s)</span>` : ''}
+                    ${nota.graphs && nota.graphs.length > 0 ? 
+                        `<span class="badge badge-info ml-1">${nota.graphs.length} graph(s)</span>` : ''}
                 </label>
             </div>
         `;
