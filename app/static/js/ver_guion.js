@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     filaGraph.className = 'graph-row';
 
                     // Ordenar bajadas por ID (ascendente)
-                    const bajadasOrdenadas = [...(g.bajadas || [])].sort((a, b) => (a.id || 0) - (b.id || 0)).reverse();
+                    const bajadasOrdenadas = [...(g.bajadas || [])].sort((a, b) => (a.id || 0) - (b.id || 0));
 
                     // Procesar bajadas (sin viñetas)
                     let bajadasContent = bajadasOrdenadas ? bajadasOrdenadas.map(b => `${b.texto || b}</br>`).join('') : '';
