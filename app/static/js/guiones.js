@@ -267,25 +267,32 @@ async function seleccionarGuion(id) {
             filaTexto.classList.add('bg-light');
             filaTexto.setAttribute('data-texto-id', t.id);
 
+            // Verificar si el título contiene //TANDA
+            const esTanda = t.titulo && t.titulo.includes('//TANDA');
+
+            if (esTanda) {
+                filaTexto.classList.add('bloque-celeste');
+            }
+
             if (t.emitido) filaTexto.classList.replace('bg-light', 'bg-secondary');
             else if (t.activo) filaTexto.classList.replace('bg-light', 'bg-warning');
 
             filaTexto.classList.add('texto-principal');
             filaTexto.dataset.id = t.id;
             filaTexto.innerHTML = `
-                <td class="bg-secondary text-white text-center handle" style="cursor: move;">
+                <td class="${esTanda ? 'bg-info text-white' : 'bg-secondary text-white'} text-center handle" style="cursor: move;">
                     <div style="display: inline-block; padding: 5px 10px;">
                         <h5 class="m-0">${t.numero_de_nota}</h5>
                     </div>
                 </td>
-                <td>
+                <td class="${esTanda ? 'bg-info text-white' : ''}">
                     <strong>${t.titulo}</strong>
                     ${t.grabar ? '<div class="text-danger small font-weight-bold">GRABAR</div>' : ''}
                 </td>
-                <td>${convertirUrlsYPreservarSaltos(t.material || '')}</td>
-                <td>${t.musica}</td>
-                <td>${t.duracion}</td>
-                <td>
+                <td class="${esTanda ? 'bg-info text-white' : ''}">${convertirUrlsYPreservarSaltos(t.material || '')}</td>
+                <td class="${esTanda ? 'bg-info text-white' : ''}">${t.musica}</td>
+                <td class="${esTanda ? 'bg-info text-white' : ''}">${t.duracion}</td>
+                <td class="${esTanda ? 'bg-info' : ''}">
                     <div class="btn-group">
                         <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})">
                             <i class="fas fa-arrow-right"></i>
@@ -342,6 +349,11 @@ async function seleccionarGuion(id) {
                         const filaGraph = document.createElement('tr');
                         filaGraph.classList.add('graph-asociado');
 
+                        // Si el texto principal es un bloque, también colorear el graph asociado
+                        if (esTanda) {
+                            filaGraph.classList.add('bloque-celeste');
+                        }
+
                         // Procesar bajadas ordenadas - CORRECCIÓN: usar la propiedad correcta
                         let bajadasContent = '';
                         if (tieneBajadas) {
@@ -383,14 +395,14 @@ async function seleccionarGuion(id) {
                         ].filter(Boolean).join('\n\n');
 
                         filaGraph.innerHTML = `
-                            <td></td>
-                            <td></td>
-                            <td class="bg-light p-0" colspan="4">
+                            <td class="${esTanda ? 'bg-info' : ''}"></td>
+                            <td class="${esTanda ? 'bg-info' : ''}"></td>
+                            <td class="${esTanda ? 'bg-info text-white' : 'bg-light'} p-0" colspan="4">
                                 <details>
-                                    <summary class="bg-light" style="cursor: pointer;">
+                                    <summary class="${esTanda ? 'bg-info text-white' : 'bg-light'}" style="cursor: pointer;">
                                         <strong>Graph ${index + 1}</strong>
                                     </summary>
-                                    <div class="p-3">
+                                    <div class="p-3 ${esTanda ? 'bg-info text-white' : ''}">
                                         ${tieneLugar ? `<div class="mb-2"><strong>Lugar:</strong> ${g.lugar}</div>` : ''}
                                         ${tieneTema ? `<div class="mb-2"><strong>Tema:</strong> ${g.tema}</div>` : ''}
                                         ${bajadasContent}

@@ -287,6 +287,15 @@
         #errorModal {
             transition: all 0.3s ease;
         }
+
+        .bloque-celeste {
+            background-color: #87CEEB !important; /* Color celeste */
+        }
+
+        .bloque-celeste td {
+            background-color: #87CEEB !important;
+            color: #000 !important; /* Texto negro para mejor contraste */
+        }
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
@@ -699,14 +708,14 @@
                             <i class="fas fa-info-circle"></i>
                             Selecciona las notas a clonar y el guion destino
                         </div>
-{#                        <div>#}
-{#                            <button class="btn btn-sm btn-outline-warning" onclick="cargarNotasYGuiones()">#}
-{#                                <i class="fas fa-sync"></i> Recargar#}
-{#                            </button>#}
-{#                            <button class="btn btn-sm btn-outline-danger" onclick="probarEndpointsNotas()">#}
-{#                                <i class="fas fa-bug"></i> Debug#}
-{#                            </button>#}
-{#                        </div>#}
+                        {#                        <div>#}
+                        {#                            <button class="btn btn-sm btn-outline-warning" onclick="cargarNotasYGuiones()">#}
+                        {#                                <i class="fas fa-sync"></i> Recargar#}
+                        {#                            </button>#}
+                        {#                            <button class="btn btn-sm btn-outline-danger" onclick="probarEndpointsNotas()">#}
+                        {#                                <i class="fas fa-bug"></i> Debug#}
+                        {#                            </button>#}
+                        {#                        </div>#}
                     </div>
 
                     <div class="row">
@@ -728,10 +737,10 @@
                                             onclick="deseleccionarTodasNotas()">
                                         <i class="far fa-square"></i> Deseleccionar todas
                                     </button>
-{#                                    <button class="btn btn-sm btn-outline-info" onclick="probarRutas()"#}
-{#                                            title="Diagnóstico">#}
-{#                                        <i class="fas fa-bug"></i> Diagnosticar#}
-{#                                    </button>#}
+                                    {#                                    <button class="btn btn-sm btn-outline-info" onclick="probarRutas()"#}
+                                    {#                                            title="Diagnóstico">#}
+                                    {#                                        <i class="fas fa-bug"></i> Diagnosticar#}
+                                    {#                                    </button>#}
                                 </div>
                             </div>
                         </div>
