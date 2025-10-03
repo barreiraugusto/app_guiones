@@ -91,22 +91,48 @@ def textos():
             return jsonify({"mensaje": "Datos incompletos"}), 400
 
         try:
+            # Convertir a entero
+            numero_de_nota = int(data['numero_de_nota'])
+            guion_id = data.get('guion_id')
+
+            # Verificar si ya existe una nota con ese número en el mismo guion
+            nota_existente = Texto.query.filter_by(
+                numero_de_nota=numero_de_nota,
+                guion_id=guion_id
+            ).first()
+
+            if nota_existente:
+                # Reordenar notas: incrementar números de las notas existentes
+                notas_a_actualizar = Texto.query.filter(
+                    Texto.guion_id == guion_id,
+                    Texto.numero_de_nota >= numero_de_nota
+                ).order_by(Texto.numero_de_nota.desc()).all()
+
+                for nota in notas_a_actualizar:
+                    nota.numero_de_nota += 1
+
+            # Crear la nueva nota
             nuevo_texto = Texto(
-                numero_de_nota=data['numero_de_nota'],
+                numero_de_nota=numero_de_nota,
                 titulo=data['titulo'],
                 duracion=data.get('duracion', ''),
                 contenido=data.get('contenido', ''),
                 musica=data.get('musica', ''),
                 material=data.get('material', ''),
                 grabar=data.get('grabar', False),
-                guion_id=data.get('guion_id')
+                guion_id=guion_id
             )
             db.session.add(nuevo_texto)
             db.session.commit()
+
             return jsonify({
                 "mensaje": "Texto agregado",
                 "id": nuevo_texto.id
             }), 201
+
+        except ValueError:
+            db.session.rollback()
+            return jsonify({"mensaje": "Número de nota debe ser un valor numérico"}), 400
         except Exception as e:
             db.session.rollback()
             return jsonify({"mensaje": f"Error al crear texto: {str(e)}"}), 500
@@ -356,14 +382,50 @@ def obtener_tiempos(id):
 def editar_texto(id):
     data = request.json
     texto = Texto.query.get(id)
+
     if texto:
-        texto.numero_de_nota = data.get('numero_de_nota', texto.numero_de_nota)
+        # Convertir a entero para evitar errores de comparación
+        nuevo_numero = int(data.get('numero_de_nota', texto.numero_de_nota))
+        numero_actual = texto.numero_de_nota  # Esto ya debería ser entero en el modelo
+        guion_id = texto.guion_id
+
+        # Si cambió el número de nota, verificar duplicados y reordenar
+        if nuevo_numero != numero_actual:
+            nota_existente = Texto.query.filter_by(
+                numero_de_nota=nuevo_numero,
+                guion_id=guion_id
+            ).first()
+
+            if nota_existente and nota_existente.id != id:
+                # Reordenar notas existentes
+                if nuevo_numero > numero_actual:
+                    # Moviendo hacia abajo - decrementar notas en el medio
+                    notas_a_actualizar = Texto.query.filter(
+                        Texto.guion_id == guion_id,
+                        Texto.numero_de_nota > numero_actual,
+                        Texto.numero_de_nota <= nuevo_numero
+                    ).all()
+                    for nota in notas_a_actualizar:
+                        nota.numero_de_nota -= 1
+                else:
+                    # Moviendo hacia arriba - incrementar notas en el medio
+                    notas_a_actualizar = Texto.query.filter(
+                        Texto.guion_id == guion_id,
+                        Texto.numero_de_nota >= nuevo_numero,
+                        Texto.numero_de_nota < numero_actual
+                    ).all()
+                    for nota in notas_a_actualizar:
+                        nota.numero_de_nota += 1
+
+        # Actualizar el texto
+        texto.numero_de_nota = nuevo_numero
         texto.titulo = data.get('titulo', texto.titulo)
         texto.duracion = data.get('duracion', texto.duracion)
         texto.contenido = data.get('contenido', texto.contenido)
         texto.musica = data.get('musica', texto.musica)
         texto.material = data.get('material', texto.material)
         texto.grabar = data.get('grabar', texto.grabar)
+
         db.session.commit()
         return jsonify({"mensaje": "Texto actualizado"})
     else:
@@ -385,6 +447,9 @@ def borrar_texto(id):
         if not texto:
             return jsonify({"mensaje": "Texto no encontrado"}), 404
 
+        guion_id = texto.guion_id
+        numero_nota_eliminada = texto.numero_de_nota  # Esto ya es entero
+
         # Primero eliminamos manualmente las relaciones many-to-many
         for graph in texto.graphs:
             # Limpiar la relación graph_entrevistado
@@ -395,8 +460,18 @@ def borrar_texto(id):
             # Eliminar relaciones de bajadas
             graph.bajadas = []
 
-        # Ahora podemos eliminar el texto (la cascada eliminará los graphs)
+        # Ahora podemos eliminar el texto
         db.session.delete(texto)
+
+        # Reordenar las notas restantes
+        notas_a_actualizar = Texto.query.filter(
+            Texto.guion_id == guion_id,
+            Texto.numero_de_nota > numero_nota_eliminada
+        ).all()
+
+        for nota in notas_a_actualizar:
+            nota.numero_de_nota -= 1
+
         db.session.commit()
 
         return jsonify({"mensaje": "Texto eliminado correctamente"})
@@ -494,3 +569,18 @@ def get_all_bajadas():
         'texto': b.texto,
         'graph_id': b.graphs[0].id if b.graphs else None
     } for b in bajadas])
+
+
+def reordenar_notas_despues_de_agregar(guion_id, numero_nota_nueva):
+    """Reordena las notas existentes cuando se agrega una nueva"""
+    notas_a_actualizar = Texto.query.filter(
+        Texto.guion_id == guion_id,
+        Texto.numero_de_nota >= numero_nota_nueva
+    ).order_by(Texto.numero_de_nota.desc()).all()
+
+    for nota in notas_a_actualizar:
+        if nota.numero_de_nota == numero_nota_nueva:
+            # Solo incrementar las que tienen el mismo número o mayor
+            nota.numero_de_nota += 1
+
+    return True
