@@ -52,6 +52,8 @@
         /* Buttons */
         .btn-copiar {
             transition: all 0.2s;
+            user-select: all !important;
+
         }
 
         .btn-copiar:hover {
@@ -296,6 +298,19 @@
             background-color: #87CEEB !important;
             color: #000 !important; /* Texto negro para mejor contraste */
         }
+
+        .modal-front {
+            z-index: 99999 !important;
+        }
+
+        .modal-front + .modal-backdrop {
+            z-index: 99998 !important;
+        }
+
+        .modal-front ~ .modal:not(.modal-front) {
+            z-index: 1050 !important;
+        }
+
     </style>
 {% endblock extra_style %}
 {% block extra_script %}
@@ -634,7 +649,7 @@
         </div>
     </div>
     <!-- Modal Nuevo guion -->
-    <div class="modal fade bd-example-modal-lg" id="formularioGuionModal" tabindex="-1" role="dialog"
+    <div class="modal fade bd-example-modal-lg modal-front" id="formularioGuionModal" tabindex="-1" role="dialog"
          aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
