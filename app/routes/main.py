@@ -25,4 +25,6 @@ def control_live():
     return render_template('control_live.html')
 
 
-
+@main_bp.route('/grabacion')
+def grabacion():
+    return render_template('grabacion.html')

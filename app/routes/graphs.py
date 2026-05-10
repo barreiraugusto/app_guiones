@@ -244,7 +244,7 @@ def obtener_graphs_por_texto(texto_id):
         graphs_data.append({
             "id": graph.id,
             "lugar": graph.lugar,
-            "tema": graph.tema,
+            "tema": graph.tema or "",
             "bajadas": bajadas,
             "entrevistados": entrevistados,
             "activo": graph.activo

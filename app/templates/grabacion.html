@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block extratitle %} - GRABACIÓN{% endblock extratitle %}
+{% block extra_script %}
+    <script src="{{ url_for('static', filename='js/grabacion.js') }}"></script>
+{% endblock extra_script %}
+
+{% block extra_style %}
+    <style>
+        body {
+            padding-top: 70px;
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: bold;
+        }
+
+        .table {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .btn-rec {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+            font-weight: bold;
+            padding: 8px 20px;
+            transition: all 0.3s;
+            border-radius: 50px;
+            min-width: 100px;
+        }
+
+        .btn-rec:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            transform: scale(1.05);
+        }
+
+        .btn-rec.recording {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            animation: pulse 1.5s infinite;
+        }
+
+        .btn-stop {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+            font-weight: bold;
+            padding: 8px 20px;
+            transition: all 0.3s;
+            border-radius: 50px;
+            min-width: 100px;
+        }
+
+        .btn-stop:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-grabando {
+            background-color: #dc3545;
+            animation: blink 1s infinite;
+        }
+
+        .status-espera {
+            background-color: #6c757d;
+        }
+
+        .status-grabado {
+            background-color: #28a745;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #6c757d;
+        }
+    </style>
+{% endblock extra_style %}
+{% block body %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
+            </a>
+
+            <div class="collapse navbar-collapse">
+                <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
+                    <button onclick="window.location.href='/principal'" class="mr-2 mb-2 mb-lg-0 btn btn-outline-light">
+                        <i class="fas fa-arrow-left"></i> Volver a Control
+                    </button>
+
+                    <div class="dropdown mr-2 mb-2 mb-lg-0">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownGuionGrabacion"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-folder-open"></i> <span id="guionActual">Seleccionar Guion</span>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownGuionGrabacion">
+                            <a class="dropdown-item" href="#" data-toggle="modal"
+                               data-target="#seleccionarGuionModalGrabacion">
+                                <i class="fas fa-folder-open mr-1"></i> Seleccionar Guion
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header text-white bg-danger d-flex justify-content-between align-items-center">
+                        <h4 class="m-0">
+                            <i class="fas fa-video mr-2"></i> Módulo de Grabación
+                        </h4>
+                        <div>
+                            <span id="estadoGlobal" class="badge badge-light">Esperando selección de guion</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Esta vista muestra solo las notas marcadas para grabar del guion seleccionado.
+                            Cada grabación se guardará con el título de la nota como nombre de archivo.
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaGrabacion">
+                                <thead class="thead-dark">
+                                <tr>
+                                    <th style="width: 10%">Nº</th>
+                                    <th style="width: 40%">Título / Descripción</th>
+                                    <th style="width: 30%">Estado</th>
+                                    <th style="width: 20%">Acciones</th>
+                                </tr>
+                                </thead>
+                                <tbody id="listaGrabaciones">
+                                <tr id="sinDatos">
+                                    <td colspan="4" class="empty-state">
+                                        <i class="fas fa-film"></i>
+                                        <h5 class="mt-3">No hay datos para mostrar</h5>
+                                        <p class="text-muted">Selecciona un guion para ver las notas marcadas para
+                                            grabar</p>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para selección de guiones -->
+    <div class="modal fade" id="seleccionarGuionModalGrabacion" tabindex="-1" role="dialog"
+         aria-labelledby="seleccionarGuionModalGrabacionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white bg-danger">
+                    <h5 class="modal-title" id="seleccionarGuionModalGrabacionLabel">Seleccionar Guion para
+                        Grabación</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="buscarGuionGrabacion" placeholder="Buscar guion..."
+                               onkeyup="filtrarGuionesGrabacion()">
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                    <div class="list-group" id="listaGuionesModalGrabacion">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-danger" role="status"></div>
+                            <p class="mt-2">Cargando guiones...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock body %}
