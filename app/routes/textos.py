@@ -207,7 +207,14 @@ def textos_por_guion(guion_id):
 @textos_bp.route('/textos/activo/<int:id>', methods=['PUT'])
 def setTextoActivo(id):
     # Desactivar todos los textos primero
-    Texto.query.update({Texto.activo: False})
+    textos = Texto.query.all()
+    for texto in textos:
+        texto.activo = False
+        # También desactivar los graphs asociados a cada texto
+        for graph in texto.graphs:
+            graph.activo = False
+    
+    db.session.flush()  # Asegurar que los cambios se apliquen antes de continuar
 
     # Activar el texto seleccionado y sus graphs
     texto = Texto.query.get(id)

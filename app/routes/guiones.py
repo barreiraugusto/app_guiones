@@ -256,16 +256,12 @@ def editar_guion(id):
                     for graph_data in texto_data['graphs']:
                         graph = next((g for g in texto.graphs if g.id == graph_data['id']), None)
                         if graph:
-                            if 'primera_linea' in graph_data:
-                                graph.primera_linea = graph_data['primera_linea']
-                            if 'segunda_linea' in graph_data:
-                                graph.segunda_linea = graph_data['segunda_linea']
-                            if 'entrevistado' in graph_data:
-                                graph.entrevistado = graph_data['entrevistado']
                             if 'lugar' in graph_data:
                                 graph.lugar = graph_data['lugar']
                             if 'tema' in graph_data:
                                 graph.tema = graph_data['tema']
+                            if 'activo' in graph_data:
+                                graph.activo = graph_data['activo']
 
     # Guardar los cambios en la base de datos
     db.session.commit()

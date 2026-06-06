@@ -225,10 +225,9 @@ def obtener_graphs_por_texto(texto_id):
     graphs = Graph.query.filter_by(texto_id=texto_id).all()
     graphs_data = []
 
-    bajadas_ordenadas = sorted(graphs.bajadas, key=lambda bajada: bajada.id)
-
     for graph in graphs:
-        # Obtener bajadas
+        # Obtener bajadas ordenadas para este graph específico
+        bajadas_ordenadas = sorted(graph.bajadas, key=lambda bajada: bajada.id)
         bajadas = [b.texto for b in bajadas_ordenadas]
 
         # Obtener entrevistados y citas
