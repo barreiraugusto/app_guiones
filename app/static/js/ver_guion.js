@@ -138,31 +138,16 @@ document.addEventListener('DOMContentLoaded', function () {
         return texto.replace(/\n/g, '<br>').replace(/  /g, ' &nbsp;');
     }
 
-    actualizarTiempoTotal(guionId);
-
-    // Suscribirse a las actualizaciones del servidor
-    const eventSource = new EventSource('/stream_textos');
-
-    eventSource.onmessage = function (event) {
-        try {
-            const textos = JSON.parse(event.data);
-            actualizarTabla(textos);
-        } catch (error) {
-            console.error('Error al procesar actualización:', error);
-        }
-    };
-
-    eventSource.onerror = function () {
-        console.error('Error en la conexión SSE');
-    };
-
-    // Cargar los textos iniciales
-    fetch('/textos')
+    // Cargar los datos específicos de este guion directamente
+    fetch(`/guiones/${guionId}`)
         .then(response => {
-            if (!response.ok) throw new Error('Error al cargar textos');
+            if (!response.ok) throw new Error('Error al cargar el guion');
             return response.json();
         })
-        .then(actualizarTabla)
+        .then(data => {
+            // Actualizar la tabla con los textos de este guion específico
+            actualizarTabla(data.textos || []);
+        })
         .catch(error => {
             console.error('Error:', error);
         });
