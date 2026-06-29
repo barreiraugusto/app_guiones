@@ -261,6 +261,7 @@ def stream_texto_activo():
                         data = {
                             "id": texto_activo.id,
                             "numero_de_nota": texto_activo.numero_de_nota,
+                            "grabar": texto_activo.grabar,
                             "titulo": texto_activo.titulo,
                             "contenido": texto_activo.contenido,
                             "material": texto_activo.material,

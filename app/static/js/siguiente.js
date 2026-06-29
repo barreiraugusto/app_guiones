@@ -6,6 +6,7 @@ function convertirUrlsEnEnlaces(texto) {
 const previousContent = {
     titulo: "",
     numero_de_nota: "",
+    grabar: "",
     contenido: "",
     material: "",
     musica: "",
@@ -17,6 +18,7 @@ const previousContent = {
 function actualizarTextoActivo(data) {
     const tituloElement = document.getElementById('texto-activo-titulo');
     const numeroElement = document.getElementById('texto-activo-numero-de-nota');
+    const grabarElement = document.getElementById('texto-activo-grabar');
     const contenidoElement = document.getElementById('texto-activo-contenido');
     const materialElement = document.getElementById('texto-activo-material');
     const musicaElement = document.getElementById('texto-activo-musica');
@@ -34,6 +36,11 @@ function actualizarTextoActivo(data) {
         if (previousContent.numero_de_nota !== data.numero_de_nota) {
             numeroElement.textContent = `${data.numero_de_nota}`;
             previousContent.numero_de_nota = data.numero_de_nota;
+        }
+
+        if (previousContent.grabar !== data.grabar) {
+            grabarElement.textContent = data.grabar ? "GRABAR" : "";
+            previousContent.grabar = data.grabar;
         }
 
         if (previousContent.contenido !== data.contenido) {
@@ -133,6 +140,7 @@ function actualizarTextoActivo(data) {
         // Actualizar previousContent para todo
         previousContent.titulo = "";
         previousContent.numero_de_nota = "";
+        previousContent.grabar = "";
         previousContent.contenido = "";
         previousContent.material = "";
         previousContent.musica = "";

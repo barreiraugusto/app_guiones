@@ -280,19 +280,19 @@ async function seleccionarGuion(id) {
             filaTexto.classList.add('texto-principal');
             filaTexto.dataset.id = t.id;
             filaTexto.innerHTML = `
-                <td class="${esTanda ? 'bg-info text-white' : 'bg-secondary text-white'} text-center handle" style="cursor: move;">
+                <td class="${esTanda ? 'bg-info text-white' : 'bg-secondary text-white'} text-center handle" style="cursor: move;" style="width: 5%">
                     <div style="display: inline-block; padding: 5px 10px;">
                         <h5 class="m-0">${t.numero_de_nota}</h5>
                     </div>
                 </td>
-                <td class="${esTanda ? 'bg-info text-white' : ''}">
+                <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 15%">
                     <strong>${t.titulo}</strong>
                     ${t.grabar ? '<div class="text-danger small font-weight-bold">GRABAR</div>' : ''}
                 </td>
-                <td class="${esTanda ? 'bg-info text-white' : ''}">${convertirUrlsYPreservarSaltos(t.material || '')}</td>
-                <td class="${esTanda ? 'bg-info text-white' : ''}">${t.musica}</td>
-                <td class="${esTanda ? 'bg-info text-white' : ''}">${t.duracion}</td>
-                <td class="${esTanda ? 'bg-info' : ''}">
+                <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 50%">${convertirUrlsYPreservarSaltos(t.material || '')}</td>
+                <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 5%">${t.musica}</td>
+                <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 5%">${t.duracion}</td>
+                <td class="${esTanda ? 'bg-info' : ''}" style="width: 20%">
                     <div class="btn-group">
                         <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})">
                             <i class="fas fa-arrow-right"></i>
@@ -397,7 +397,7 @@ async function seleccionarGuion(id) {
                         filaGraph.innerHTML = `
                             <td class="${esTanda ? 'bg-info' : ''}"></td>
                             <td class="${esTanda ? 'bg-info' : ''}"></td>
-                            <td class="${esTanda ? 'bg-info text-white' : 'bg-light'} p-0" colspan="4">
+                            <td class="${esTanda ? 'bg-info text-white' : 'bg-light'} p-0" colspan="6">
                                 <details>
                                     <summary class="${esTanda ? 'bg-info text-white' : 'bg-light'}" style="cursor: pointer;">
                                         <strong>Graph ${index + 1}</strong>
