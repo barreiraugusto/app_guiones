@@ -105,6 +105,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     filaGraph.setAttribute('data-graph-parent', t.id);
                     filaGraph.className = 'graph-row';
 
+                    // Aplicar el MISMO color de estado que la fila principal.
+                    // Asi cuando el SSE reconstruye el graph, queda pintado
+                    // igual que el texto padre (activo / emitido / default).
+                    aplicarResaltadoEmitidoActivo(filaGraph, t);
+
                     // Ordenar bajadas por ID (ascendente)
                     const bajadasOrdenadas = [...(g.bajadas || [])].sort((a, b) => (a.id || 0) - (b.id || 0));
 

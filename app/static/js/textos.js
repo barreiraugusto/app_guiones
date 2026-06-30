@@ -334,10 +334,11 @@ function actualizarEstadoGraphs(textoId, estado) {
     const filaTexto = document.querySelector(`tr[data-texto-id="${textoId}"]`);
     if (!filaTexto) return;
 
-    // Colores según estado
-    const colorActivo = '#fff3cd';   // amarillo claro (bg-warning)
-    const colorEmitido = '#e2e3e5';  // gris claro (bg-secondary)
-    const colorDefault = '#f8f9fa';  // blanco grisáceo (bg-light)
+    // Mapear el estado a la clase Bootstrap correspondiente.
+    // Asi usamos exactamente los mismos colores que el texto principal.
+    const claseEstado = estado === 'activo'   ? 'bg-warning'
+                      : estado === 'emitido'  ? 'bg-secondary'
+                      : 'bg-light';
 
     // Encontrar todos los graphs asociados (filas siguientes hasta el próximo texto).
     // Soporta ambas maquetas:
@@ -348,18 +349,28 @@ function actualizarEstadoGraphs(textoId, estado) {
            (nextSibling.classList.contains('graph-asociado') ||
             nextSibling.classList.contains('graph-row'))) {
 
-        const nuevoColor = estado === 'activo' ? colorActivo
-                         : estado === 'emitido' ? colorEmitido
-                         : colorDefault;
+        // Quitar clases de estado previas y aplicar la nueva a TODA la fila
+        // (los <td> heredan visualmente el background de Bootstrap desde el <tr>).
+        nextSibling.classList.remove('bg-light', 'bg-warning', 'bg-secondary');
+        nextSibling.classList.add(claseEstado);
 
-        // Caso principal.html: hay <details>, pintar su fondo
+        // Caso principal.html: hay <details>, pintar su fondo también,
+        // porque los <details> tienen su propia backgroundColor que tapa la del <tr>.
         const details = nextSibling.querySelector('details');
         if (details) {
-            details.style.backgroundColor = nuevoColor;
-        } else {
-            // Caso ver_guion.html: no hay <details>, pintar la celda de la fila
-            const celda = nextSibling.querySelector('td');
-            if (celda) celda.style.backgroundColor = nuevoColor;
+            // Limpiar background inline anterior y aplicar la clase al <summary> también
+            const clasesBootstrap = {
+                'bg-warning':    '#fff3cd',
+                'bg-secondary':  '#e2e3e5',
+                'bg-light':      '#f8f9fa'
+            };
+            details.style.backgroundColor = clasesBootstrap[claseEstado] || '#f8f9fa';
+
+            const summary = details.querySelector('summary');
+            if (summary) {
+                summary.classList.remove('bg-light', 'bg-warning', 'bg-secondary');
+                summary.classList.add(claseEstado);
+            }
         }
 
         nextSibling = nextSibling.nextElementSibling;
