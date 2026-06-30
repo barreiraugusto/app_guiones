@@ -15,6 +15,22 @@ document.addEventListener('DOMContentLoaded', function () {
         return texto.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
     }
 
+    // Función para aplicar el resaltado de la fila segun emitido / activo
+    // (mismo criterio que usa la tabla de principal.html / guiones.js)
+    function aplicarResaltadoEmitidoActivo(fila, texto) {
+        // Limpiar clases de resaltado previas para que la actualización
+        // in-place refleje siempre el estado mas reciente del servidor.
+        fila.classList.remove('bg-light', 'bg-secondary', 'bg-warning');
+
+        if (texto.emitido) {
+            fila.classList.add('bg-secondary'); // emitido => gris
+        } else if (texto.activo) {
+            fila.classList.add('bg-warning');   // activo  => amarillo
+        } else {
+            fila.classList.add('bg-light');     // default => claro
+        }
+    }
+
     // Función para actualizar la tabla
     function actualizarTabla(textos) {
         const tbody = document.querySelector('#tablaTextos tbody');
@@ -51,7 +67,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Actualizar contenido del texto
             filaTexto.innerHTML = `
-            <td rowspan="${rowspanValue}" class="text-center"><h3>${t.numero_de_nota}</h3></td>
+            <td rowspan="${rowspanValue}" class="text-center"><h3>${t.numero_de_nota}</h3>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
             <td>
                 <strong>${t.titulo}</strong>
                 ${t.grabar ? '<div class="text-danger small font-weight-bold">GRABAR</div>' : ''}
@@ -59,6 +83,12 @@ document.addEventListener('DOMContentLoaded', function () {
             <td>${t.contenido || ''}</td>
             <td>${materialContent}</td>
         `;
+
+            // Aplicar resaltado emitido / activo a la fila y, por herencia visual
+            // de Bootstrap sobre los <td>, a todas las celdas de la nota.
+            // Se aplica DESPUES de reconstruir el innerHTML para que persista
+            // aunque el contenido de la fila se refresque en cada update del SSE.
+            aplicarResaltadoEmitidoActivo(filaTexto, t);
 
             // Procesar graphs del texto
             if (t.graphs && t.graphs.length > 0) {

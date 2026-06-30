@@ -227,12 +227,15 @@ async function setTextoActivo(id) {
     try {
         // 1. Guardar posición del scroll
         const tablaContainer = document.querySelector('#tablaTextos tbody');
-        const scrollPosition = tablaContainer.scrollTop;
+        const scrollPosition = tablaContainer ? tablaContainer.scrollTop : 0;
 
-         // 2. Actualizar todos los textos que tengan bg-warning
-        document.querySelectorAll('tr.texto-principal.bg-warning').forEach(tr => {
+        // 2. Actualizar todos los textos que estén actualmente activos (bg-warning)
+        //    Menos el que vamos a activar ahora.
+        //    Selector unificado para principal.html (.texto-principal) y
+        //    ver_guion.html (sin esa clase, solo con data-texto-id).
+        document.querySelectorAll('tr[data-texto-id].bg-warning, tr.texto-principal.bg-warning').forEach(tr => {
             // Solo cambiar si no es el texto que vamos a activar
-            if (tr.dataset.textoId !== id.toString()) {
+            if (String(tr.dataset.textoId) !== String(id)) {
                 tr.classList.remove('bg-warning', 'activo');
 
                 // Verificar si está emitido para aplicar el color correcto
@@ -331,16 +334,34 @@ function actualizarEstadoGraphs(textoId, estado) {
     const filaTexto = document.querySelector(`tr[data-texto-id="${textoId}"]`);
     if (!filaTexto) return;
 
-    // Encontrar todos los graphs asociados (filas siguientes hasta el próximo texto)
+    // Colores según estado
+    const colorActivo = '#fff3cd';   // amarillo claro (bg-warning)
+    const colorEmitido = '#e2e3e5';  // gris claro (bg-secondary)
+    const colorDefault = '#f8f9fa';  // blanco grisáceo (bg-light)
+
+    // Encontrar todos los graphs asociados (filas siguientes hasta el próximo texto).
+    // Soporta ambas maquetas:
+    //   - principal.html: usa la clase .graph-asociado y contiene <details>
+    //   - ver_guion.html: usa la clase .graph-row y NO contiene <details>
     let nextSibling = filaTexto.nextElementSibling;
-    while (nextSibling && nextSibling.classList.contains('graph-asociado')) {
-        if (estado === 'activo') {
-            nextSibling.querySelector('details').style.backgroundColor = '#fff3cd';
-        } else if (estado === 'emitido') {
-            nextSibling.querySelector('details').style.backgroundColor = '#e2e3e5';
+    while (nextSibling &&
+           (nextSibling.classList.contains('graph-asociado') ||
+            nextSibling.classList.contains('graph-row'))) {
+
+        const nuevoColor = estado === 'activo' ? colorActivo
+                         : estado === 'emitido' ? colorEmitido
+                         : colorDefault;
+
+        // Caso principal.html: hay <details>, pintar su fondo
+        const details = nextSibling.querySelector('details');
+        if (details) {
+            details.style.backgroundColor = nuevoColor;
         } else {
-            nextSibling.querySelector('details').style.backgroundColor = '#f8f9fa';
+            // Caso ver_guion.html: no hay <details>, pintar la celda de la fila
+            const celda = nextSibling.querySelector('td');
+            if (celda) celda.style.backgroundColor = nuevoColor;
         }
+
         nextSibling = nextSibling.nextElementSibling;
     }
 }
