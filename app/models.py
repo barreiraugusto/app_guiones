@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from . import db, MUSICA_OPCIONES
 from sqlalchemy import Table, Column, Integer, ForeignKey
 
@@ -88,3 +90,19 @@ class Graph(db.Model):
         backref=db.backref('graphs', lazy='dynamic'),
         lazy='select'
     )
+
+
+class AuditLog(db.Model):
+    """Registro de acciones de usuarios para auditoría."""
+    __tablename__ = 'audit_log'
+
+    id             = db.Column(db.Integer, primary_key=True)
+    timestamp      = db.Column(db.DateTime, nullable=False, default=datetime.now, index=True)
+    nivel          = db.Column(db.String(10),  nullable=False)   # INFO | WARNING | DANGER
+    ip             = db.Column(db.String(45),  nullable=False)
+    user_agent     = db.Column(db.String(300), nullable=True)
+    accion         = db.Column(db.String(255), nullable=False)
+    tipo_entidad   = db.Column(db.String(50),  nullable=True)    # guion | texto | graph
+    id_entidad     = db.Column(db.Integer,     nullable=True)
+    nombre_entidad = db.Column(db.String(255), nullable=True)
+    detalle        = db.Column(db.Text,        nullable=True)

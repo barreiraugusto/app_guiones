@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block extratitle %} - AUDITORÍA{% endblock %}
+
+{% block extra_style %}
+<style>
+body { padding-top: 70px; }
+
+/* ── Badges de nivel ─────────────────────────── */
+.nivel-badge {
+    display: inline-block;
+    padding: 0.22em 0.65em;
+    border-radius: 4px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.nivel-INFO    { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.nivel-WARNING { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.nivel-DANGER  { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* ── Color de filas ─────────────────────────── */
+tr.row-INFO    > td { background: #f8fff9 !important; }
+tr.row-WARNING > td { background: #fffef0 !important; }
+tr.row-DANGER  > td { background: #fff5f6 !important; }
+
+/* ── Tabla ──────────────────────────────────── */
+#tablaAuditoria td,
+#tablaAuditoria th { vertical-align: middle !important; font-size: 0.86rem; }
+#tablaAuditoria th { white-space: nowrap; }
+
+.ua-cell {
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+    font-size: 0.78rem;
+    color: #6c757d;
+}
+
+/* ── Barra de estadísticas ──────────────────── */
+.stat-bar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.stat-pill {
+    padding: 0.25rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ── Responsive ─────────────────────────────── */
+@media (max-width: 767px) {
+    body { padding-top: 60px; }
+    .hide-mobile { display: none !important; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- ── Navbar ────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container-fluid">
+        <span class="navbar-brand">
+            <i class="fas fa-shield-alt mr-2"></i>Log de Auditoría
+        </span>
+        <div class="d-flex" style="gap:0.4rem;">
+            <a href="/listado_guiones">
+                <button class="btn btn-primary btn-sm">
+                    <i class="fas fa-list mr-1"></i>
+                    <span class="d-none d-sm-inline">Guiones</span>
+                </button>
+            </a>
+            <a href="/">
+                <button class="btn btn-success btn-sm">
+                    <i class="fas fa-home mr-1"></i>
+                    <span class="d-none d-sm-inline">Menú</span>
+                </button>
+            </a>
+            <a href="/auditoria/logout">
+                <button class="btn btn-outline-light btn-sm" title="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-3">
+
+    <!-- ── Filtros ─────────────────────────────── -->
+    <form method="GET" action="/auditoria" class="card shadow-sm mb-3 p-3">
+        <div class="form-row align-items-end">
+            <div class="col-auto">
+                <label class="small font-weight-bold mb-1 d-block">Nivel</label>
+                <select name="nivel" class="form-control form-control-sm">
+                    <option value="">Todos</option>
+                    <option value="INFO"    {% if nivel == 'INFO'    %}selected{% endif %}>INFO</option>
+                    <option value="WARNING" {% if nivel == 'WARNING' %}selected{% endif %}>WARNING</option>
+                    <option value="DANGER"  {% if nivel == 'DANGER'  %}selected{% endif %}>DANGER</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label class="small font-weight-bold mb-1 d-block">IP</label>
+                <input type="text" name="ip" value="{{ ip_filtro }}"
+                       class="form-control form-control-sm" placeholder="ej: 192.168.1"
+                       style="width:140px;">
+            </div>
+            <div class="col-auto">
+                <label class="small font-weight-bold mb-1 d-block">Entidad</label>
+                <select name="entidad" class="form-control form-control-sm">
+                    <option value="">Todas</option>
+                    <option value="guion" {% if entidad_filtro == 'guion' %}selected{% endif %}>Guión</option>
+                    <option value="texto" {% if entidad_filtro == 'texto' %}selected{% endif %}>Nota</option>
+                    <option value="graph" {% if entidad_filtro == 'graph' %}selected{% endif %}>Graph</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-search mr-1"></i>Filtrar
+                </button>
+                <a href="/auditoria" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times mr-1"></i>Limpiar
+                </a>
+            </div>
+            <div class="col-auto ml-auto">
+                <a href="/auditoria/exportar?nivel={{ nivel }}&ip={{ ip_filtro }}&entidad={{ entidad_filtro }}"
+                   class="btn btn-outline-info btn-sm" title="Exportar resultados a CSV">
+                    <i class="fas fa-file-csv mr-1"></i>CSV
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- ── Barra de estadísticas ────────────────── -->
+    <div class="stat-bar">
+        <span class="stat-pill bg-secondary text-white">
+            Total BD: {{ total_info + total_warning + total_danger }}
+        </span>
+        <span class="stat-pill nivel-INFO">
+            <i class="fas fa-info-circle mr-1"></i>INFO: {{ total_info }}
+        </span>
+        <span class="stat-pill nivel-WARNING">
+            <i class="fas fa-exclamation-triangle mr-1"></i>WARNING: {{ total_warning }}
+        </span>
+        <span class="stat-pill nivel-DANGER">
+            <i class="fas fa-skull-crossbones mr-1"></i>DANGER: {{ total_danger }}
+        </span>
+        {% if nivel or ip_filtro or entidad_filtro %}
+        <span class="text-muted small">
+            &nbsp;Mostrando {{ total }} resultado{{ 's' if total != 1 else '' }} con filtros
+        </span>
+        {% endif %}
+        {% if total_paginas > 1 %}
+        <span class="text-muted small ml-auto">
+            Página {{ pagina }} / {{ total_paginas }}
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- ── Tabla ─────────────────────────────────── -->
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-2" id="tablaAuditoria">
+            <thead class="thead-dark">
+                <tr>
+                    <th style="width:50px;">#</th>
+                    <th style="width:145px;">Fecha y Hora</th>
+                    <th style="width:82px; text-align:center;">Nivel</th>
+                    <th style="width:120px;">IP</th>
+                    <th>Acción</th>
+                    <th style="width:170px;">Entidad</th>
+                    <th style="width:180px;" class="hide-mobile">Detalle</th>
+                    <th style="width:160px;" class="hide-mobile">Equipo</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in registros %}
+            <tr class="row-{{ r.nivel }}">
+                <td class="text-center text-muted small">{{ r.id }}</td>
+                <td>
+                    <small>{{ r.timestamp.strftime('%d/%m/%Y') }}</small><br>
+                    <strong class="small">{{ r.timestamp.strftime('%H:%M:%S') }}</strong>
+                </td>
+                <td class="text-center">
+                    <span class="nivel-badge nivel-{{ r.nivel }}">{{ r.nivel }}</span>
+                </td>
+                <td>
+                    <code class="small">{{ r.ip }}</code>
+                </td>
+                <td>
+                    <strong class="small">{{ r.accion }}</strong>
+                </td>
+                <td>
+                    {% if r.tipo_entidad %}
+                    <span class="badge badge-dark" style="font-size:0.68rem;">{{ r.tipo_entidad }}</span>
+                    {% if r.nombre_entidad %}
+                    <small class="d-block mt-1" style="line-height:1.2;">{{ r.nombre_entidad }}</small>
+                    {% endif %}
+                    {% if r.id_entidad %}
+                    <small class="text-muted">ID #{{ r.id_entidad }}</small>
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td class="hide-mobile">
+                    <small class="text-muted">{{ r.detalle or '—' }}</small>
+                </td>
+                <td class="ua-cell hide-mobile" title="{{ r.user_agent or '' }}">
+                    {{ r.user_agent or '—' }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                    No hay registros con los filtros aplicados.
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ── Paginación ────────────────────────────── -->
+    {% if total_paginas > 1 %}
+    {% set start_p = (pagina - 4) if (pagina - 4) >= 1 else 1 %}
+    {% set end_p   = (pagina + 4) if (pagina + 4) <= total_paginas else total_paginas %}
+    <nav aria-label="Paginación">
+        <ul class="pagination pagination-sm flex-wrap mb-4">
+            {% if pagina > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="?p=1&nivel={{ nivel }}&ip={{ ip_filtro }}&entidad={{ entidad_filtro }}"
+                   title="Primera">&laquo;</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?p={{ pagina - 1 }}&nivel={{ nivel }}&ip={{ ip_filtro }}&entidad={{ entidad_filtro }}"
+                   title="Anterior">&lsaquo;</a>
+            </li>
+            {% endif %}
+
+            {% if start_p > 1 %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            {% endif %}
+
+            {% for i in range(start_p, end_p + 1) %}
+            <li class="page-item {% if i == pagina %}active{% endif %}">
+                <a class="page-link"
+                   href="?p={{ i }}&nivel={{ nivel }}&ip={{ ip_filtro }}&entidad={{ entidad_filtro }}">
+                    {{ i }}
+                </a>
+            </li>
+            {% endfor %}
+
+            {% if end_p < total_paginas %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            {% endif %}
+
+            {% if pagina < total_paginas %}
+            <li class="page-item">
+                <a class="page-link" href="?p={{ pagina + 1 }}&nivel={{ nivel }}&ip={{ ip_filtro }}&entidad={{ entidad_filtro }}"
+                   title="Siguiente">&rsaquo;</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?p={{ total_paginas }}&nivel={{ nivel }}&ip={{ ip_filtro }}&entidad={{ entidad_filtro }}"
+                   title="Última">&raquo;</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

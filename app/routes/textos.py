@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request, render_template, stream_with_cont
 from sqlalchemy.orm import joinedload, selectinload
 from .. import db
 from ..models import Texto, Guion, Graph, Cita, Bajada
+from ..audit import registrar
 
 textos_bp = Blueprint('textos', __name__)
 
@@ -227,6 +228,13 @@ def textos():
             )
             db.session.add(nuevo_texto)
             db.session.commit()
+
+            guion = Guion.query.get(guion_id)
+            registrar('INFO',
+                      f'Agregó nota #{nuevo_texto.numero_de_nota}: {nuevo_texto.titulo}',
+                      'texto', nuevo_texto.id, nuevo_texto.titulo,
+                      f'Guión: {guion.nombre if guion else guion_id}')
+
             return jsonify({"mensaje": "Texto agregado", "id": nuevo_texto.id}), 201
 
         except ValueError:
@@ -305,6 +313,11 @@ def editar_texto(id):
     texto.grabar = data.get('grabar', texto.grabar)
 
     db.session.commit()
+
+    registrar('WARNING',
+              f'Editó nota #{texto.numero_de_nota}: {texto.titulo}',
+              'texto', id, texto.titulo)
+
     return jsonify({"mensaje": "Texto actualizado"})
 
 
@@ -322,7 +335,10 @@ def borrar_texto(id):
         if not texto:
             return jsonify({"mensaje": "Texto no encontrado"}), 404
 
-        guion_id = texto.guion_id
+        # Capturar antes de eliminar
+        titulo_eliminado = texto.titulo
+        num_eliminado    = texto.numero_de_nota
+        guion_id         = texto.guion_id
         numero_nota_eliminada = texto.numero_de_nota
 
         for graph in texto.graphs:
@@ -334,6 +350,11 @@ def borrar_texto(id):
         db.session.delete(texto)
         _decrementar_notas_desde(guion_id, numero_nota_eliminada)
         db.session.commit()
+
+        registrar('DANGER',
+                  f'Eliminó nota #{num_eliminado}: {titulo_eliminado}',
+                  'texto', id, titulo_eliminado,
+                  f'guion_id={guion_id}')
 
         return jsonify({"mensaje": "Texto eliminado correctamente"})
 
@@ -385,6 +406,11 @@ def setTextoActivo(id):
             graph.activo = True
 
         db.session.commit()
+
+        registrar('INFO',
+                  f'Activó nota #{texto.numero_de_nota}: {texto.titulo}',
+                  'texto', id, texto.titulo)
+
         return jsonify({"mensaje": "Texto y graphs asociados activados"})
     except Exception as e:
         db.session.rollback()
@@ -399,6 +425,13 @@ def setTextoEmitido(id):
 
     texto.emitido = not texto.emitido
     db.session.commit()
+
+    estado = 'emitido' if texto.emitido else 'no emitido'
+    registrar('INFO',
+              f'Marcó nota #{texto.numero_de_nota} como {estado}: {texto.titulo}',
+              'texto', id, texto.titulo,
+              f'Estado emitido: {texto.emitido}')
+
     return jsonify({"mensaje": "El texto se marcó como emitido", "emitido": texto.emitido})
 
 

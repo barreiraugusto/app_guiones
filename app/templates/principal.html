@@ -1,520 +1,431 @@
 {% extends "base.html" %}
 {% block extratitle %} - CONTROL{% endblock extratitle %}
 {% block extra_style %}
-    <style>
-        body {
-            padding-top: 70px;
+<style>
+    body {
+        padding-top: 70px;
+    }
+
+    /* ── Mobile first ──────────────────────────── */
+    @media (max-width: 767px) {
+        body { padding-top: 60px; }
+
+        /* Tabla de control: scroll horizontal */
+        .table-responsive-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Cards */
-        .card-guion {
-            transition: transform 0.2s, box-shadow 0.2s;
+        /* Fuente más compacta en mobile */
+        #tablaTextos { font-size: 0.82rem; }
+        #tablaTextos th, #tablaTextos td { padding: 0.35rem 0.4rem; }
+    }
+
+    /* Cards */
+    .card-guion {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card-guion:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .navbar-collapse {
+            max-height: calc(100vh - 60px);
+            overflow-y: auto;
         }
 
-        .card-guion:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .navbar-brand img {
+            max-height: 30px !important;
         }
+    }
 
-        /* Responsive */
-        @media (max-width: 992px) {
-            .navbar-collapse {
-                max-height: calc(100vh - 60px);
-                overflow-y: auto;
-            }
-
-            .navbar-brand img {
-                max-height: 30px !important;
-            }
-        }
-
-        @media (max-width: 768px) {
-            #tablaTextos {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-        }
-
-        /* Form elements */
-        .big-checkbox {
-            width: 18px;
-            height: 18px;
-            min-width: 18px;
-            min-height: 18px;
-            margin-top: 0;
-        }
-
-        .form-check-label {
-            margin-left: 5px;
-        }
-
-        /* Buttons */
-        .btn-copiar {
-            transition: all 0.2s;
-            user-select: all !important;
-
-        }
-
-        .btn-copiar:hover {
-            transform: scale(1.1);
-        }
-
-        .btn-outline-primary {
-            color: #0d6efd;
-            border-color: #0d6efd;
-        }
-
-        .btn-outline-primary:hover {
-            color: #fff;
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-
-        /* Drag and drop */
-        .handle {
-            cursor: move;
-            transition: all 0.2s;
-        }
-
-        .handle:hover {
-            background-color: rgba(0, 0, 0, 0.1) !important;
-        }
-
-        .handle:hover h3 {
-            color: white !important;
-        }
-
-
-        /* Graph states */
-        .graph-asociado {
-            transition: transform 0.2s, opacity 0.2s;
-        }
-
-        .graph-asociado td {
-            border-top: none;
-            padding-top: 0;
-        }
-
-        .graph-asociado details {
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-            border-left: 4px solid transparent;
-        }
-
-        .texto-principal.activo + .graph-asociado details {
-            background-color: #fff3cd;
-            border-left-color: #ffc107;
-        }
-
-        .texto-principal.emitido + .graph-asociado details {
-            background-color: #e2e3e5;
-            border-left-color: #6c757d;
-        }
-
-        /* Sortable styles */
-        .sortable-ghost {
-            opacity: 0.6;
-            background: #c8ebfb;
-        }
-
-        .sortable-ghost.texto-principal {
-            opacity: 0.8;
-        }
-
-        .sortable-ghost.graph-asociado {
-            background: #e1f5fe;
-        }
-
-        .sortable-ghost td.bg-secondary {
-            background-color: #5a6268 !important;
-        }
-
-        .sortable-chosen {
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .sortable-chosen td.bg-secondary {
-            background-color: #545b62 !important;
-            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .sortable-drag {
-            opacity: 1 !important;
-            background: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .texto-principal.sortable-drag {
-            border: 1px dashed #0d6efd;
-        }
-
-        /* Table layout */
-        #tablaTextos tbody {
+    @media (max-width: 768px) {
+        #tablaTextos {
             display: block;
-            overflow-y: auto;
-            max-height: calc(100vh - 300px);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+
+    /* Form elements */
+    .big-checkbox {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        min-height: 18px;
+        margin-top: 0;
+    }
+
+    .form-check-label {
+        margin-left: 5px;
+    }
+
+    /* Buttons */
+    .btn-copiar {
+        transition: all 0.2s;
+        user-select: all !important;
+
+    }
+
+    .btn-copiar:hover {
+        transform: scale(1.1);
+    }
+
+    .btn-outline-primary {
+        color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .btn-outline-primary:hover {
+        color: #fff;
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    /* Drag and drop */
+    .handle {
+        cursor: move;
+        transition: all 0.2s;
+    }
+
+    .handle:hover {
+        background-color: rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .handle:hover h3 {
+        color: white !important;
+    }
+
+
+    /* Graph states */
+    .graph-asociado {
+        transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .graph-asociado td {
+        border-top: none;
+        padding-top: 0;
+    }
+
+    .graph-asociado details {
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        border-left: 4px solid transparent;
+    }
+
+    .texto-principal.activo + .graph-asociado details {
+        background-color: #fff3cd;
+        border-left-color: #ffc107;
+    }
+
+    .texto-principal.emitido + .graph-asociado details {
+        background-color: #e2e3e5;
+        border-left-color: #6c757d;
+    }
+
+    /* Sortable styles */
+    .sortable-ghost {
+        opacity: 0.6;
+        background: #c8ebfb;
+    }
+
+    .sortable-ghost.texto-principal {
+        opacity: 0.8;
+    }
+
+    .sortable-ghost.graph-asociado {
+        background: #e1f5fe;
+    }
+
+    .sortable-ghost td.bg-secondary {
+        background-color: #5a6268 !important;
+    }
+
+    .sortable-chosen {
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .sortable-chosen td.bg-secondary {
+        background-color: #545b62 !important;
+        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .sortable-drag {
+        opacity: 1 !important;
+        background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .texto-principal.sortable-drag {
+        border: 1px dashed #0d6efd;
+    }
+
+    /* Table layout */
+    #tablaTextos tbody {
+        display: block;
+        overflow-y: auto;
+        max-height: calc(100vh - 300px);
+    }
+
+    .graph-container {
+        border-radius: 0 0.25rem 0.25rem 0;
+    }
+
+    .align-middle {
+        vertical-align: middle !important;
+    }
+
+    /* Animations */
+    .updated-highlight {
+        animation: highlight-fade 2s;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    @keyframes highlight-fade {
+        0% {
+            background-color: rgba(40, 167, 69, 0.3);
+        }
+        100% {
+            background-color: transparent;
+        }
+    }
+
+
+    /* Color utilities - Moved to bottom for specificity */
+    .bg-secondary.text-white {
+        background-color: #6c757d !important;
+        color: white !important;
+    }
+
+    /* Estilos para el modal de selección de guiones */
+    #listaGuionesModal {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .list-group-item {
+        transition: all 0.2s;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Ajustes responsivos */
+    @media (max-width: 768px) {
+        #seleccionarGuionModal .modal-dialog {
+            margin: 10px;
+            width: calc(100% - 20px);
+        }
+    }
+
+    /* Estilos para los dropdowns del navbar */
+    .navbar .dropdown-menu {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .navbar .dropdown-item {
+        padding: 0.5rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .navbar .dropdown-item:hover {
+        background-color: #f8f9fa;
+        color: #0056b3;
+    }
+
+    /* Ajustar espaciado en dispositivos móviles */
+    @media (max-width: 991px) {
+        .navbar .dropdown {
+            width: 100%;
+            margin-bottom: 0.5rem;
         }
 
-        .graph-container {
-            border-radius: 0 0.25rem 0.25rem 0;
+        .navbar .dropdown .btn {
+            width: 100%;
         }
 
-        .align-middle {
-            vertical-align: middle !important;
-        }
-
-        /* Animations */
-        .updated-highlight {
-            animation: highlight-fade 2s;
-            background-color: rgba(40, 167, 69, 0.1);
-        }
-
-        @keyframes highlight-fade {
-            0% {
-                background-color: rgba(40, 167, 69, 0.3);
-            }
-            100% {
-                background-color: transparent;
-            }
-        }
-
-
-        /* Color utilities - Moved to bottom for specificity */
-        .bg-secondary.text-white {
-            background-color: #6c757d !important;
-            color: white !important;
-        }
-
-        /* Estilos para el modal de selección de guiones */
-        #listaGuionesModal {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        .list-group-item {
-            transition: all 0.2s;
-        }
-
-        .list-group-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        /* Ajustes responsivos */
-        @media (max-width: 768px) {
-            #seleccionarGuionModal .modal-dialog {
-                margin: 10px;
-                width: calc(100% - 20px);
-            }
-        }
-
-        /* Estilos para los dropdowns del navbar */
         .navbar .dropdown-menu {
-            border: none;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            width: 100%;
         }
+    }
 
-        .navbar .dropdown-item {
-            padding: 0.5rem 1rem;
-            transition: all 0.2s;
-        }
+    /* Estilos para la clonación de notas */
+    #listaNotasClonar .form-check {
+        padding: 8px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.2s;
+    }
 
-        .navbar .dropdown-item:hover {
-            background-color: #f8f9fa;
-            color: #0056b3;
-        }
+    #listaNotasClonar .form-check:hover {
+        background-color: #f8f9fa;
+    }
 
-        /* Ajustar espaciado en dispositivos móviles */
-        @media (max-width: 991px) {
-            .navbar .dropdown {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
+    #listaNotasClonar .form-check:last-child {
+        border-bottom: none;
+    }
 
-            .navbar .dropdown .btn {
-                width: 100%;
-            }
+    .nota-checkbox:checked + label {
+        font-weight: bold;
+        color: #007bff;
+    }
 
-            .navbar .dropdown-menu {
-                width: 100%;
-            }
-        }
+    #resumenClonacion {
+        font-size: 0.9rem;
+    }
 
-        /* Estilos para la clonación de notas */
-        #listaNotasClonar .form-check {
-            padding: 8px;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s;
-        }
+    /* Estilos para el modal de clonación */
+    #listaNotasClonar {
+        max-height: 300px;
+        overflow-y: auto;
+    }
 
-        #listaNotasClonar .form-check:hover {
-            background-color: #f8f9fa;
-        }
+    #listaNotasClonar .form-check {
+        padding: 8px 10px;
+        margin-bottom: 5px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
 
-        #listaNotasClonar .form-check:last-child {
-            border-bottom: none;
-        }
+    #listaNotasClonar .form-check:hover {
+        background-color: #f8f9fa;
+    }
 
-        .nota-checkbox:checked + label {
-            font-weight: bold;
-            color: #007bff;
-        }
+    #listaNotasClonar .form-check-input:checked + label {
+        font-weight: bold;
+        color: #007bff;
+    }
 
-        #resumenClonacion {
-            font-size: 0.9rem;
-        }
+    #errorModal {
+        transition: all 0.3s ease;
+    }
 
-        /* Estilos para el modal de clonación */
-        #listaNotasClonar {
-            max-height: 300px;
-            overflow-y: auto;
-        }
+    .bloque-celeste {
+        background-color: #87CEEB !important; /* Color celeste */
+    }
 
-        #listaNotasClonar .form-check {
-            padding: 8px 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
+    .bloque-celeste td {
+        background-color: #87CEEB !important;
+        color: #000 !important; /* Texto negro para mejor contraste */
+    }
 
-        #listaNotasClonar .form-check:hover {
-            background-color: #f8f9fa;
-        }
+    .modal-front {
+        z-index: 99999 !important;
+    }
 
-        #listaNotasClonar .form-check-input:checked + label {
-            font-weight: bold;
-            color: #007bff;
-        }
+    .modal-front + .modal-backdrop {
+        z-index: 99998 !important;
+    }
 
-        #errorModal {
-            transition: all 0.3s ease;
-        }
+    .modal-front ~ .modal:not(.modal-front) {
+        z-index: 1050 !important;
+    }
 
-        .bloque-celeste {
-            background-color: #87CEEB !important; /* Color celeste */
-        }
-
-        .bloque-celeste td {
-            background-color: #87CEEB !important;
-            color: #000 !important; /* Texto negro para mejor contraste */
-        }
-
-        .modal-front {
-            z-index: 99999 !important;
-        }
-
-        .modal-front + .modal-backdrop {
-            z-index: 99998 !important;
-        }
-
-        .modal-front ~ .modal:not(.modal-front) {
-            z-index: 1050 !important;
-        }
-
-    </style>
+</style>
 {% endblock extra_style %}
 {% block extra_script %}
-    <script src="{{ url_for('static', filename='js/core.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/guiones.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/actualiza_tiempos.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/textos.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/eventos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/guiones.js') }}"></script>
+<script src="{{ url_for('static', filename='js/actualiza_tiempos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/textos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
+<script src="{{ url_for('static', filename='js/eventos.js') }}"></script>
 
-    <!-- Add the theme's stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/quill.snow.css') }}">
-    <!-- Add FontAwesome -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/@fortawesome/fontawesome-free/css/all.min.css') }}">
-    <!-- Add Quill -->
-    <script src="{{ url_for('static', filename='utilidades-js/js/quill.js') }}"></script>
-    <!-- Add Clipboard -->
-    <script src="{{ url_for('static', filename='utilidades-js/js/clipboard.min.js') }}"></script>
+<!-- Add the theme's stylesheet -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/quill.snow.css') }}">
+<!-- Add Quill -->
+<script src="{{ url_for('static', filename='utilidades-js/js/quill.js') }}"></script>
+<!-- Add Clipboard -->
+<script src="{{ url_for('static', filename='utilidades-js/js/clipboard.min.js') }}"></script>
 
-    <!-- Ssortable -->
-    <script src="{{ url_for('static', filename='js/Sortable.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery-sortable.js') }}"></script>
+<!-- Ssortable -->
+<script src="{{ url_for('static', filename='js/Sortable.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jquery-sortable.js') }}"></script>
 
 
 {% endblock extra_script %}
 {% block body %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-        <div class="container-fluid">
-            <!-- Logo -->
-            <a class="navbar-brand" href="#">
-                <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
-            </a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container-fluid">
+        <!-- Logo -->
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
+        </a>
 
-            <!-- Botón hamburguesa -->
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <!-- Botón hamburguesa -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <!-- Contenido colapsable (todo a la derecha) -->
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
-                    <!-- Cronómetro (ahora dentro del grupo derecho) -->
-                    <div class="d-flex btn border-info mr-2 mb-2 mb-lg-0">
-                        <button id="inicio" class="btn btn-primary btn-sm mr-2">Inicio</button>
-                        <button id="detener" class="btn btn-danger btn-sm mr-2">Detener</button>
-                        <div id="cronometro" class="h3 p-0 ml-2 mb-0 text-white">00:00:00</div>
-                    </div>
-                    <button type="button" class="btn btn-info mr-2 mb-2 mb-lg-0" data-toggle="modal"
-                            data-target="#modalClonarNotas">
-                        <i class="fas fa-copy"></i> Clonar Notas
-                    </button>
-
-                    <!-- Dropdown para Guiones -->
-                    <div class="dropdown mr-2 mb-2 mb-lg-0">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownGuion"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Guion
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownGuion">
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGuionModal">
-                                <i class="fas fa-plus mr-1"></i> Nuevo
-                            </a>
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#seleccionarGuionModal">
-                                <i class="fas fa-folder-open mr-1"></i> Seleccionar
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Dropdown para Agregar -->
-                    <div class="dropdown mr-2 mb-2 mb-lg-0">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownAgregar"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Agregar
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownAgregar">
-                            {#                            <a class="dropdown-item" href="#" id="dropdownAgregarNota">#}
-                            {#                                <i class="fas fa-sticky-note mr-1"></i> Nota#}
-                            {#                            </a>#}
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGraphModal">
-                                <i class="fas fa-chart-bar mr-1"></i> Graph
-                            </a>
-                        </div>
-                    </div>
-
-                    <button onclick="window.location.href='/'" class="mr-2 mb-2 mb-lg-0 btn btn-success">Menu</button>
+        <!-- Contenido colapsable (todo a la derecha) -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
+                <!-- Cronómetro (ahora dentro del grupo derecho) -->
+                <div class="d-flex btn border-info mr-2 mb-2 mb-lg-0">
+                    <button id="inicio" class="btn btn-primary btn-sm mr-2">Inicio</button>
+                    <button id="detener" class="btn btn-danger btn-sm mr-2">Detener</button>
+                    <div id="cronometro" class="h3 p-0 ml-2 mb-0 text-white">00:00:00</div>
                 </div>
+                <button type="button" class="btn btn-info mr-2 mb-2 mb-lg-0" data-toggle="modal"
+                        data-target="#modalClonarNotas">
+                    <i class="fas fa-copy"></i>
+                    <span class="d-none d-md-inline"> Clonar Notas</span>
+                </button>
+
+                <!-- Dropdown para Guiones -->
+                <div class="dropdown mr-2 mb-2 mb-lg-0">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownGuion"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Guion
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownGuion">
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGuionModal">
+                            <i class="fas fa-plus mr-1"></i> Nuevo
+                        </a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#seleccionarGuionModal">
+                            <i class="fas fa-folder-open mr-1"></i> Seleccionar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Dropdown para Agregar -->
+                <div class="dropdown mr-2 mb-2 mb-lg-0">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownAgregar"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Agregar
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownAgregar">
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioTextoModal">
+                            <i class="fas fa-sticky-note mr-1"></i> Nota
+                        </a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGraphModal">
+                            <i class="fas fa-chart-bar mr-1"></i> Graph
+                        </a>
+                    </div>
+                </div>
+
+                <button onclick="window.location.href='/'" class="mr-2 mb-2 mb-lg-0 btn btn-success">
+                    <i class="fas fa-home"></i>
+                    <span class="d-none d-md-inline"> Menú</span>
+                </button>
             </div>
         </div>
-    </nav>
-    <div class="row">
-        <div class="col-lg-6 col-12 mt-lg-2 mt-4 pr-0">
-            <div class="card shadow rounded w-100" style="display: none;">
-                <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
-                    <h4 class="m-0">Guiones</h4>
-                    <button type="button" class="btn btn-light btn-sm" data-toggle="modal"
-                            data-target="#seleccionarGuionModal">
-                        <i class="fas fa-folder-open"></i> Seleccionar Guion
-                    </button>
-                </div>
+    </div>
+</nav>
+<div class="col-12">
+    <div class="col-12 mt-lg-2 mt-4 d-flex flex-column gap-3">
+        <!-- Elimina la clase "row" que limita el ancho -->
+        <div class="p-1 rounded">  <!-- Quitamos "row" -->
+            <!-- Guion -->
+            <div class="card shadow rounded">
                 <div class="card-body">
-                    <p id="guionSeleccionadoInfo" class="text-muted">Ningún guion seleccionado</p>
-                </div>
-            </div>
-            <!-- Formulario para agregar Notas -->
-            <div id="formularioTextoContainer" class="card shadow p-1 rounded">
-                <form class="form-group" id="formularioTexto" onsubmit="guardarTexto(event)">
-                    <div class="card-header text-white bg-primary d-flex justify-content-between align-items-center">
-                        <h4 class="m-0">Agregar nota</h4>
-                        <button class="btn btn-success" type="submit" id="botonGuardarTexto">Agregar</button>
-                    </div>
-                    <div class="card-body">
-                        <!-- Fila aparte para el select -->
-                        <div class="row" style="display: none;">
-                            <div class="col">
-                                <label for="guion_id">Guion:</label>
-                                <select class="form-control" id="guion_id">
-                                    <!-- Las opciones se llenarán dinámicamente con JavaScript -->
-                                </select>
-                            </div>
-                        </div>
-                        <!-- Campo oculto para el contenido -->
-                        <input type="hidden" id="contenido-hidden" name="contenido">
-                        <div class="row mt-2">
-                            <div class="col-lg-8 col-sm-12">
-                                <!-- Campo para el título -->
-                                <div class="form-group">
-                                    <label for="titulo">Descripción/Sección:</label>
-                                    <input class="form-control" id="titulo" name="titulo" required>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-sm-12">
-                                <!-- Campo para el número de nota -->
-                                <div class="form-group">
-                                    <label for="numero_de_nota">Nota nro.:</label>
-                                    <input class="form-control" type="number" id="numero_de_nota" name="numero_de_nota">
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-sm-12">
-                                <!-- Campo para la duracion -->
-                                <div class="form-group">
-                                    <label for="duracion">Duracion:</label>
-                                    <input class="form-control" type="time" step="1" id="duracion" name="duracion">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-10 col-sm-12">
-                                <!-- Campo para el material -->
-                                <div class="form-group">
-                                    <label for="material">Codigo:</label>
-                                    <textarea class="form-control" id="material" name="material"></textarea>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-2 col-sm-12">
-                                <!-- Campo para la musica -->
-                                <div class="form-group">
-                                    <label for="musica">Música:</label>
-                                    <select class="form-control" id="musica" name="musica">
-                                        <option value="">Selecciona una opción</option>
-                                        {% for opcion in musica_opciones %}
-                                            <option value="{{ opcion }}">{{ opcion }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-2 col-sm-12 d-flex align-items-center">
-                                <!-- Checkbox Grabar -->
-                                <div class="form-group form-check ">
-                                    <input type="checkbox" class="form-check-input big-checkbox" id="grabar"
-                                           name="grabar">
-                                    <label class="form-check-label" for="grabar">Grabar</label>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Campo para el contenido -->
-                        <div class="form-group">
-                            <label for="contenido">Copete/Contenido:</label>
-                            <div id="contenido" style="height: 300px" class="form-control"></div>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <!-- Fila para los botones -->
-                        <div class="row">
-                            <div class="col">
-                                <button class="btn btn-outline-success" type="submit" id="botonGuardarTexto">Agregar
-                                    Nota
-                                </button>
-                                <button class="btn btn-outline-danger" type="button" onclick="cancelarEdicion()"
-                                        id="botonCancelar" style="display: none;">Cancelar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="col-lg-6 col-12 mt-lg-2 mt-4 d-flex flex-column gap-3">
-            <div class="row p-1 rounded">
-                <!-- Guion -->
-                <div class="card shadow rounded">
-                    <div class="card-body">
-                        <h3 id="encabezado"></h3>
+                    <h3 id="encabezado"></h3>
+                    <div class="table-responsive">
                         <table class="table table-responsive" id="tablaTextos">
                             <thead class="thead-light">
                             <tr>
@@ -527,8 +438,8 @@
                                 <th scope="col" style="width: 15%">Descripción/Sección</th>
                                 <th scope="col" style="width: 50%">Contenido</th>
                                 <th scope="col" style="width: 5%">Música</th>
-                                <th scope="col" style="width: 10%">Duración</th>
-                                <th scope="col" style="width: 15%">Acciones</th>
+                                <th scope="col" style="width: 5%">Duración</th>
+                                <th scope="col" style="width: 20%">Acciones</th>
                             </tr>
                             </thead>
                             <tbody id="tbodyTextos">
@@ -540,352 +451,473 @@
             </div>
         </div>
     </div>
-    <!-- Modal para el formulario de Graph -->
-    <div class="modal fade bd-example-modal-lg" id="formularioGraphModal" tabindex="-1" role="dialog"
-         aria-labelledby="formularioGraphModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header text-white bg-primary">
-                    <h5 class="modal-title" id="formularioGraphModalLabel">Carga de Graphs</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+</div>
+
+<!-- Modal para el formulario de Notas -->
+<div class="modal fade bd-example-modal-lg" id="formularioTextoModal" tabindex="-1" role="dialog"
+     aria-labelledby="formularioTextoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form class="form-group mb-0" id="formularioTexto" onsubmit="guardarTexto(event)">
+                <div class="modal-header text-white bg-primary d-flex justify-content-between align-items-center">
+                    <h4 class="modal-title m-0" id="formularioTextoModalLabel">Agregar nota</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="formularioGraph" onsubmit="guardarGraph(event)">
-                        <!-- Campo oculto para el ID del graph -->
-                        <input type="hidden" id="graph_id" value="">
-
-                        <!-- Select para asociar a Texto -->
-                        <div class="form-group mb-3">
-                            <label for="texto_id">Nota:</label>
-                            <select class="form-control" id="texto_id" required>
+                    <!-- Fila aparte para el select -->
+                    <div class="row" style="display: none;">
+                        <div class="col">
+                            <label for="guion_id">Guion:</label>
+                            <select class="form-control" id="guion_id">
                                 <!-- Las opciones se llenarán dinámicamente con JavaScript -->
                             </select>
                         </div>
-
-                        <!-- Lugar y Tema -->
-                        <div class="row p-0 m-0">
-                            <div class="col-6 p-0 m-0">
-                                <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
-                            </div>
-                            <div class="col-6 p-0 m-0">
-                                <input type="text" class="form-control m-0" id="tema" placeholder="Tema (opcional)">
+                    </div>
+                    <!-- Campo oculto para el contenido -->
+                    <input type="hidden" id="contenido-hidden" name="contenido">
+                    <div class="row mt-2">
+                        <div class="col-lg-8 col-sm-12">
+                            <!-- Campo para el título -->
+                            <div class="form-group">
+                                <label for="titulo">Descripción/Sección:</label>
+                                <input class="form-control" id="titulo" name="titulo" required>
                             </div>
                         </div>
-
-                        <!-- Sección de Bajadas -->
-                        <div class="form-group mt-3">
-                            <label>Bajadas:</label>
-                            <div id="bajadas-container">
-                                <!-- Bajadas se agregarán dinámicamente aquí -->
-                                <div class="input-group mb-2">
-                                    <input type="text" class="form-control bajada-input"
-                                           placeholder="Texto de la bajada (max 255 caracteres)" maxlength="255">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-outline-danger" type="button"
-                                                onclick="removerBajada(this)">×
-                                        </button>
-                                    </div>
-                                </div>
+                        <div class="col-lg-2 col-sm-12">
+                            <!-- Campo para el número de nota -->
+                            <div class="form-group">
+                                <label for="numero_de_nota">Nota nro.:</label>
+                                <input class="form-control" type="number" id="numero_de_nota" name="numero_de_nota">
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="agregarBajada()">
-                                <i class="fas fa-plus"></i> Añadir otra bajada
-                            </button>
                         </div>
-
-                        <!-- Sección de Entrevistados -->
-                        <div class="form-group mt-3">
-                            <label>Entrevistados y sus citas:</label>
-                            <div id="entrevistados-container">
-                                <!-- Entrevistados se agregarán dinámicamente aquí -->
-                                <div class="entrevistado-group mb-3 p-2 border rounded">
-                                    <div class="input-group mb-2">
-                                        <input type="text" class="form-control entrevistado-nombre"
-                                               placeholder="Nombre del entrevistado">
-                                    </div>
-                                    <div class="citas-container">
-                                        <div class="input-group mb-2">
-                                            <input type="text" class="form-control cita-texto"
-                                                   placeholder="Cita textual (max 255 caracteres)" maxlength="255">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-danger" type="button"
-                                                        onclick="removerCita(this)">×
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            onclick="agregarCita(this)">
-                                        <i class="fas fa-plus"></i> Añadir otra cita
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger float-right"
-                                            onclick="removerEntrevistado(this)">
-                                        <i class="fas fa-trash"></i> Eliminar entrevistado
-                                    </button>
-                                </div>
+                        <div class="col-lg-2 col-sm-12">
+                            <!-- Campo para la duracion -->
+                            <div class="form-group">
+                                <label for="duracion">Duracion:</label>
+                                <input class="form-control" type="time" step="1" id="duracion" name="duracion">
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary mt-1"
-                                    onclick="agregarEntrevistado()">
-                                <i class="fas fa-plus"></i> Añadir otro entrevistado
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <!-- Botón para enviar el formulario -->
-                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph"
-                            onclick="guardarGraph(event)">
-                        Guardar y cerrar
-                    </button>
-                    <button type="button" class="btn btn-outline-success" onclick="agregarNoCerrar(event)"
-                            id="agregarNoCerrar"><i class="fas fa-plus"></i>&nbsp;Agregar
-                    </button>
-                    <button type="button" class="btn btn-outline-danger" onclick="cancelarEdicionGraph()"
-                            id="botonCancelarGraph">Cancelar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Modal Nuevo guion -->
-    <div class="modal fade bd-example-modal-lg modal-front" id="formularioGuionModal" tabindex="-1" role="dialog"
-         aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header text-white bg-primary">
-                    <h5 class="modal-title" id="formularioGuionModalLabel">Nuevo Guion</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
-                        <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion"
-                               required><br>
-                        <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
-                        ></textarea><br>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGuion" form="formularioGuion">
-                        Crear Guion
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para selección de guiones -->
-    <div class="modal fade" id="seleccionarGuionModal" tabindex="-1" role="dialog"
-         aria-labelledby="seleccionarGuionModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header text-white bg-primary">
-                    <h5 class="modal-title" id="seleccionarGuionModalLabel">Seleccionar Guion</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" id="buscarGuion" placeholder="Buscar guion..."
-                               onkeyup="filtrarGuiones()">
-                        <div class="input-group-append">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
                         </div>
                     </div>
-                    <div class="list-group" id="listaGuionesModal">
-                        <!-- Los guiones se cargarán aquí dinámicamente -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para clonar notas -->
-    <div class="modal fade" id="modalClonarNotas" tabindex="-1" role="dialog" aria-labelledby="modalClonarNotasLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalClonarNotasLabel">Clonar Notas a otro Guion</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-info-circle"></i>
-                            Selecciona las notas a clonar y el guion destino
-                        </div>
-                        {#                        <div>#}
-                        {#                            <button class="btn btn-sm btn-outline-warning" onclick="cargarNotasYGuiones()">#}
-                        {#                                <i class="fas fa-sync"></i> Recargar#}
-                        {#                            </button>#}
-                        {#                            <button class="btn btn-sm btn-outline-danger" onclick="probarEndpointsNotas()">#}
-                        {#                                <i class="fas fa-bug"></i> Debug#}
-                        {#                            </button>#}
-                        {#                        </div>#}
-                    </div>
-
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-10 col-sm-12">
+                            <!-- Campo para el material -->
                             <div class="form-group">
-                                <label><strong>Notas disponibles:</strong></label>
-                                <div id="listaNotasClonar"
-                                     style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
-                                    <div class="text-center py-3" id="loadingNotas">
-                                        <div class="spinner-border text-primary" role="status"></div>
-                                        <p class="mt-2">Cargando notas...</p>
-                                    </div>
-                                </div>
-                                <div class="mt-2">
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="seleccionarTodasNotas()">
-                                        <i class="fas fa-check-square"></i> Seleccionar todas
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary"
-                                            onclick="deseleccionarTodasNotas()">
-                                        <i class="far fa-square"></i> Deseleccionar todas
-                                    </button>
-                                    {#                                    <button class="btn btn-sm btn-outline-info" onclick="probarRutas()"#}
-                                    {#                                            title="Diagnóstico">#}
-                                    {#                                        <i class="fas fa-bug"></i> Diagnosticar#}
-                                    {#                                    </button>#}
-                                </div>
+                                <label for="material">Codigo:</label>
+                                <textarea class="form-control" id="material" name="material"></textarea>
                             </div>
                         </div>
-                        <div class="col-md-6">
+
+                        <div class="col-lg-2 col-sm-12">
+                            <!-- Campo para la musica -->
                             <div class="form-group">
-                                <label for="guionDestinoClonar"><strong>Guion destino:</strong></label>
-                                <select class="form-control" id="guionDestinoClonar">
-                                    <option value="">Cargando guiones...</option>
+                                <label for="musica">Música:</label>
+                                <select class="form-control" id="musica" name="musica">
+                                    <option value="">Selecciona una opción</option>
+                                    {% for opcion in musica_opciones %}
+                                    <option value="{{ opcion }}">{{ opcion }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
+                        </div>
 
-                            <div class="form-group">
-                                <label><strong>Resumen:</strong></label>
-                                <div id="resumenClonacion" class="alert alert-info">
-                                    <i class="fas fa-info-circle"></i> Selecciona notas y un guion destino para clonar.
-                                </div>
+                        <div class="col-lg-2 col-sm-12 d-flex align-items-center">
+                            <!-- Checkbox Grabar -->
+                            <div class="form-group form-check ">
+                                <input type="checkbox" class="form-check-input big-checkbox" id="grabar"
+                                       name="grabar">
+                                <label class="form-check-label" for="grabar">Grabar</label>
                             </div>
-
-                            <button id="btnClonarNotas" class="btn btn-success btn-block" onclick="clonarNotas()"
-                                    disabled>
-                                <i class="fas fa-copy"></i> Clonar Notas Seleccionadas
+                        </div>
+                    </div>
+                    <!-- Campo para el contenido -->
+                    <div class="form-group">
+                        <label for="contenido">Copete/Contenido:</label>
+                        <div id="contenido" style="height: 300px" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- Fila para los botones -->
+                    <div class="row w-100">
+                        <div class="col">
+                            <button class="btn btn-outline-success" type="submit" id="botonGuardarTexto">Agregar
+                                Nota
+                            </button>
+                            <button class="btn btn-outline-danger" type="button" onclick="cancelarEdicion()"
+                                    data-dismiss="modal" id="botonCancelar" style="display: none;">Cancelar
                             </button>
                         </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para el formulario de Graph -->
+<div class="modal fade bd-example-modal-lg" id="formularioGraphModal" tabindex="-1" role="dialog"
+     aria-labelledby="formularioGraphModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header text-white bg-primary">
+                <h5 class="modal-title" id="formularioGraphModalLabel">Carga de Graphs</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formularioGraph" onsubmit="guardarGraph(event)">
+                    <!-- Campo oculto para el ID del graph -->
+                    <input type="hidden" id="graph_id" value="">
+
+                    <!-- Select para asociar a Texto -->
+                    <div class="form-group mb-3">
+                        <label for="texto_id">Nota:</label>
+                        <select class="form-control" id="texto_id" required>
+                            <!-- Las opciones se llenarán dinámicamente con JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Lugar y Tema -->
+                    <div class="row p-0 m-0">
+                        <div class="col-6 p-0 m-0">
+                            <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
+                        </div>
+                        <div class="col-6 p-0 m-0">
+                            <input type="text" class="form-control m-0" id="tema" placeholder="Tema (opcional)">
+                        </div>
+                    </div>
+
+                    <!-- Sección de Bajadas -->
+                    <div class="form-group mt-3">
+                        <label>Bajadas:</label>
+                        <div id="bajadas-container">
+                            <!-- Bajadas se agregarán dinámicamente aquí -->
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control bajada-input"
+                                       placeholder="Texto de la bajada (max 255 caracteres)" maxlength="255">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-danger" type="button"
+                                            onclick="removerBajada(this)">×
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="agregarBajada()">
+                            <i class="fas fa-plus"></i> Añadir otra bajada
+                        </button>
+                    </div>
+
+                    <!-- Sección de Entrevistados -->
+                    <div class="form-group mt-3">
+                        <label>Entrevistados y sus citas:</label>
+                        <div id="entrevistados-container">
+                            <!-- Entrevistados se agregarán dinámicamente aquí -->
+                            <div class="entrevistado-group mb-3 p-2 border rounded">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control entrevistado-nombre"
+                                           placeholder="Nombre del entrevistado">
+                                </div>
+                                <div class="citas-container">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control cita-texto"
+                                               placeholder="Cita textual (max 255 caracteres)" maxlength="255">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-danger" type="button"
+                                                    onclick="removerCita(this)">×
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        onclick="agregarCita(this)">
+                                    <i class="fas fa-plus"></i> Añadir otra cita
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger float-right"
+                                        onclick="removerEntrevistado(this)">
+                                    <i class="fas fa-trash"></i> Eliminar entrevistado
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-1"
+                                onclick="agregarEntrevistado()">
+                            <i class="fas fa-plus"></i> Añadir otro entrevistado
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <!-- Botón para enviar el formulario -->
+                <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph"
+                        onclick="guardarGraph(event)">
+                    Guardar y cerrar
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="agregarNoCerrar(event)"
+                        id="agregarNoCerrar"><i class="fas fa-plus"></i>&nbsp;Agregar
+                </button>
+                <button type="button" class="btn btn-outline-danger" onclick="cancelarEdicionGraph()"
+                        id="botonCancelarGraph">Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Nuevo guion -->
+<div class="modal fade bd-example-modal-lg modal-front" id="formularioGuionModal" tabindex="-1" role="dialog"
+     aria-labelledby="formularioGuionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header text-white bg-primary">
+                <h5 class="modal-title" id="formularioGuionModalLabel">Nuevo Guion</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-group" id="formularioGuion" onsubmit="guardarGuion(event)">
+                    <input class="form-control" type="text" id="nombreGuion" placeholder="Nombre del Guion"
+                           required><br>
+                    <textarea class="form-control" id="descripcionGuion" placeholder="Descripción del Guion"
+                    ></textarea><br>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-outline-success" id="botonGuardarGuion" form="formularioGuion">
+                    Crear Guion
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para selección de guiones -->
+<div class="modal fade" id="seleccionarGuionModal" tabindex="-1" role="dialog"
+     aria-labelledby="seleccionarGuionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header text-white bg-primary">
+                <h5 class="modal-title" id="seleccionarGuionModalLabel">Seleccionar Guion</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="buscarGuion" placeholder="Buscar guion..."
+                           onkeyup="filtrarGuiones()">
+                    <div class="input-group-append">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                </div>
+                <div class="list-group" id="listaGuionesModal">
+                    <!-- Los guiones se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para clonar notas -->
+<div class="modal fade" id="modalClonarNotas" tabindex="-1" role="dialog" aria-labelledby="modalClonarNotasLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalClonarNotasLabel">Clonar Notas a otro Guion</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-info-circle"></i>
+                        Selecciona las notas a clonar y el guion destino
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><strong>Notas disponibles:</strong></label>
+                            <div id="listaNotasClonar"
+                                 style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                                <div class="text-center py-3" id="loadingNotas">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2">Cargando notas...</p>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="seleccionarTodasNotas()">
+                                    <i class="fas fa-check-square"></i> Seleccionar todas
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        onclick="deseleccionarTodasNotas()">
+                                    <i class="far fa-square"></i> Deseleccionar todas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="guionDestinoClonar"><strong>Guion destino:</strong></label>
+                            <select class="form-control" id="guionDestinoClonar">
+                                <option value="">Cargando guiones...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label><strong>Resumen:</strong></label>
+                            <div id="resumenClonacion" class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Selecciona notas y un guion destino para clonar.
+                            </div>
+                        </div>
+
+                        <button id="btnClonarNotas" class="btn btn-success btn-block" onclick="clonarNotas()"
+                                disabled>
+                            <i class="fas fa-copy"></i> Clonar Notas Seleccionadas
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Inicializar Quill en el campo "contenido"
-        const quill = new Quill('#contenido', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    // Fuente y tamaño
-                    [{'font': []}],
-                    [{'size': ['small', false, 'large', 'huge']}],
-                    // Estilos de texto
-                    ['bold', 'italic', 'underline', 'strike'],        // Negrita, cursiva, subrayado, tachado
-                    [{'color': []}, {'background': []}],          // Color de texto y fondo
-                    [{'script': 'sub'}, {'script': 'super'}],     // Subíndice y superíndice
-                    // Alineación y dirección del texto
-                    [{'align': []}],
-                    [{'direction': 'rtl'}],                         // Dirección de texto (de derecha a izquierda)
-                    // Listas
-                    [{'list': 'ordered'}, {'list': 'bullet'}],   // Listas ordenadas y no ordenadas
-                    [{'indent': '-1'}, {'indent': '+1'}],         // Sangría
-                    // Encabezados
-                    [{'header': [1, 2, 3, 4, 5, 6, false]}],        // Niveles de encabezado
-                    // Bloques de código y citas
-                    ['blockquote', 'code-block'],                     // Citas y bloques de código
-                    // Enlaces e imágenes
-                    ['link', 'image', 'video'],                       // Insertar enlaces, imágenes y videos
-                    // Limpiar formato
-                    ['clean']                                         // Limpiar formato
-                ]
-            },
-            bounds: '#contenido', // Define el contenedor del editor
-            height: '200px',
-        });
+<script>
+    // Inicializar Quill en el campo "contenido"
+    const quill = new Quill('#contenido', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                // Fuente y tamaño
+                [{'font': []}],
+                [{'size': ['small', false, 'large', 'huge']}],
+                // Estilos de texto
+                ['bold', 'italic', 'underline', 'strike'],        // Negrita, cursiva, subrayado, tachado
+                [{'color': []}, {'background': []}],          // Color de texto y fondo
+                [{'script': 'sub'}, {'script': 'super'}],     // Subíndice y superíndice
+                // Alineación y dirección del texto
+                [{'align': []}],
+                [{'direction': 'rtl'}],                         // Dirección de texto (de derecha a izquierda)
+                // Listas
+                [{'list': 'ordered'}, {'list': 'bullet'}],   // Listas ordenadas y no ordenadas
+                [{'indent': '-1'}, {'indent': '+1'}],         // Sangría
+                // Encabezados
+                [{'header': [1, 2, 3, 4, 5, 6, false]}],        // Niveles de encabezado
+                // Bloques de código y citas
+                ['blockquote', 'code-block'],                     // Citas y bloques de código
+                // Enlaces e imágenes
+                ['link', 'image', 'video'],                       // Insertar enlaces, imágenes y videos
+                // Limpiar formato
+                ['clean']                                         // Limpiar formato
+            ]
+        },
+        bounds: '#contenido', // Define el contenedor del editor
+        height: '200px',
+    });
 
-        // Función para enviar solicitudes al servidor
-        function enviarSolicitud(url) {
-            fetch(url)
-                .then(response => {
-                    if (response.status === 204) {
-                        console.log(`Solicitud a ${url} enviada correctamente`);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
+    // Función para enviar solicitudes al servidor
+    function enviarSolicitud(url) {
+        fetch(url)
+            .then(response => {
+                if (response.status === 204) {
+                    console.log(`Solicitud a ${url} enviada correctamente`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Referencias a los botones
+    const inicioBoton = document.getElementById('inicio');
+    const detenerBoton = document.getElementById('detener');
+
+    // Evento para el botón "Inicio"
+    inicioBoton.addEventListener('click', () => {
+        if (inicioBoton.textContent === "Inicio") {
+            enviarSolicitud('/iniciar');
+        } else if (inicioBoton.textContent === "Rest.") {
+            enviarSolicitud('/restablecer');
+            inicioBoton.textContent = "Inicio"; // Cambiar a "Inicio" después de restablecer
         }
+    });
 
-        // Referencias a los botones
-        const inicioBoton = document.getElementById('inicio');
-        const detenerBoton = document.getElementById('detener');
+    // Evento para el botón "Detener"
+    detenerBoton.addEventListener('click', () => {
+        enviarSolicitud('/detener');
+        inicioBoton.textContent = "Rest."; // Cambiar a "Restablecer" después de detener
+    });
 
-        // Evento para el botón "Inicio"
-        inicioBoton.addEventListener('click', () => {
-            if (inicioBoton.textContent === "Inicio") {
-                enviarSolicitud('/iniciar');
-            } else if (inicioBoton.textContent === "Rest.") {
-                enviarSolicitud('/restablecer');
-                inicioBoton.textContent = "Inicio"; // Cambiar a "Inicio" después de restablecer
-            }
-        });
+    // Conectar al stream de eventos (SSE)
+    const eventSource = new EventSource('/stream');
 
-        // Evento para el botón "Detener"
-        detenerBoton.addEventListener('click', () => {
-            enviarSolicitud('/detener');
-            inicioBoton.textContent = "Rest."; // Cambiar a "Restablecer" después de detener
-        });
+    // Actualizar el cronómetro y el estado del botón cuando se reciba un mensaje del servidor
+    eventSource.onmessage = (event) => {
+        const [tiempo, estado] = event.data.split(',');
+        const horas = Math.floor(tiempo / 3600).toString().padStart(2, '0');
+        const minutos = Math.floor((tiempo % 3600) / 60).toString().padStart(2, '0');
+        const segundos = (tiempo % 60).toString().padStart(2, '0');
+        document.getElementById('cronometro').textContent = `${horas}:${minutos}:${segundos}`;
 
-        // Conectar al stream de eventos (SSE)
-        const eventSource = new EventSource('/stream');
-
-        // Actualizar el cronómetro y el estado del botón cuando se reciba un mensaje del servidor
-        eventSource.onmessage = (event) => {
-            const [tiempo, estado] = event.data.split(',');
-            const horas = Math.floor(tiempo / 3600).toString().padStart(2, '0');
-            const minutos = Math.floor((tiempo % 3600) / 60).toString().padStart(2, '0');
-            const segundos = (tiempo % 60).toString().padStart(2, '0');
-            document.getElementById('cronometro').textContent = `${horas}:${minutos}:${segundos}`;
-
-            // Actualizar el botón en control.html (si está abierto)
-            if (window.opener) {
-                const inicioBoton = window.opener.document.getElementById('inicio');
-                const restablecerBoton = window.opener.document.getElementById('restablecer');
-                if (inicioBoton && restablecerBoton) {
-                    if (estado === "activo") {
-                        inicioBoton.textContent = "Rest.";
-                        restablecerBoton.style.display = "inline";
-                    } else {
-                        inicioBoton.textContent = "Inicio";
-                        restablecerBoton.style.display = "none";
-                    }
+        // Actualizar el botón en control.html (si está abierto)
+        if (window.opener) {
+            const inicioBoton = window.opener.document.getElementById('inicio');
+            const restablecerBoton = window.opener.document.getElementById('restablecer');
+            if (inicioBoton && restablecerBoton) {
+                if (estado === "activo") {
+                    inicioBoton.textContent = "Rest.";
+                    restablecerBoton.style.display = "inline";
+                } else {
+                    inicioBoton.textContent = "Inicio";
+                    restablecerBoton.style.display = "none";
                 }
             }
-        };
+        }
+    };
 
-        // Ejecutar al cargar la página
-        document.addEventListener('DOMContentLoaded', function () {
-            const id = localStorage.getItem('guionSeleccionado');
-            if (id) {
-                seleccionarGuion(id);
-            } else {
-                console.log("No hay guión seleccionado en el almacenamiento local");
-                // Opcional: Cargar un guión por defecto o mostrar mensaje
+    // Ejecutar al cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        const id = localStorage.getItem('guionSeleccionado');
+        if (id) {
+            seleccionarGuion(id);
+        } else {
+            console.log("No hay guión seleccionado en el almacenamiento local");
+            // Opcional: Cargar un guión por defecto o mostrar mensaje
+        }
+    });
+
+    // ===== Abrir el modal de nota al editar =====
+    // Envolver editarTexto() (definida en textos.js) para que, además de
+    // cargar los datos en el formulario, muestre el modal #formularioTextoModal.
+    function _envolverEditarTexto() {
+        if (typeof window.editarTexto !== 'function' || window.editarTexto.__patchedNotaModal) return false;
+        const original = window.editarTexto;
+        window.editarTexto = function () {
+            const resultado = original.apply(this, arguments);
+            try {
+                // Bootstrap 4 (jQuery)
+                $('#formularioTextoModal').modal('show');
+            } catch (e) {
+                // Fallback Bootstrap 5 (nativo)
+                const modalEl = document.getElementById('formularioTextoModal');
+                if (modalEl && window.bootstrap && bootstrap.Modal) {
+                    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
             }
-        });
+            return resultado;
+        };
+        window.editarTexto.__patchedNotaModal = true;
+        return true;
+    }
 
-    </script>
+    // textos.js ya se cargó sincrónicamente arriba, pero igual reintentamos en DOMContentLoaded por si acaso.
+    if (!_envolverEditarTexto()) {
+        document.addEventListener('DOMContentLoaded', _envolverEditarTexto);
+    }
+
+</script>
 {% endblock body %}

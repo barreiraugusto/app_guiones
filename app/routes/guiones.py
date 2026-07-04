@@ -6,6 +6,7 @@ from weasyprint import HTML
 
 from .. import db
 from ..models import Guion, Texto, Graph, Cita, graph_bajada, Bajada, Entrevistado
+from ..audit import registrar
 
 
 
@@ -22,6 +23,8 @@ def guiones():
         )
         db.session.add(nuevo_guion)
         db.session.commit()
+        registrar('INFO', f'Creó guión: {nuevo_guion.nombre}',
+                  'guion', nuevo_guion.id, nuevo_guion.nombre)
         return jsonify({"mensaje": "Guion creado", "id": nuevo_guion.id}), 201
     else:
         guiones = Guion.query.all()
@@ -206,6 +209,11 @@ def clonar_notas(guion_origen_id, guion_destino_id):
 
         db.session.commit()
 
+        registrar('INFO',
+                  f'Clonó {len(notas_clonadas)} nota(s) de "{guion_origen.nombre}" → "{guion_destino.nombre}"',
+                  'guion', guion_destino_id, guion_destino.nombre,
+                  f'Origen: {guion_origen.nombre} | {len(notas_clonadas)} notas copiadas')
+
         return jsonify({
             'mensaje': f'Se clonaron {len(notas_clonadas)} notas al guion "{guion_destino.nombre}"',
             'notas_clonadas': notas_clonadas
@@ -270,6 +278,9 @@ def editar_guion(id):
     # Guardar los cambios en la base de datos
     db.session.commit()
 
+    registrar('WARNING', f'Editó guión: {guion.nombre}',
+              'guion', id, guion.nombre)
+
     return jsonify({"mensaje": "Guion actualizado correctamente"}), 200
 
 
@@ -294,6 +305,10 @@ def borrar_guion(id):
     if not guion:
         return jsonify({"mensaje": "Guion no encontrado"}), 404
 
+    # Capturar datos ANTES de eliminar
+    nombre_guion = guion.nombre
+    n_notas      = len(guion.textos)
+
     try:
         # Eliminar en cascada manual para evitar problemas
         for texto in guion.textos:
@@ -316,6 +331,10 @@ def borrar_guion(id):
         # Eliminar el guion
         db.session.delete(guion)
         db.session.commit()
+
+        registrar('DANGER', f'Eliminó guión: {nombre_guion}',
+                  'guion', id, nombre_guion,
+                  f'Contenía {n_notas} nota(s)')
 
         return jsonify({"mensaje": "Guion eliminado correctamente"})
 
@@ -352,13 +371,15 @@ def exportar_pdf(guion_id):
         nombre_archivo = nombre_archivo.replace(" ", "_")
 
         # Crear una respuesta con el PDF
+        registrar('INFO', f'Exportó PDF: {guion.nombre}',
+                  'guion', guion_id, guion.nombre)
+
         response = make_response(pdf)
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = f'attachment; filename={nombre_archivo}.pdf'
 
         return response
     except Exception as e:
-        # Registrar el error y devolver una respuesta de error
         print(f"Error al generar el PDF: {e}")
         return "Error al generar el PDF", 500
 

@@ -11,6 +11,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from .. import db
 from ..models import Graph, Texto, Guion, Entrevistado, Bajada, Cita
 from ..config_manager import display_config, save_config
+from ..audit import registrar
 
 graphs_bp = Blueprint('graphs', __name__)
 
@@ -60,6 +61,13 @@ def crear_graph():
                         ))
 
         db.session.commit()
+
+        texto = Texto.query.get(data['texto_id'])
+        registrar('INFO',
+                  f'Agregó graph: {nuevo_graph.lugar}',
+                  'graph', nuevo_graph.id, nuevo_graph.lugar,
+                  f'Nota #{texto.numero_de_nota}: {texto.titulo}' if texto else f'texto_id={data["texto_id"]}')
+
         return jsonify({"mensaje": "Graph creado", "id": nuevo_graph.id}), 201
     except Exception as e:
         db.session.rollback()
@@ -112,6 +120,11 @@ def actualizar_graph(id):
                         ))
 
         db.session.commit()
+
+        registrar('WARNING',
+                  f'Editó graph: {graph.lugar}',
+                  'graph', id, graph.lugar)
+
         return jsonify({"mensaje": "Graph actualizado"})
     except Exception as e:
         db.session.rollback()
@@ -124,12 +137,23 @@ def eliminar_graph(id):
     if not graph:
         return jsonify({"mensaje": "Graph no encontrado"}), 404
 
+    # Capturar antes de eliminar
+    lugar_eliminado  = graph.lugar
+    texto_id_parent  = graph.texto_id
+
     try:
         Cita.query.filter_by(graph_id=id).delete()
         for bajada in list(graph.bajadas):
             db.session.delete(bajada)
         db.session.delete(graph)
         db.session.commit()
+
+        texto = Texto.query.get(texto_id_parent)
+        registrar('DANGER',
+                  f'Eliminó graph: {lugar_eliminado}',
+                  'graph', id, lugar_eliminado,
+                  f'Nota #{texto.numero_de_nota}: {texto.titulo}' if texto else f'texto_id={texto_id_parent}')
+
         return jsonify({"mensaje": "Graph eliminado correctamente"})
     except Exception as e:
         db.session.rollback()
@@ -275,6 +299,11 @@ def setGraphsActivo(id):
         return jsonify({"error": "Graph no encontrado"}), 404
     graph.activo = True
     db.session.commit()
+
+    registrar('INFO',
+              f'Activó graph: {graph.lugar}',
+              'graph', id, graph.lugar)
+
     return jsonify({"mensaje": "Graph activo actualizado"})
 
 
@@ -356,6 +385,11 @@ def generar_xml_graphs():
                 ruta_archivo = os.path.join(graphs_dir, f"{texto.numero_de_nota}_{i}.xml")
                 with open(ruta_archivo, 'w', encoding='ISO-8859-1') as f:
                     f.write(xml_content)
+
+        registrar('INFO',
+                  f'Generó XML de graphs ({total_graphs} archivos)',
+                  None, None, None,
+                  f'{total_graphs} archivos en carpeta Graphs')
 
         return jsonify({
             'success': True,

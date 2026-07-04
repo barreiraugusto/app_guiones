@@ -1,0 +1,587 @@
+/* =============================================
+   SIGPRO — Sistema de Gestión de Producciones
+   Estilos globales y mejoras mobile-first
+   ============================================= */
+
+/* ── Variables ─────────────────────────────── */
+:root {
+  --sp-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+             'Helvetica Neue', Arial, system-ui, sans-serif;
+
+  --sp-radius:    10px;
+  --sp-radius-sm:  6px;
+  --sp-radius-lg: 16px;
+
+  --sp-shadow-xs: 0 1px 4px rgba(0,0,0,0.08);
+  --sp-shadow-sm: 0 2px 10px rgba(0,0,0,0.10);
+  --sp-shadow:    0 4px 20px rgba(0,0,0,0.14);
+  --sp-shadow-lg: 0 8px 36px rgba(0,0,0,0.18);
+
+  --sp-transition: 0.18s ease;
+
+  --sp-primary:   #1565c0;
+  --sp-primary-d: #0d47a1;
+  --sp-warning:   #f57f17;
+  --sp-danger:    #c62828;
+  --sp-success:   #2e7d32;
+  --sp-muted:     #6c757d;
+
+  /* Colores de estado del guion */
+  --sp-activo-bg:  #fff3cd;
+  --sp-activo-bdr: #ffc107;
+  --sp-emitido-bg: #e2e3e5;
+  --sp-emitido-bdr:#6c757d;
+
+  /* Navbar */
+  --sp-nav-h: 60px;
+}
+
+/* ── Base ───────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--sp-font);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: contain;
+}
+
+/* ── Tipografía ─────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* ── Navbar ─────────────────────────────────── */
+.navbar {
+  min-height: var(--sp-nav-h);
+}
+
+.navbar-brand {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* ── Botones — touch target mínimo 44px ─────── */
+.btn {
+  min-height: 36px;
+  border-radius: var(--sp-radius-sm);
+  font-weight: 500;
+  transition: background-color var(--sp-transition),
+              border-color    var(--sp-transition),
+              transform       var(--sp-transition),
+              box-shadow      var(--sp-transition);
+}
+
+@media (max-width: 767px) {
+  .btn {
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+  /* Botones en grupos de iconos: cuadrado táctil */
+  .btn-group .btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* Ícono un poco más grande para mejor accesibilidad */
+  .btn .fas, .btn .far {
+    font-size: 1.05rem;
+  }
+}
+
+/* ── Cards ──────────────────────────────────── */
+.card {
+  border: none;
+  border-radius: var(--sp-radius);
+  box-shadow: var(--sp-shadow-sm);
+}
+
+.card-header {
+  border-radius: var(--sp-radius) var(--sp-radius) 0 0 !important;
+  font-weight: 600;
+}
+
+/* ── Inputs / Select ────────────────────────── */
+.form-control {
+  border-radius: var(--sp-radius-sm);
+}
+
+/* iOS: evitar zoom automático en focus (font-size < 16px dispara el zoom) */
+@media (max-width: 767px) {
+  input.form-control,
+  select.form-control,
+  textarea.form-control {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+  select.form-control {
+    height: 44px;
+  }
+}
+
+/* ── Modales ────────────────────────────────── */
+@media (max-width: 575px) {
+  .modal-dialog {
+    margin: 8px;
+    max-width: calc(100% - 16px);
+  }
+  .modal-content {
+    border-radius: var(--sp-radius-lg);
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+  .modal-body {
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: calc(92vh - 130px);
+  }
+}
+
+/* ── Tablas ─────────────────────────────────── */
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+@media (max-width: 767px) {
+  .table td {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+/* ── Scrollbar sutil ────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: rgba(0,0,0,0.04); }
+::-webkit-scrollbar-thumb  { background: rgba(0,0,0,0.20); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35); }
+
+/* ── No-select en elementos de UI ───────────── */
+.btn, .navbar, th, .badge {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Focus accesible ────────────────────────── */
+:focus-visible {
+  outline: 3px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+
+/* =============================================
+   PÁGINA: siguiente.html  (Próxima Nota)
+   Diseño oscuro optimizado para tablets y
+   lectura a distancia en sala de control.
+   ============================================= */
+
+.sp-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;          /* dynamic viewport height en móvil */
+  min-height: 100vh;
+  background: #080812;
+  color: #e8eaf0;
+  font-family: var(--sp-font);
+  overflow: hidden;
+}
+
+/* -- Cabecera --------------------------------- */
+.sp-header {
+  background: linear-gradient(135deg, #0d47a1, #1976d2);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.5);
+}
+
+.sp-nota-num {
+  font-size: clamp(2.2rem, 7vw, 4.5rem);
+  font-weight: 900;
+  color: #ffee58;
+  line-height: 1;
+  min-width: 1.8ch;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sp-vbar {
+  width: 2px;
+  height: 54px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.sp-titulo {
+  font-size: clamp(1.1rem, 3vw, 1.85rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  flex: 1;
+}
+
+/* -- Banner GRABAR ---------------------------- */
+.sp-grabar-banner {
+  background: #b71c1c;
+  color: #fff;
+  text-align: center;
+  padding: 0.55rem 1rem;
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  display: none;  /* Se muestra vía JS */
+  animation: sp-pulse 1.2s ease-in-out infinite;
+}
+
+.sp-grabar-banner.visible {
+  display: block;
+}
+
+@keyframes sp-pulse {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.65; }
+}
+
+/* -- Área de contenido scrollable ------------ */
+.sp-contenido-wrap {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.1rem 1.4rem;
+}
+
+.sp-contenido-texto {
+  font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+  line-height: 1.8;
+  color: #cfd3e0;
+}
+
+/* -- Sección Graphs -------------------------- */
+.sp-graphs-wrap {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.sp-graph-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.sp-graph-lugar {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #64b5f6;
+  margin-bottom: 0.15rem;
+}
+
+.sp-graph-tema {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.sp-bajadas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.sp-bajada {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e8eaf6;
+  padding: 0.15rem 0.4rem;
+  border-left: 3px solid rgba(100,181,246,0.4);
+}
+
+.sp-entrevistado {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+}
+
+.sp-entrevistado-nombre {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #80cbc4;
+}
+
+.sp-cita {
+  font-size: 0.85rem;
+  color: #90a4ae;
+  font-style: italic;
+  margin-top: 0.2rem;
+}
+
+/* -- Estado vacío ---------------------------- */
+.sp-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.15);
+  text-align: center;
+  padding: 2rem;
+}
+
+.sp-empty-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.sp-empty-text {
+  font-size: 1.2rem;
+  font-weight: 300;
+}
+
+/* -- Footer: Material | Música --------------- */
+.sp-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-shrink: 0;
+  min-height: 68px;
+  border-top: 2px solid rgba(255,255,255,0.05);
+}
+
+.sp-material {
+  background: #0d0d1a;
+  padding: 0.6rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.sp-material-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #546e7a;
+  margin-bottom: 0.15rem;
+}
+
+.sp-material-value {
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: #b0bec5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-musica {
+  background: #e65100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  font-size: clamp(0.85rem, 2.5vw, 1.25rem);
+  font-weight: 900;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+
+/* =============================================
+   PÁGINA: ver_guion.html
+   ============================================= */
+
+@media (max-width: 767px) {
+  /* Tabla con scroll horizontal en mobile */
+  .ver-guion-tabla-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--sp-radius-sm);
+  }
+
+  /* Columna de número + botones nunca se achica */
+  #tablaTextos td:first-child,
+  #tablaTextos th:first-child {
+    min-width: 90px;
+    position: sticky;
+    left: 0;
+    background: inherit;
+    z-index: 1;
+  }
+
+  /* Botones de nota más grandes */
+  #tablaTextos .btn-group .btn {
+    padding: 0.45rem 0.6rem;
+  }
+
+  /* Texto en celdas no se rompe de forma extraña */
+  #tablaTextos td {
+    min-width: 120px;
+  }
+
+  #tablaTextos td:first-child {
+    min-width: 90px;
+  }
+}
+
+/* Separadores entre notas */
+.linea-separadora td {
+  background-color: #495057 !important;
+}
+
+
+/* =============================================
+   PÁGINA: principal.html
+   ============================================= */
+
+@media (max-width: 991px) {
+  #cronometro {
+    font-size: 1.35rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Tabla de control: scroll horizontal */
+  #tablaTextos {
+    font-size: 0.82rem;
+  }
+  #tablaTextos th,
+  #tablaTextos td {
+    padding: 0.35rem 0.4rem;
+  }
+  /* En accciones: solo iconos (ocultar texto) */
+  .accion-texto span,
+  .accion-texto .btn-text {
+    display: none;
+  }
+}
+
+/* Navbar principal — grupo de botones más compacto en tablet */
+@media (max-width: 991px) {
+  .navbar .btn-sm {
+    padding: 0.28rem 0.55rem;
+    font-size: 0.78rem;
+  }
+}
+
+
+/* =============================================
+   PÁGINA: listado_guiones.html
+   ============================================= */
+
+/* Desktop: tabla normal */
+.tabla-guiones { display: table; }
+.guiones-cards  { display: none; }
+
+/* Mobile: cards en lugar de tabla */
+@media (max-width: 767px) {
+  .tabla-guiones { display: none; }
+  .guiones-cards  { display: block; }
+}
+
+.guion-card-item {
+  background: #fff;
+  border-radius: var(--sp-radius);
+  box-shadow: var(--sp-shadow-sm);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.7rem;
+  border-left: 4px solid #1565c0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: box-shadow var(--sp-transition), transform var(--sp-transition);
+}
+
+.guion-card-item:active {
+  transform: scale(0.99);
+}
+
+.guion-card-info h5 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.guion-card-info .muted {
+  font-size: 0.82rem;
+  color: var(--sp-muted);
+}
+
+.guion-card-actions {
+  flex-shrink: 0;
+}
+
+.guion-card-actions .btn {
+  padding: 0.5rem 0.65rem;
+}
+
+
+/* =============================================
+   PÁGINA: index.html
+   ============================================= */
+
+/* Mejor legibilidad del menú en móvil */
+@media (max-width: 575px) {
+  .menu-card .btn-lg {
+    font-size: 1.05rem;
+    padding: 0.9rem 1.2rem;
+  }
+}
+
+
+/* =============================================
+   UTILIDADES GLOBALES
+   ============================================= */
+
+/* Contenedor principal con padding top para navbar fijo */
+.sp-main-padded {
+  padding-top: calc(var(--sp-nav-h) + 8px);
+}
+
+/* Estado de carga */
+.sp-skeleton {
+  background: linear-gradient(90deg,
+    rgba(0,0,0,0.06) 25%,
+    rgba(0,0,0,0.12) 50%,
+    rgba(0,0,0,0.06) 75%);
+  background-size: 200% 100%;
+  animation: sp-skeleton-wave 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes sp-skeleton-wave {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* Animación de entrada suave */
+@keyframes sp-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.sp-fade-in {
+  animation: sp-fade-in 0.25s ease forwards;
+}
+
+/* Evitar selección accidental en touch */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
