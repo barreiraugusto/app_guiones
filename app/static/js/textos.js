@@ -238,12 +238,15 @@ async function setTextoActivo(id) {
             if (String(tr.dataset.textoId) !== String(id)) {
                 tr.classList.remove('bg-warning', 'activo');
 
-                // Verificar si está emitido para aplicar el color correcto
-                if (tr.classList.contains('emitido')) {
+                const estaEmitido = tr.classList.contains('emitido');
+                if (estaEmitido) {
                     tr.classList.add('bg-secondary');
                 } else {
                     tr.classList.add('bg-light');
                 }
+
+                // También desactivar los graphs asociados al texto anterior
+                actualizarEstadoGraphs(tr.dataset.textoId, estaEmitido ? 'emitido' : '');
             }
         });
 
@@ -294,14 +297,17 @@ async function setTextoActivo(id) {
 async function setTextoEmitido(id) {
     try {
         const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
+        let nuevoEstadoGraphs = 'emitido';
         if (filaActual) {
             // Cambiar estado visual inmediatamente
             if (filaActual.classList.contains('bg-secondary')) {
                 filaActual.classList.remove('bg-secondary');
                 filaActual.classList.add('bg-light');
+                nuevoEstadoGraphs = '';          // se desmarca → graphs a bg-light
             } else {
                 filaActual.classList.remove('bg-light', 'bg-warning');
                 filaActual.classList.add('bg-secondary');
+                nuevoEstadoGraphs = 'emitido';   // se marca → graphs a bg-secondary
             }
         }
 
@@ -316,8 +322,8 @@ async function setTextoEmitido(id) {
 
         if (!response.ok) throw new Error(await response.text() || 'Error al marcar texto como emitido');
 
-        // Actualizar graphs asociados
-        actualizarEstadoGraphs(id, 'emitido');
+        // Actualizar graphs asociados con el estado correcto (emitir o desemitir)
+        actualizarEstadoGraphs(id, nuevoEstadoGraphs);
 
     } catch (error) {
         console.error("Error en setTextoEmitido:", error);
