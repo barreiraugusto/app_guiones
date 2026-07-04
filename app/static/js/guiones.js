@@ -289,7 +289,7 @@ async function seleccionarGuion(id) {
                     <strong>${t.titulo}</strong>
                     ${t.grabar ? '<div class="text-danger small font-weight-bold">GRABAR</div>' : ''}
                 </td>
-                <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 50%">${convertirUrlsYPreservarSaltos(t.contenido || '')}</td>
+                <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 50%">${convertirUrlsYPreservarSaltos(t.material || '')}</td>
                 <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 5%">${t.musica}</td>
                 <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 5%">${t.duracion}</td>
                 <td class="${esTanda ? 'bg-info' : ''}" style="width: 20%">
