@@ -1,160 +1,179 @@
+/* siguiente.js — Próxima Nota
+   Muestra en tiempo real el texto activo vía SSE.
+   Compatible con el nuevo diseño oscuro de siguiente.html.
+*/
+
 function convertirUrlsEnEnlaces(texto) {
+    if (!texto) return '';
     const urlRegex = /https?:\/\/[^\s]+/g;
-    return texto.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+    return texto.replace(urlRegex, url => `<a href="${url}" target="_blank" style="color:#64b5f6;">${url}</a>`);
 }
 
-const previousContent = {
-    titulo: "",
-    numero_de_nota: "",
-    grabar: "",
-    contenido: "",
-    material: "",
-    musica: "",
-    graphTema: "",
-    graphBajadas: [],
-    graphEntrevistados: []
+const prev = {
+    titulo: null,
+    numero_de_nota: null,
+    grabar: null,
+    contenido: null,
+    material: null,
+    musica: null,
+    graphs: null,
 };
 
 function actualizarTextoActivo(data) {
-    const tituloElement = document.getElementById('texto-activo-titulo');
-    const numeroElement = document.getElementById('texto-activo-numero-de-nota');
-    const grabarElement = document.getElementById('texto-activo-grabar');
-    const contenidoElement = document.getElementById('texto-activo-contenido');
-    const materialElement = document.getElementById('texto-activo-material');
-    const musicaElement = document.getElementById('texto-activo-musica');
+    const elNum      = document.getElementById('texto-activo-numero-de-nota');
+    const elTitulo   = document.getElementById('texto-activo-titulo');
+    const elGrabar   = document.getElementById('texto-activo-grabar');
+    const elContenido= document.getElementById('texto-activo-contenido');
+    const elMaterial = document.getElementById('texto-activo-material');
+    const elMusica   = document.getElementById('texto-activo-musica');
+    const elGraphs   = document.getElementById('graphs-container');
 
-    // Elementos contenedores para múltiples graphs
-    const graphsContainerElement = document.getElementById('graphs-container'); // Asegúrate de tener este contenedor en tu HTML
-
-    if (data && data.titulo) {
-        // Actualizar solo si el contenido ha cambiado (parte original)
-        if (previousContent.titulo !== data.titulo) {
-            tituloElement.textContent = `${data.titulo}`;
-            previousContent.titulo = data.titulo;
+    if (!data || !data.titulo) {
+        // Sin nota activa
+        if (prev.titulo !== '') {
+            elNum.textContent = '';
+            elTitulo.textContent = 'Esperando nota activa…';
+            elGrabar.classList.remove('visible');
+            elContenido.innerHTML = '';
+            elMaterial.innerHTML = '';
+            elMusica.innerHTML = '';
+            elGraphs.innerHTML = '';
+            prev.titulo = '';
+            prev.numero_de_nota = '';
+            prev.grabar = false;
+            prev.contenido = '';
+            prev.material = '';
+            prev.musica = '';
+            prev.graphs = null;
         }
+        return;
+    }
 
-        if (previousContent.numero_de_nota !== data.numero_de_nota) {
-            numeroElement.textContent = `${data.numero_de_nota}`;
-            previousContent.numero_de_nota = data.numero_de_nota;
-        }
+    if (prev.numero_de_nota !== data.numero_de_nota) {
+        elNum.textContent = data.numero_de_nota ?? '';
+        prev.numero_de_nota = data.numero_de_nota;
+    }
 
-        if (previousContent.grabar !== data.grabar) {
-            grabarElement.textContent = data.grabar ? "GRABAR" : "";
-            previousContent.grabar = data.grabar;
-        }
+    if (prev.titulo !== data.titulo) {
+        elTitulo.textContent = data.titulo;
+        prev.titulo = data.titulo;
+    }
 
-        if (previousContent.contenido !== data.contenido) {
-            contenidoElement.innerHTML = data.contenido;
-            previousContent.contenido = data.contenido;
-        }
-
-        if (previousContent.material !== data.material) {
-            materialElement.innerHTML = convertirUrlsEnEnlaces(data.material || '');
-            previousContent.material = data.material;
-        }
-
-        if (previousContent.musica !== data.musica) {
-            musicaElement.innerHTML = convertirUrlsEnEnlaces(data.musica || '').toUpperCase();
-            previousContent.musica = data.musica;
-        }
-
-        // Actualizar información de graphs si existe
-        if (data.graphs && data.graphs.length > 0) {
-            // Limpiar el contenedor de graphs
-            graphsContainerElement.innerHTML = '';
-
-            // Iterar sobre todos los graphs
-            data.graphs.forEach((graph, index) => {
-                // Crear un contenedor para cada graph
-                const graphElement = document.createElement('div');
-                graphElement.className = 'graph-container';
-
-                // Crear elementos para este graph específico
-                const graphTemaElement = document.createElement('h4');
-                graphTemaElement.className = 'graph-tema';
-                graphTemaElement.textContent = graph.tema || `Graph ${index + 1}`;
-                graphElement.appendChild(graphTemaElement);
-
-                // Crear elemento para bajadas
-                const graphBajadasElement = document.createElement('ul');
-                graphBajadasElement.className = 'graph-bajadas';
-
-                // Actualizar bajadas si existen
-                if (graph.bajadas && graph.bajadas.length > 0) {
-                    graph.bajadas.forEach(bajada => {
-                        const li = document.createElement('li');
-                        li.textContent = bajada;
-                        graphBajadasElement.appendChild(li);
-                    });
-                }
-                graphElement.appendChild(graphBajadasElement);
-
-                // Crear elemento para entrevistados
-                const graphEntrevistadosElement = document.createElement('div');
-                graphEntrevistadosElement.className = 'graph-entrevistados';
-
-                // Actualizar entrevistados si existen
-                if (graph.entrevistados && graph.entrevistados.length > 0) {
-                    graph.entrevistados.forEach(entrevistado => {
-                        const entrevistadoDiv = document.createElement('div');
-                        entrevistadoDiv.className = 'entrevistado';
-
-                        const nombreH5 = document.createElement('h5');
-                        nombreH5.textContent = entrevistado.nombre;
-                        entrevistadoDiv.appendChild(nombreH5);
-
-                        if (entrevistado.citas && entrevistado.citas.length > 0) {
-                            const citasUl = document.createElement('ul');
-                            entrevistado.citas.forEach(cita => {
-                                const li = document.createElement('li');
-                                li.textContent = cita;
-                                citasUl.appendChild(li);
-                            });
-                            entrevistadoDiv.appendChild(citasUl);
-                        }
-
-                        graphEntrevistadosElement.appendChild(entrevistadoDiv);
-                    });
-                }
-                graphElement.appendChild(graphEntrevistadosElement);
-
-                // Agregar el graph al contenedor principal
-                graphsContainerElement.appendChild(graphElement);
-            });
-
-            // Actualizar previousContent para graphs
-            previousContent.graphs = [...data.graphs];
+    if (prev.grabar !== data.grabar) {
+        if (data.grabar) {
+            elGrabar.classList.add('visible');
         } else {
-            // Limpiar todo de graphs si no hay graphs
-            graphsContainerElement.innerHTML = '';
-            previousContent.graphs = [];
+            elGrabar.classList.remove('visible');
         }
-    } else {
-        // Limpiar todo si no hay data
-        tituloElement.textContent = "No hay un texto activo seleccionado.";
-        contenidoElement.innerHTML = "";
-        materialElement.innerHTML = "";
-        musicaElement.innerHTML = "";
-        graphsContainerElement.innerHTML = "";
+        prev.grabar = data.grabar;
+    }
 
-        // Actualizar previousContent para todo
-        previousContent.titulo = "";
-        previousContent.numero_de_nota = "";
-        previousContent.grabar = "";
-        previousContent.contenido = "";
-        previousContent.material = "";
-        previousContent.musica = "";
-        previousContent.graphs = [];
+    if (prev.contenido !== data.contenido) {
+        elContenido.innerHTML = data.contenido || '';
+        prev.contenido = data.contenido;
+    }
+
+    if (prev.material !== data.material) {
+        elMaterial.innerHTML = convertirUrlsEnEnlaces(data.material || '');
+        prev.material = data.material;
+    }
+
+    if (prev.musica !== data.musica) {
+        elMusica.textContent = (data.musica || '').toUpperCase();
+        prev.musica = data.musica;
+    }
+
+    // Graphs: sólo re-render si cambiaron (comparación por JSON)
+    const graphsJson = JSON.stringify(data.graphs || []);
+    if (prev.graphs !== graphsJson) {
+        renderGraphs(elGraphs, data.graphs || []);
+        prev.graphs = graphsJson;
     }
 }
 
-// Suscribirse a las actualizaciones del servidor
+function renderGraphs(container, graphs) {
+    container.innerHTML = '';
+
+    if (!graphs || graphs.length === 0) return;
+
+    graphs.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'pn-graph-card';
+
+        // Lugar
+        if (g.lugar) {
+            const lugar = document.createElement('div');
+            lugar.className = 'pn-graph-lugar';
+            lugar.textContent = g.lugar;
+            card.appendChild(lugar);
+        }
+
+        // Tema
+        if (g.tema) {
+            const tema = document.createElement('div');
+            tema.className = 'pn-graph-tema';
+            tema.textContent = g.tema;
+            card.appendChild(tema);
+        }
+
+        // Bajadas
+        if (g.bajadas && g.bajadas.length > 0) {
+            const list = document.createElement('div');
+            list.className = 'pn-bajadas-list';
+            g.bajadas.forEach(b => {
+                const item = document.createElement('div');
+                item.className = 'pn-bajada';
+                item.textContent = b;
+                list.appendChild(item);
+            });
+            card.appendChild(list);
+        }
+
+        // Entrevistados
+        if (g.entrevistados && g.entrevistados.length > 0) {
+            g.entrevistados.forEach(e => {
+                if (!e.nombre) return;
+                const entDiv = document.createElement('div');
+                entDiv.className = 'pn-entrevistado';
+
+                const nombre = document.createElement('div');
+                nombre.className = 'pn-entrevistado-nombre';
+                nombre.textContent = e.nombre;
+                entDiv.appendChild(nombre);
+
+                if (e.citas && e.citas.length > 0) {
+                    e.citas.forEach(c => {
+                        if (!c || c === 'Sin cita') return;
+                        const cita = document.createElement('div');
+                        cita.className = 'pn-cita';
+                        cita.textContent = `"${c}"`;
+                        entDiv.appendChild(cita);
+                    });
+                }
+
+                card.appendChild(entDiv);
+            });
+        }
+
+        container.appendChild(card);
+    });
+}
+
+// ── SSE ────────────────────────────────────────
 const eventSource = new EventSource('/stream_texto_activo');
 
 eventSource.onmessage = function (event) {
-    const data = JSON.parse(event.data);
-    actualizarTextoActivo(data);
+    try {
+        const data = JSON.parse(event.data);
+        actualizarTextoActivo(data);
+    } catch (e) {
+        console.error('siguiente.js: error al parsear SSE', e);
+    }
 };
 
-// Actualizar el texto activo al cargar la página
-actualizarTextoActivo({}); // Inicializar con un objeto vacío
+eventSource.onerror = function () {
+    console.warn('siguiente.js: conexión SSE interrumpida, reintentando…');
+};
+
+// Estado inicial vacío
+actualizarTextoActivo({});

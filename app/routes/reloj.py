@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, Response
 import time
-from threading import Thread
+from threading import Thread, Lock
 
 reloj_bp = Blueprint('reloj', __name__)
 
+_lock = Lock()
 cronometro_activo = False
 tiempo = 0
 
@@ -11,9 +12,9 @@ tiempo = 0
 def simular_cronometro():
     global tiempo, cronometro_activo
     while True:
-        if cronometro_activo:
-            tiempo += 1
-            print(f"Tiempo actual: {tiempo}")  # Depuración
+        with _lock:
+            if cronometro_activo:
+                tiempo += 1
         time.sleep(1)
 
 
@@ -30,10 +31,12 @@ def control():
 @reloj_bp.route('/stream')
 def stream():
     def event_stream():
-        global tiempo, cronometro_activo
         while True:
-            estado = "activo" if cronometro_activo else "inactivo"
-            yield f"data: {tiempo},{estado}\n\n"
+            with _lock:
+                t = tiempo
+                activo = cronometro_activo
+            estado = "activo" if activo else "inactivo"
+            yield f"data: {t},{estado}\n\n"
             time.sleep(1)
 
     return Response(event_stream(), mimetype='text/event-stream')
@@ -42,23 +45,25 @@ def stream():
 @reloj_bp.route('/iniciar')
 def iniciar():
     global cronometro_activo
-    cronometro_activo = True
+    with _lock:
+        cronometro_activo = True
     return '', 204
 
 
 @reloj_bp.route('/detener')
 def detener():
     global cronometro_activo
-    cronometro_activo = False
+    with _lock:
+        cronometro_activo = False
     return '', 204
 
 
 @reloj_bp.route('/restablecer')
 def restablecer():
     global tiempo
-    tiempo = 0
+    with _lock:
+        tiempo = 0
     return '', 204
 
 
-# Iniciar el hilo para simular el cronómetro
 Thread(target=simular_cronometro, daemon=True).start()

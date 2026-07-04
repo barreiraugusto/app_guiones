@@ -7,6 +7,8 @@ from weasyprint import HTML
 from .. import db
 from ..models import Guion, Texto, Graph, Cita, graph_bajada, Bajada, Entrevistado
 
+
+
 guiones_bp = Blueprint('guiones', __name__)
 
 
@@ -67,8 +69,6 @@ def obtener_guion(id):
             }
 
             for graph in texto.graphs:
-                # Usamos defaultdict para acumular citas por entrevistado
-                from collections import defaultdict
                 entrevistados_dict = defaultdict(list)
 
                 # 1. Procesar citas con entrevistados

@@ -1,105 +1,124 @@
 {% extends "base.html" %}
 {% block extratitle %} - GUION{% endblock extratitle %}
+
 {% block extra_style %}
 <style>
-    #loader {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgba(0, 0, 0, 0.5);
-        color: white;
-        padding: 20px;
-        border-radius: 5px;
-        display: none; /* Inicialmente oculto */
+    body { padding-top: 66px; }
+
+    /* ── Tabla ─────────────────────────────────── */
+    #tablaTextos {
+        table-layout: fixed;
+        width: 100%;
     }
 
-    .spinner {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    @media print {
-        body {
-            padding-top: 0 !important; /* Eliminar el padding superior en la exportación */
-        }
-
-        .navbar {
-            display: none; /* Ocultar la barra de navegación en la exportación */
-        }
-
-        .card {
-            box-shadow: none; /* Eliminar sombras para una mejor impresión */
-            border: 1px solid #ddd; /* Agregar un borde suave */
-        }
-    }
-
-    body {
-        padding-top: 70px;
-    }
-
-    .card {
-        overflow-x: auto;
-    }
+    /* Columnas desktop */
+    #tablaTextos th:nth-child(1),
+    #tablaTextos td:nth-child(1) { width: 10%; }
+    #tablaTextos th:nth-child(2),
+    #tablaTextos td:nth-child(2) { width: 15%; }
+    #tablaTextos th:nth-child(3),
+    #tablaTextos td:nth-child(3) { width: 55%; }
+    #tablaTextos th:nth-child(4),
+    #tablaTextos td:nth-child(4) { width: 20%; }
 
     #tablaTextos th, #tablaTextos td {
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
 
-    /* Ajusta los anchos de las columnas según necesites */
-    #tablaTextos th:nth-child(1), #tablaTextos td:nth-child(1) {
-        width: 5%;
-    }
+    /* ── Estados ───────────────────────────────── */
+    #tablaTextos tbody tr[data-texto-id] { background-color: white; }
+    #tablaTextos tbody tr.graph-row     { background-color: white; }
 
-    #tablaTextos th:nth-child(2), #tablaTextos td:nth-child(2) {
-        width: 15%;
-    }
-
-    #tablaTextos th:nth-child(3), #tablaTextos td:nth-child(3) {
-        width: 50%;
-    }
-
-    #tablaTextos th:nth-child(4), #tablaTextos td:nth-child(4) {
-        width: 20%;
-    }
-
-    #tablaTextos th:nth-child(5), #tablaTextos td:nth-child(5) {
-        width: 5%;
-    }
-
-    /* ===== ESTILOS PARA SEPARACIÓN DE NOTAS ===== */
-
-    /* Asegurar que las notas tengan un fondo blanco para contrastar con la línea */
-    #tablaTextos tbody tr[data-texto-id] {
-        background-color: white;
-    }
-
-    #tablaTextos tbody tr.graph-row {
-        background-color: white;
-    }
-
-    /* Mejorar el aspecto general de la tabla */
+    /* ── Separadores entre notas ───────────────── */
     #tablaTextos {
-        border-spacing: 0 8px;
+        border-spacing: 0 4px;
     }
 
+    /* ── Print ─────────────────────────────────── */
+    @media print {
+        body        { padding-top: 0 !important; }
+        .navbar     { display: none; }
+        .card       { box-shadow: none; border: 1px solid #ddd; }
+        .btn-group  { display: none; }
+    }
 
+    /* ── Mobile ────────────────────────────────── */
+    @media (max-width: 767px) {
+        body { padding-top: 60px; }
+
+        .ver-guion-tabla-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #tablaTextos { table-layout: auto; font-size: 0.88rem; }
+
+        /* Sticky SOLO para la cabecera y las filas de texto principal.
+           La celda con rowspan abarca visualmente las filas de graphs,
+           por lo que las celdas de .graph-row y .linea-separadora
+           NO deben ser sticky (de lo contrario tapan la celda principal). */
+        #tablaTextos thead th:first-child,
+        #tablaTextos tr[data-texto-id] td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            min-width: 88px;
+        }
+
+        /* Color explícito por estado (background: inherit no es suficiente
+           en todos los navegadores móviles) */
+        #tablaTextos tr[data-texto-id].bg-warning  td:first-child { background-color: #fff3cd !important; }
+        #tablaTextos tr[data-texto-id].bg-secondary td:first-child { background-color: #e2e3e5 !important; }
+        #tablaTextos tr[data-texto-id].bg-light    td:first-child { background-color: #f8f9fa !important; }
+        /* Color por defecto cuando no hay clase de estado */
+        #tablaTextos tr[data-texto-id] td:first-child { background-color: #fff; }
+
+        /* Las filas de graphs y separadores: primer td estático */
+        #tablaTextos tr.graph-row td:first-child,
+        #tablaTextos tr.linea-separadora td {
+            position: static !important;
+            z-index: auto !important;
+        }
+
+        /* Botones de nota más grandes al tocar */
+        #tablaTextos .btn-group .btn {
+            padding: 0.45rem 0.6rem;
+            min-width: 42px;
+        }
+    }
+
+    /* ── Loader ────────────────────────────────── */
+    #loader {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0,0,0,0.6);
+        color: white;
+        padding: 24px 32px;
+        border-radius: 12px;
+        display: none;
+        z-index: 9999;
+        text-align: center;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255,255,255,0.2);
+        border-top: 4px solid #fff;
+        border-radius: 50%;
+        width: 46px;
+        height: 46px;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 {% endblock extra_style %}
+
 {% block extra_script %}
 <script src="{{ url_for('static', filename='js/actualiza_tiempos.js') }}"></script>
 <script src="{{ url_for('static', filename='js/ver_guion.js') }}"></script>
@@ -107,171 +126,136 @@
 <script src="{{ url_for('static', filename='js/html2canvas.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/textos.js') }}"></script>
 {% endblock extra_script %}
+
 {% block body %}
-<!-- Barra de navegación fija en la parte superior -->
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
     <div class="container-fluid">
-        <!-- Logo o nombre de la aplicación (opcional) -->
-        <a class="navbar-brand" href="#">Guiones</a>
-        <div class="d-flex">
-            <button class="btn btn-warning mr-2" onclick="exportarAPDF()">Exportar PDF</button>
-            <!-- NUEVO BOTÓN PARA EXPORTAR TEXTO -->
-            <button class="btn btn-info mr-2" onclick="exportarTexto()">Exportar Texto</button>
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-scroll mr-2"></i>Guion
+        </a>
+        <div class="d-flex flex-wrap" style="gap:0.35rem;">
+            <button class="btn btn-warning btn-sm" onclick="exportarAPDF()">
+                <i class="fas fa-file-pdf mr-1"></i>
+                <span class="d-none d-sm-inline">PDF</span>
+            </button>
+            <button class="btn btn-info btn-sm" onclick="exportarTexto()">
+                <i class="fas fa-file-alt mr-1"></i>
+                <span class="d-none d-sm-inline">Texto</span>
+            </button>
             <a href="/listado_guiones">
-                <button class="btn btn-primary mr-2">Guiones</button>
+                <button class="btn btn-primary btn-sm">
+                    <i class="fas fa-list mr-1"></i>
+                    <span class="d-none d-sm-inline">Guiones</span>
+                </button>
             </a>
             <a href="/">
-                <button class="btn btn-success mr-2">Menu</button>
+                <button class="btn btn-success btn-sm">
+                    <i class="fas fa-home mr-1"></i>
+                    <span class="d-none d-sm-inline">Menú</span>
+                </button>
             </a>
         </div>
     </div>
 </nav>
-<div class="card shadow p-1 m-2 rounded">
-    <div class="card-header">
-        <h2>{{ guion.nombre }}</h2>
-        <em>{{ guion.descripcion }}</em>
+
+<!-- Contenido principal -->
+<div class="card shadow m-2 rounded">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">{{ guion.nombre }}</h5>
+        {% if guion.descripcion %}
+        <small class="text-white-50">{{ guion.descripcion }}</small>
+        {% endif %}
     </div>
+
     <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
-    <div class="table-responsive">
-        <table class="table-bordered" id="tablaTextos" style="table-layout: fixed; width: 100%;">
+
+    <!-- Tabla con wrapper scrollable en mobile -->
+    <div class="ver-guion-tabla-wrap">
+        <table class="table-bordered" id="tablaTextos">
             <thead class="thead-light">
-            <tr>
-                <th scope="col" style="width: 10%">Nº</th>
-                <th scope="col" style="width: 15%">Descripcion/Seccion</th>
-                <th scope="col" style="width: 55%">Graf/Copete</th>
-                <th scope="col" style="width: 20%">Codigo</th>
-            </tr>
+                <tr>
+                    <th>Nº</th>
+                    <th>Descripción / Sección</th>
+                    <th>Graf / Copete</th>
+                    <th>Código</th>
+                </tr>
             </thead>
             <tbody>
-            <!-- Las filas se llenarán dinámicamente con JavaScript -->
+                <!-- Filas generadas dinámicamente por ver_guion.js -->
             </tbody>
         </table>
     </div>
-    <div class="card-footer">
+
+    <div class="card-footer d-flex align-items-center" style="gap:0.5rem;">
         <a href="/listado_guiones">
-            <button class="btn btn-outline-primary">Atras</button>
+            <button class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrow-left mr-1"></i>Volver
+            </button>
         </a>
     </div>
 </div>
-<!-- Loader -->
-<div id="loader" style="display:none;">
-    <p>Generando PDF, por favor espera...</p>
-    <div class="spinner"></div> <!-- Puedes reemplazar esto por un gif o algo más -->
+
+<!-- Loader PDF -->
+<div id="loader">
+    <div class="spinner"></div>
+    <p class="mb-0">Generando PDF…</p>
 </div>
 
-
+<!-- Exportar a texto plano -->
 <script>
-    // Función para exportar a texto plano
-    async function exportarTexto() {
-        const guionId = document.getElementById('guion-data').getAttribute('data-guion-id');
+async function exportarTexto() {
+    const guionId = document.getElementById('guion-data').getAttribute('data-guion-id');
+    document.getElementById('loader').style.display = 'block';
+    try {
+        const response = await fetch(`/guiones/${guionId}/texto_completo`);
+        if (!response.ok) throw new Error('Error al obtener los datos del guion');
+        const data = await response.json();
 
-        // Mostrar loader
-        document.getElementById('loader').style.display = 'block';
+        const textosOrdenados = data.textos.sort((a, b) =>
+            (parseInt(a.numero_de_nota) || 0) - (parseInt(b.numero_de_nota) || 0)
+        );
 
-        try {
-            // Obtener los datos del guion
-            const response = await fetch(`/guiones/${guionId}/texto_completo`);
-            if (!response.ok) {
-                throw new Error('Error al obtener los datos del guion');
+        let contenido = '';
+        textosOrdenados.forEach((texto, index) => {
+            contenido += `---------------------- NOTA ${texto.numero_de_nota || index + 1} ----------------------------\n`;
+
+            if (texto.graphs && texto.graphs.length > 0) {
+                texto.graphs.forEach(graph => {
+                    if (graph.lugar)  contenido += graph.lugar + '\n';
+                    if (graph.tema)   contenido += graph.tema  + '\n';
+                    (graph.bajadas || []).forEach(b => { contenido += b + '\n'; });
+                    (graph.entrevistados || []).forEach(e => {
+                        if (e.nombre) contenido += e.nombre + '\n';
+                        (e.citas || []).forEach(c => { contenido += c + '\n'; });
+                    });
+                    contenido += '\n';
+                });
+            } else {
+                contenido += '# Sin graphs para esta nota\n\n';
             }
 
-            const data = await response.json();
+            contenido += 'CODIGO:\n';
+            contenido += texto.material ? `"${texto.material}"\n` : '# Sin código\n';
+            contenido += '\n\n';
+        });
 
-            // ORDENAR las notas por número_de_nota antes de procesarlas
-            const textosOrdenados = data.textos.sort((a, b) => {
-                // Convertir a números para ordenar numéricamente en lugar de alfabéticamente
-                const numA = parseInt(a.numero_de_nota) || 0;
-                const numB = parseInt(b.numero_de_nota) || 0;
-                return numA - numB;
-            });
-
-            // Crear el contenido del texto
-            let contenidoTexto = '';
-
-            // Recorrer cada texto (nota) ORDENADA
-            textosOrdenados.forEach((texto, index) => {
-                contenidoTexto += `---------------------- NOTA ${texto.numero_de_nota || index + 1} ----------------------------\n`;
-
-                // Agregar todos los graphs de esta nota
-                if (texto.graphs && texto.graphs.length > 0) {
-                    texto.graphs.forEach(graph => {
-                        // Lugar
-                        if (graph.lugar) {
-                            contenidoTexto += graph.lugar + '\n';
-                        }
-
-                        // Tema (si existe)
-                        if (graph.tema) {
-                            contenidoTexto += graph.tema + '\n';
-                        }
-
-                        // Bajadas
-                        if (graph.bajadas && graph.bajadas.length > 0) {
-                            graph.bajadas.forEach(bajada => {
-                                contenidoTexto += bajada + '\n';
-                            });
-                        }
-
-                        // Entrevistados y citas
-                        if (graph.entrevistados && graph.entrevistados.length > 0) {
-                            graph.entrevistados.forEach(entrevistado => {
-                                if (entrevistado.nombre) {
-                                    contenidoTexto += entrevistado.nombre + '\n';
-                                }
-
-                                if (entrevistado.citas && entrevistado.citas.length > 0) {
-                                    entrevistado.citas.forEach(cita => {
-                                        contenidoTexto += cita + '\n';
-                                    });
-                                }
-                            });
-                        }
-
-                        contenidoTexto += '\n'; // Separador entre graphs
-                    });
-                } else {
-                    contenidoTexto += '# No hay graphs para esta nota\n\n';
-                }
-
-                // Agregar el código de la nota
-                contenidoTexto += 'CODIGO:\n';
-                if (texto.material) {
-                    contenidoTexto += `"${texto.material}"\n`;
-                } else {
-                    contenidoTexto += '# No hay código para esta nota\n';
-                }
-
-                contenidoTexto += '\n\n'; // Separador entre notas
-            });
-
-            const nombreArchivo = limpiarNombreArchivo(data.nombre);
-
-            // Crear y descargar el archivo
-            const blob = new Blob([contenidoTexto], {type: 'text/plain'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${nombreArchivo}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-        } catch (error) {
-            console.error('Error al exportar texto:', error);
-            alert('Error al exportar el texto: ' + error.message);
-        } finally {
-            // Ocultar loader
-            document.getElementById('loader').style.display = 'none';
-        }
+        const nombre = data.nombre.replace(/[<>:"/\\|?*]/g, '').replace(/\s+/g, '_').trim();
+        const blob = new Blob([contenido], { type: 'text/plain' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url;
+        a.download = `${nombre}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error al exportar texto:', error);
+        alert('Error al exportar: ' + error.message);
+    } finally {
+        document.getElementById('loader').style.display = 'none';
     }
-
-    // Función para limpiar caracteres no válidos en nombres de archivo
-    function limpiarNombreArchivo(nombre) {
-        return nombre
-            .replace(/[<>:"/\\|?*]/g, '') // Eliminar caracteres no permitidos en nombres de archivo
-            .replace(/\s+/g, '_')         // Reemplazar espacios con guiones bajos
-            .trim();
-    }
+}
 </script>
 {% endblock body %}

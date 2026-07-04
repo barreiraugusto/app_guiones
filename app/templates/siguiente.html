@@ -1,88 +1,326 @@
 {% extends "base.html" %}
+{% block extratitle %} - PRÓXIMA NOTA{% endblock extratitle %}
 
-{% block extratitle %} - SIGUIENTE{% endblock extratitle %}
 {% block extra_style %}
 <style>
-    html, body {
-        height: 100%;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-    }
+/* ─── Reset para esta página ───────────────────── */
+body {
+    background: #f0f4f8 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                 'Helvetica Neue', Arial, system-ui, sans-serif;
+}
 
-    #contenido-principal {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
+/* ─── Layout raíz ───────────────────────────────── */
+.pn-page {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #f0f4f8;
+}
 
-    #texto-contenido {
-        flex: 1;
-        overflow-y: auto;
-    }
+/* ─── Cabecera ──────────────────────────────────── */
+.pn-header {
+    background: #fff;
+    border-bottom: 3px solid #1565c0;
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+    box-shadow: 0 3px 16px rgba(0,0,0,0.10);
+    min-height: 100px;
+}
 
-    #videoyaudio {
-        position: sticky;
-        bottom: 0;
-        width: 100%;
-        background: white; /* Opcional: evita que se superponga con el contenido */
-    }
+/* Número de nota — el elemento más importante */
+.pn-num-badge {
+    background: #1565c0;
+    color: #fff;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1.2rem;
+    flex-shrink: 0;
+}
 
-    #videoyaudio {
-        display: flex;
-    }
+.pn-num-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 0.1rem;
+}
 
-    #videoyaudio .col-6 {
-        display: flex;
-        flex-direction: column;
-    }
+.pn-num-value {
+    font-size: clamp(3.5rem, 9vw, 6rem);
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+}
 
-    #videoyaudio .col-6 .card {
-        flex: 1;
-    }
+/* Título */
+.pn-titulo-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.4rem;
+    border-left: 1px solid #e0e6ef;
+}
 
+.pn-titulo {
+    font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+    font-weight: 800;
+    color: #1a1a2e;
+    line-height: 1.25;
+}
 
+/* ─── Banner GRABAR ─────────────────────────────── */
+.pn-grabar-banner {
+    background: #d32f2f;
+    color: #fff;
+    text-align: center;
+    padding: 0.55rem 1rem;
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    font-weight: 900;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    display: none;
+    animation: pn-pulse 1s ease-in-out infinite;
+}
+
+.pn-grabar-banner.visible {
+    display: block;
+}
+
+@keyframes pn-pulse {
+    0%, 100% { opacity: 1;   }
+    50%       { opacity: 0.7; }
+}
+
+/* ─── Área de contenido scrollable ─────────────── */
+.pn-contenido-wrap {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1.25rem 1.75rem;
+    background: #fff;
+    margin: 0.75rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.pn-contenido-texto {
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    line-height: 1.8;
+    color: #2c3e50;
+}
+
+/* ─── Graphs ────────────────────────────────────── */
+.pn-graphs-wrap {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 2px solid #e8ecf0;
+}
+
+.pn-graph-card {
+    background: #f7faff;
+    border: 1px solid #d0def5;
+    border-left: 4px solid #1565c0;
+    border-radius: 8px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.pn-graph-lugar {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #1565c0;
+    margin-bottom: 0.15rem;
+}
+
+.pn-graph-tema {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 0.5rem;
+}
+
+.pn-bajadas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: 0.4rem;
+}
+
+.pn-bajada {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    padding: 0.15rem 0.5rem;
+    border-left: 3px solid #42a5f5;
+    background: rgba(66,165,245,0.06);
+}
+
+.pn-entrevistado {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #eef3fc;
+    border-radius: 6px;
+}
+
+.pn-entrevistado-nombre {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #1565c0;
+}
+
+.pn-cita {
+    font-size: 0.87rem;
+    color: #5a6a7e;
+    font-style: italic;
+    margin-top: 0.2rem;
+}
+
+/* ─── Estado vacío ──────────────────────────────── */
+.pn-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #aab4c0;
+    text-align: center;
+    padding: 2rem;
+    background: #fff;
+    margin: 0.75rem;
+    border-radius: 12px;
+}
+
+.pn-empty-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+.pn-empty-text { font-size: 1.2rem; font-weight: 300; }
+
+/* ─── Footer: Código | Música ───────────────────── */
+.pn-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex-shrink: 0;
+    min-height: 72px;
+    margin: 0 0.75rem 0.75rem;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.09);
+}
+
+.pn-material {
+    background: #1a237e;
+    padding: 0.7rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.pn-material-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 0.2rem;
+}
+
+.pn-material-value {
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    font-weight: 600;
+    color: #e8eaf6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pn-musica {
+    background: #e65100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 0.8rem;
+    font-size: clamp(1rem, 2.8vw, 1.4rem);
+    font-weight: 900;
+    color: #fff;
+    text-align: center;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+}
+
+/* ─── Adaptaciones por tamaño ───────────────────── */
+@media (max-width: 480px) {
+    .pn-num-badge    { min-width: 88px; padding: 0.5rem 0.8rem; }
+    .pn-num-value    { font-size: 3rem; }
+    .pn-titulo       { font-size: 1.2rem; }
+    .pn-contenido-wrap { padding: 1rem 1.1rem; }
+    .pn-footer       { min-height: 60px; }
+    .pn-musica       { font-size: 0.95rem; }
+}
+
+/* Monitor grande / pantalla widescreen */
+@media (min-width: 1200px) {
+    .pn-num-value    { font-size: 7rem; }
+    .pn-titulo       { font-size: 2.6rem; }
+    .pn-num-badge    { min-width: 160px; }
+    .pn-contenido-texto { font-size: 1.4rem; }
+    .pn-bajada       { font-size: 1.15rem; }
+    .pn-graph-tema   { font-size: 1.2rem; }
+}
 </style>
 {% endblock extra_style %}
+
 {% block extra_script %}
 <script src="{{ url_for('static', filename='js/siguiente.js') }}"></script>
 {% endblock extra_script %}
+
 {% block body %}
-<div id="contenido-principal">
-    <div class="card shadow p-1 m-2 rounded">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex flex-column text-center">
-                <h1 id="texto-activo-numero-de-nota" class="m-0 text-danger" style="font-size: 6rem;"></h1>
-                <h3 id="texto-activo-grabar" class="m-0 text-danger" style="font-size: 2rem;"></h3>
-            </div>
-            <h2 id="texto-activo-titulo" class="m-0"></h2>
+<div class="pn-page">
+
+    <!-- Cabecera: Nº nota + Título -->
+    <div class="pn-header">
+        <div class="pn-num-badge">
+            <div class="pn-num-label">NOTA</div>
+            <div id="texto-activo-numero-de-nota" class="pn-num-value"></div>
         </div>
-        <div class="card-body" id="texto-contenido">
-            <h3 id="texto-activo-contenido"></h3>
-            <hr>
-            <!-- Reemplaza los elementos individuales por este contenedor -->
-            <div id="graphs-container"></div>
+        <div class="pn-titulo-wrap">
+            <div id="texto-activo-titulo" class="pn-titulo">
+                Esperando nota activa&hellip;
+            </div>
         </div>
     </div>
+
+    <!-- Banner GRABAR (pulsante, visible solo cuando grabar=true) -->
+    <div id="texto-activo-grabar" class="pn-grabar-banner">
+        &#9654;&nbsp;GRABAR&nbsp;&#9654;
+    </div>
+
+    <!-- Contenido scrollable -->
+    <div class="pn-contenido-wrap">
+        <div id="texto-activo-contenido" class="pn-contenido-texto"></div>
+        <div id="graphs-container"></div>
+    </div>
+
+    <!-- Footer: Código | Música -->
+    <div class="pn-footer">
+        <div class="pn-material">
+            <div class="pn-material-label">Código / Material</div>
+            <div id="texto-activo-material" class="pn-material-value"></div>
+        </div>
+        <div id="texto-activo-musica" class="pn-musica"></div>
+    </div>
+
 </div>
-
-<div class="row m-0" id="videoyaudio">
-    <div class="col-6 p-0">
-        <div class="card shadow p-1 rounded">
-            <div class="card-body">
-                <h5><p id="texto-activo-material"></p></h5>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 p-0">
-        <div class="card shadow p-0 rounded">
-            <div class="card-body text-center bg-warning d-flex align-items-center justify-content-center"
-                 style="height: 100%;">
-                <h1 style="margin: 0;"><p id="texto-activo-musica"></p></h1>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 {% endblock body %}
