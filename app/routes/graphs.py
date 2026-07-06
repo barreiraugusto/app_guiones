@@ -504,6 +504,51 @@ def get_display_config():
         return jsonify({}), 500
 
 
+def _resolver_capas_plantilla(graph_activo):
+    if not graph_activo or not graph_activo.plantilla:
+        return None
+
+    bajadas = sorted(graph_activo.bajadas, key=lambda b: b.id)
+    bajada_1 = bajadas[0].texto if len(bajadas) > 0 else ""
+    bajada_2 = bajadas[1].texto if len(bajadas) > 1 else ""
+    entrevistado = graph_activo.citas[0].entrevistado.nombre if graph_activo.citas else ""
+
+    valores_por_campo = {
+        'lugar': graph_activo.lugar or "",
+        'tema': graph_activo.tema or "",
+        'entrevistado': entrevistado,
+        'bajada_1': bajada_1,
+        'bajada_2': bajada_2,
+    }
+
+    plantilla = graph_activo.plantilla
+    capas = []
+    for capa in sorted(plantilla.capas, key=lambda c: c.orden):
+        capa_resuelta = {
+            "id": capa.id,
+            "orden": capa.orden,
+            "tipo": capa.tipo,
+            "x": capa.x,
+            "y": capa.y,
+            "ancho": capa.ancho,
+            "alto": capa.alto,
+            "archivo": capa.archivo,
+            "loop": capa.loop,
+            "fuente": capa.fuente,
+            "tamano_fuente": capa.tamano_fuente,
+            "color": capa.color,
+            "alineacion": capa.alineacion,
+            "animacion_entrada": capa.animacion_entrada,
+            "animacion_salida": capa.animacion_salida,
+            "duracion_transicion_ms": capa.duracion_transicion_ms,
+        }
+        if capa.tipo == 'texto':
+            capa_resuelta["valor"] = valores_por_campo.get(capa.campo_dato, capa.texto_fijo or "")
+        capas.append(capa_resuelta)
+
+    return {"id": plantilla.id, "ancho": plantilla.ancho, "alto": plantilla.alto, "capas": capas}
+
+
 @graphs_bp.route('/stream_display_config')
 def stream_display_config():
     app = current_app._get_current_object()
@@ -516,7 +561,8 @@ def stream_display_config():
                     db.session.expire_all()
                     graph_activo = db.session.query(Graph).options(
                         selectinload(Graph.bajadas),
-                        joinedload(Graph.citas).joinedload(Cita.entrevistado)
+                        joinedload(Graph.citas).joinedload(Cita.entrevistado),
+                        joinedload(Graph.plantilla).selectinload(Plantilla.capas)
                     ).filter_by(activo=True).first()
 
                     try:
@@ -530,6 +576,7 @@ def stream_display_config():
                         "layout": saved_config.get("layout", {}),
                         "badges": saved_config.get("badges", {}),
                         "live":   saved_config.get("live",   {}),
+                        "plantilla": _resolver_capas_plantilla(graph_activo),
                         "content": {
                             "primera_bajada": "",
                             "segunda_bajada": "",
