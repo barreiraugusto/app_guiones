@@ -91,6 +91,52 @@ class Graph(db.Model):
         lazy='select'
     )
 
+    plantilla_id = db.Column(db.Integer, db.ForeignKey('plantilla.id', ondelete="SET NULL"), nullable=True)
+    plantilla = db.relationship('Plantilla')
+
+
+class Plantilla(db.Model):
+    __tablename__ = 'plantilla'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(255), nullable=False, unique=True)
+    ancho = db.Column(db.Integer, nullable=False, default=1920)
+    alto = db.Column(db.Integer, nullable=False, default=1080)
+
+    capas = db.relationship(
+        'PlantillaCapa',
+        backref='plantilla',
+        cascade="all, delete-orphan",
+        order_by='PlantillaCapa.orden',
+        lazy=True
+    )
+
+
+class PlantillaCapa(db.Model):
+    __tablename__ = 'plantilla_capa'
+    id = db.Column(db.Integer, primary_key=True)
+    plantilla_id = db.Column(db.Integer, db.ForeignKey('plantilla.id', ondelete="CASCADE"), nullable=False)
+    orden = db.Column(db.Integer, nullable=False, default=0)
+    tipo = db.Column(db.String(10), nullable=False)  # 'imagen' | 'video' | 'texto'
+
+    x = db.Column(db.Integer, nullable=False, default=0)
+    y = db.Column(db.Integer, nullable=False, default=0)
+    ancho = db.Column(db.Integer, nullable=False, default=200)
+    alto = db.Column(db.Integer, nullable=False, default=100)
+
+    archivo = db.Column(db.String(500), nullable=True)
+    loop = db.Column(db.Boolean, nullable=False, default=True)
+
+    campo_dato = db.Column(db.String(20), nullable=True)  # lugar|tema|entrevistado|bajada_1|bajada_2|None
+    texto_fijo = db.Column(db.String(255), nullable=True)
+    fuente = db.Column(db.String(100), nullable=False, default='Arial')
+    tamano_fuente = db.Column(db.Integer, nullable=False, default=24)
+    color = db.Column(db.String(20), nullable=False, default='#ffffff')
+    alineacion = db.Column(db.String(10), nullable=False, default='left')
+
+    animacion_entrada = db.Column(db.String(10), nullable=False, default='fade')
+    animacion_salida = db.Column(db.String(10), nullable=False, default='fade')
+    duracion_transicion_ms = db.Column(db.Integer, nullable=False, default=400)
+
 
 class AuditLog(db.Model):
     """Registro de acciones de usuarios para auditoría."""
