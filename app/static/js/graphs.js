@@ -1,3 +1,24 @@
+document.addEventListener('DOMContentLoaded', cargarPlantillasSelect);
+
+async function cargarPlantillasSelect() {
+    const select = document.getElementById('plantilla_id');
+    if (!select) return;
+    try {
+        const response = await fetch('/api/plantillas');
+        if (!response.ok) return;
+        const plantillas = await response.json();
+        select.innerHTML = '';
+        plantillas.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id;
+            option.textContent = p.nombre;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error al cargar plantillas:', error);
+    }
+}
+
 // Función para guardar un Graph sin cerrar
 async function guardarGraph(event) {
     event.preventDefault();
@@ -64,7 +85,8 @@ async function guardarGraph(event) {
                 lugar: lugar.toUpperCase(),
                 tema: tema ? tema.toUpperCase() : null,
                 bajadas: bajadas,
-                entrevistados: entrevistados
+                entrevistados: entrevistados,
+                plantilla_id: document.getElementById('plantilla_id').value || null
             }),
         });
 
@@ -174,7 +196,8 @@ async function agregarNoCerrar(event) {
                 lugar: lugar.toUpperCase(),
                 tema: tema ? tema.toUpperCase() : null,
                 bajadas: bajadas,
-                entrevistados: entrevistados
+                entrevistados: entrevistados,
+                plantilla_id: document.getElementById('plantilla_id').value || null
             }),
         });
 
@@ -229,6 +252,9 @@ async function editarGraph(id) {
         document.getElementById('texto_id').value = graph.texto_id;
         document.getElementById('lugar').value = graph.lugar || '';
         document.getElementById('tema').value = graph.tema || '';
+        if (document.getElementById('plantilla_id') && graph.plantilla_id) {
+            document.getElementById('plantilla_id').value = graph.plantilla_id;
+        }
 
         // Limpiar y poblar bajadas
         const bajadasContainer = document.getElementById('bajadas-container');

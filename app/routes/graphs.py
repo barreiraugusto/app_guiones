@@ -9,11 +9,16 @@ from flask import current_app
 
 from sqlalchemy.orm import joinedload, selectinload
 from .. import db
-from ..models import Graph, Texto, Guion, Entrevistado, Bajada, Cita
+from ..models import Graph, Texto, Guion, Entrevistado, Bajada, Cita, Plantilla
 from ..config_manager import display_config, save_config
 from ..audit import registrar
 
 graphs_bp = Blueprint('graphs', __name__)
+
+
+def _plantilla_default_id():
+    default = Plantilla.query.filter_by(nombre='Zócalo clásico').first()
+    return default.id if default else None
 
 
 @graphs_bp.route('/graphs', methods=['POST'])
@@ -27,6 +32,7 @@ def crear_graph():
             lugar=data['lugar'],
             tema=data.get('tema'),
             texto_id=data['texto_id'],
+            plantilla_id=data.get('plantilla_id') or _plantilla_default_id(),
             activo=True
         )
         db.session.add(nuevo_graph)
@@ -84,6 +90,7 @@ def actualizar_graph(id):
     try:
         graph.lugar = data.get('lugar', graph.lugar)
         graph.tema = data.get('tema', graph.tema)
+        graph.plantilla_id = data.get('plantilla_id', graph.plantilla_id)
 
         graph.bajadas = []
         for texto_bajada in data['bajadas']:
@@ -188,6 +195,7 @@ def obtener_graph(id):
             "tema": graph.tema or "",
             "texto_id": graph.texto_id,
             "activo": graph.activo,
+            "plantilla_id": graph.plantilla_id,
             "bajadas": [b.texto for b in bajadas_ordenadas],
             "entrevistados": [
                 {"nombre": nombre, "citas": citas}
@@ -226,7 +234,8 @@ def obtener_graphs_por_texto(texto_id):
             "tema": graph.tema,
             "bajadas": bajadas,
             "entrevistados": [{"nombre": n, "citas": c} for n, c in entrevistados_dict.items()],
-            "activo": graph.activo
+            "activo": graph.activo,
+            "plantilla_id": graph.plantilla_id
         })
 
     return jsonify(graphs_data)
