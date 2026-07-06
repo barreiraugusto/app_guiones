@@ -14,6 +14,11 @@ async function cargarPlantillasSelect() {
             option.textContent = p.nombre;
             select.appendChild(option);
         });
+        // Explicitly select "Zócalo clásico" as default, matching backend behavior
+        const defaultPlantilla = plantillas.find(p => p.nombre === 'Zócalo clásico');
+        if (defaultPlantilla) {
+            select.value = String(defaultPlantilla.id);
+        }
     } catch (error) {
         console.error('Error al cargar plantillas:', error);
     }
