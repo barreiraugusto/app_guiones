@@ -28,6 +28,7 @@ def create_app():
     from .routes.reloj import reloj_bp
     from .routes.sobre import sobreimpresos_bp
     from .routes.auditoria import auditoria_bp
+    from .routes.plantillas import plantillas_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(guiones_bp)
@@ -36,5 +37,6 @@ def create_app():
     app.register_blueprint(reloj_bp)
     app.register_blueprint(sobreimpresos_bp, url_prefix='/sobreimpresos')
     app.register_blueprint(auditoria_bp)
+    app.register_blueprint(plantillas_bp)
 
     return app

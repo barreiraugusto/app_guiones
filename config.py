@@ -2,6 +2,7 @@ class Config:
     # Configuración para PostgreSQL
     SQLALCHEMY_DATABASE_URI = 'postgresql://abarreira:panasonic@localhost/guiones'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB, límite de subida de plantillas
 
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 5,
