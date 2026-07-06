@@ -1,6 +1,7 @@
 let plantillaActualId = null;
 let plantillaVisible = false;
 let capasActuales = [];
+let clearTimeoutId = null;
 
 function crearElementoCapa(capa) {
     let el;
@@ -78,6 +79,11 @@ function updateDisplay(data) {
     const root = document.getElementById('overlay-root');
     const hayGraphActivo = !!data.plantilla;
 
+    if (clearTimeoutId !== null) {
+        clearTimeout(clearTimeoutId);
+        clearTimeoutId = null;
+    }
+
     if (hayGraphActivo && data.plantilla.id !== plantillaActualId) {
         renderizarPlantilla(data.plantilla);
         capasActuales = data.plantilla.capas;
@@ -98,7 +104,7 @@ function updateDisplay(data) {
         aplicarAnimacion('salida');
         plantillaVisible = false;
         plantillaActualId = null;
-        setTimeout(() => { root.innerHTML = ''; }, maxDuracion);
+        clearTimeoutId = setTimeout(() => { root.innerHTML = ''; }, maxDuracion);
     }
 }
 
