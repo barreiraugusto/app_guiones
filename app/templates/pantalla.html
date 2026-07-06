@@ -9,154 +9,62 @@
             padding: 0;
             font-family: Arial, sans-serif;
             background: transparent;
+            overflow: hidden;
         }
 
-        /* Badge "Vivo" */
         .live-badge {
-            position: absolute;
+            position: fixed;
             color: white;
             padding: 5px 15px;
             border-radius: 20px;
-            font-family: Arial, sans-serif;
             font-weight: bold;
             font-size: 18px;
             -webkit-text-stroke: 1px #1e1e1e;
             text-transform: uppercase;
             text-shadow: 1px -1px 2px rgba(0, 0, 0, 0.5);
             z-index: 1000;
+            display: none;
         }
 
-        .tv-overlay {
+        #overlay-root {
             position: relative;
+            width: 1920px;
+            height: 1080px;
+        }
+
+        .capa {
+            position: absolute;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .capa-media {
             width: 100%;
-            height: 100vh;
+            height: 100%;
+            object-fit: contain;
         }
 
-        .grupo {
-            position: absolute;
-            top: 850px;
-            left: 50px;
-        }
-
-        .bottom-bar {
+        .capa-texto {
             display: flex;
             align-items: center;
-            color: white;
-            gap: 0;
-        }
-
-        .logo {
-            width: 150px;
-            height: 150px;
-            background-image: url('{{ url_for('static', filename='img/grafica/mosca.gif') }}');
-            background-size: cover;
-            background-position: center;
-            flex-shrink: 0;
-        }
-
-        .info-text {
-            height: 152px;
-            width: 1737px;
-            background: url('{{ url_for('static', filename='img/grafica/zocalo_sin_bordes.png') }}') no-repeat center center;
-            background-size: contain;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-            overflow: visible;
-        }
-
-        .blue-text {
-            color: #00ccff;
-            font-weight: bold;
-            font-size: 30px;
-            text-transform: uppercase;
-            padding-left: 30px;
-            white-space: normal;
+            white-space: pre-wrap;
             word-wrap: break-word;
-            overflow-wrap: break-word;
-            max-width: 100%;
         }
 
-        .main-text {
-            font-size: 36px;
-            font-weight: bold;
-            color: white;
-            padding-left: 30px;
-            white-space: normal;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            max-width: 100%;
-        }
+        .anim-fade-enter { animation: fadeIn var(--dur, 400ms) ease forwards; }
+        .anim-fade-exit  { animation: fadeOut var(--dur, 400ms) ease forwards; }
+        .anim-slide-enter { animation: slideIn var(--dur, 400ms) ease forwards; }
+        .anim-slide-exit  { animation: slideOut var(--dur, 400ms) ease forwards; }
 
-        .location-tag {
-            width: 291px;
-            height: 45px;
-            position: absolute;
-            bottom: 153px;
-            right: 6px;
-            background: url('{{ url_for('static', filename='img/grafica/subida_localidad.png') }}') no-repeat center center;
-            background-size: cover;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #003685;
-            font-weight: bold;
-            font-size: 24px; /* Ajustado para coincidir con maxFontSize */
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            box-sizing: border-box;
-            padding: 0 24px; /* Coincide con el valor en la función */
-        }
-
-        .name-tag {
-            width: 893px;
-            height: 45px;
-            position: absolute;
-            bottom: 106px;
-            right: 6px;
-            background: url('{{ url_for('static', filename='img/grafica/subida_nombre.png') }}') no-repeat center center;
-            background-size: cover;
-            display: flex;
-            align-items: center;
-            justify-content: left;
-            color: #02b2ef;
-            font-weight: bold;
-            font-size: 24px; /* Ajustado para coincidir con maxFontSize */
-            text-transform: uppercase;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            box-sizing: border-box;
-            padding: 0 24px; /* Coincide con el valor en la función */
-        }
-
-        #lugar, #nombre {
-            transition: opacity 0.3s ease;
-        }
+        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes slideIn  { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-40px); } }
     </style>
 </head>
 <body>
-<!-- Badge "Vivo" -->
 <div class="live-badge" id="liveBadge"></div>
-
-<div class="tv-overlay">
-    <div class="grupo" id="grupo">
-        <div class="bottom-bar">
-            <div class="logo"></div>
-            <div class="info-text" id="textContainer">
-                <div class="blue-text" id="linea1"></div>
-                <div class="main-text" id="linea2"></div>
-            </div>
-        </div>
-
-        <div class="location-tag" id="lugar"></div>
-        <div class="name-tag" id="nombre"></div>
-    </div>
-</div>
+<div id="overlay-root"></div>
 <script type="module" src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
 </body>
 </html>
