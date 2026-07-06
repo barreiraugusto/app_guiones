@@ -27,9 +27,12 @@ def subir_archivo_plantilla():
     nombre_seguro = secure_filename(archivo.filename)
     nombre_final = f"{uuid.uuid4().hex}_{nombre_seguro}"
 
-    carpeta_destino = os.path.join(current_app.root_path, 'static', 'uploads', 'plantillas')
-    os.makedirs(carpeta_destino, exist_ok=True)
+    try:
+        carpeta_destino = os.path.join(current_app.root_path, 'static', 'uploads', 'plantillas')
+        os.makedirs(carpeta_destino, exist_ok=True)
 
-    archivo.save(os.path.join(carpeta_destino, nombre_final))
+        archivo.save(os.path.join(carpeta_destino, nombre_final))
 
-    return jsonify({"ruta": f"uploads/plantillas/{nombre_final}"}), 201
+        return jsonify({"ruta": f"uploads/plantillas/{nombre_final}"}), 201
+    except Exception as e:
+        return jsonify({"mensaje": f"Error al guardar el archivo: {str(e)}"}), 500
