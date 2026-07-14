@@ -2,6 +2,7 @@ let plantillaActualId = null;
 let plantillaVisible = false;
 let capasActuales = [];
 let clearTimeoutId = null;
+let tickerLastText = null;
 
 function crearElementoCapa(capa) {
     let el;
@@ -67,7 +68,40 @@ function aplicarAnimacion(tipo) {
     });
 }
 
+function updateTicker(ticker) {
+    const band = document.getElementById('tickerBand');
+    const textEl = document.getElementById('tickerText');
+    const cfg = ticker || {};
+
+    if (!cfg.show) {
+        band.style.display = 'none';
+        tickerLastText = null;
+        return;
+    }
+
+    band.style.top = cfg.top || '1000px';
+    band.style.height = cfg.height || '50px';
+    band.style.backgroundColor = cfg.bg_color || '#000000';
+    textEl.style.color = cfg.color || '#ffffff';
+    band.style.display = 'flex';
+
+    const speed = parseFloat(cfg.speed_seconds) || 15;
+    const text = cfg.text || '';
+
+    if (text !== tickerLastText) {
+        textEl.textContent = text;
+        textEl.style.animation = 'none';
+        void textEl.offsetWidth;
+        textEl.style.animation = `ticker-scroll ${speed}s linear infinite`;
+        tickerLastText = text;
+    } else {
+        textEl.style.animationDuration = `${speed}s`;
+    }
+}
+
 function updateDisplay(data) {
+    updateTicker(data.ticker);
+
     const liveBadge = document.getElementById('liveBadge');
     if (data.live) {
         liveBadge.textContent = data.live.text || 'VIVO';

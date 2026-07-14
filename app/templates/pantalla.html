@@ -26,6 +26,30 @@
             display: none;
         }
 
+        #tickerBand {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            display: none;
+            align-items: center;
+            overflow: hidden;
+            box-sizing: border-box;
+            z-index: 900;
+        }
+
+        #tickerText {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        @keyframes ticker-scroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-100%); }
+        }
+
         #overlay-root {
             position: relative;
             width: 1920px;
@@ -64,6 +88,7 @@
 </head>
 <body>
 <div class="live-badge" id="liveBadge"></div>
+<div id="tickerBand"><span id="tickerText"></span></div>
 <div id="overlay-root"></div>
 <script type="module" src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
 </body>
