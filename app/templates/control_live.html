@@ -130,6 +130,35 @@
                 </div>
             </div>
 
+            <!-- Sección Ticker -->
+            <div class="config-section">
+                <h3>Ticker</h3>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="tickerSpeed">Velocidad (seg/vuelta):</label>
+                        <input type="number" class="form-control" id="tickerSpeed" min="1" step="1" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="tickerColor">Color texto:</label>
+                        <input type="color" class="form-control" id="tickerColor" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="tickerBgColor">Color fondo:</label>
+                        <input type="color" class="form-control" id="tickerBgColor" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="tickerTop">Top (px):</label>
+                        <input type="number" class="form-control" id="tickerTop" min="0" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="tickerHeight">Alto (px):</label>
+                        <input type="number" class="form-control" id="tickerHeight" min="1" required>
+                    </div>
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-primary btn-save mb-3">
                 <i class="fas fa-save"></i> Guardar Configuración
             </button>
@@ -185,6 +214,15 @@
                     document.getElementById('liveTop').value = parseFloat(config.live.top) || 20;
                     document.getElementById('liveRight').value = parseFloat(config.live.right) || 20;
                 }
+
+                // Ticker
+                if (config.ticker) {
+                    document.getElementById('tickerSpeed').value = parseFloat(config.ticker.speed_seconds) || 15;
+                    document.getElementById('tickerColor').value = config.ticker.color || '#ffffff';
+                    document.getElementById('tickerBgColor').value = config.ticker.bg_color || '#000000';
+                    document.getElementById('tickerTop').value = parseFloat(config.ticker.top) || 1000;
+                    document.getElementById('tickerHeight').value = parseFloat(config.ticker.height) || 50;
+                }
             }
 
             // Mostrar mensaje de estado
@@ -220,6 +258,13 @@
                         text: document.getElementById('liveText').value.trim() || 'VIVO',
                         top: document.getElementById('liveTop').value + 'px',
                         right: document.getElementById('liveRight').value + 'px'
+                    },
+                    ticker: {
+                        speed_seconds: parseFloat(document.getElementById('tickerSpeed').value) || 15,
+                        color: document.getElementById('tickerColor').value,
+                        bg_color: document.getElementById('tickerBgColor').value,
+                        top: document.getElementById('tickerTop').value + 'px',
+                        height: document.getElementById('tickerHeight').value + 'px'
                     }
                 };
 
