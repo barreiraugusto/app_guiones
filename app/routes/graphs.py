@@ -454,7 +454,7 @@ def update_display_config():
         if 'live' in data and 'show' in data['live']:
             data['live']['show'] = str(data['live']['show']).lower() == 'true'
 
-        for section in ['layout', 'badges', 'live']:
+        for section in ['layout', 'badges', 'live', 'ticker']:
             if section in data:
                 if section not in current_config:
                     current_config[section] = {}
@@ -570,12 +570,13 @@ def stream_display_config():
                             saved_config = json.load(f)
                     except Exception as e:
                         app.logger.error(f"No se pudo cargar display_config.json: {str(e)}")
-                        saved_config = {"layout": {}, "badges": {}, "live": {}}
+                        saved_config = {"layout": {}, "badges": {}, "live": {}, "ticker": {}}
 
                     config = {
                         "layout": saved_config.get("layout", {}),
                         "badges": saved_config.get("badges", {}),
                         "live":   saved_config.get("live",   {}),
+                        "ticker": saved_config.get("ticker", {}),
                         "plantilla": _resolver_capas_plantilla(graph_activo),
                         "content": {
                             "primera_bajada": "",
