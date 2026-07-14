@@ -216,13 +216,11 @@
                 }
 
                 // Ticker
-                if (config.ticker) {
-                    document.getElementById('tickerSpeed').value = parseFloat(config.ticker.speed_seconds) || 15;
-                    document.getElementById('tickerColor').value = config.ticker.color || '#ffffff';
-                    document.getElementById('tickerBgColor').value = config.ticker.bg_color || '#000000';
-                    document.getElementById('tickerTop').value = parseFloat(config.ticker.top) || 1000;
-                    document.getElementById('tickerHeight').value = parseFloat(config.ticker.height) || 50;
-                }
+                document.getElementById('tickerSpeed').value = parseFloat(config.ticker?.speed_seconds) || 15;
+                document.getElementById('tickerColor').value = config.ticker?.color || '#ffffff';
+                document.getElementById('tickerBgColor').value = config.ticker?.bg_color || '#000000';
+                document.getElementById('tickerTop').value = parseFloat(config.ticker?.top) || 1000;
+                document.getElementById('tickerHeight').value = parseFloat(config.ticker?.height) || 50;
             }
 
             // Mostrar mensaje de estado
