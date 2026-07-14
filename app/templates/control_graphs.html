@@ -31,7 +31,14 @@
             </tbody>
         </table>
 
-        <div class="card-footer">
+        <div class="card-footer d-flex flex-wrap align-items-center justify-content-between">
+            <div class="d-flex align-items-center flex-grow-1 mr-3 mb-2 mb-md-0" style="min-width: 280px;">
+                <div class="custom-control custom-switch mr-3">
+                    <input type="checkbox" class="custom-control-input" id="tickerShow">
+                    <label class="custom-control-label" for="tickerShow">Ticker</label>
+                </div>
+                <input type="text" class="form-control" id="tickerText" placeholder="Texto del ticker">
+            </div>
             <a href="/listado_guiones">
                 <button class="btn btn-outline-primary">Atras</button>
             </a>
@@ -105,4 +112,37 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const tickerShow = document.getElementById('tickerShow');
+            const tickerText = document.getElementById('tickerText');
+
+            try {
+                const response = await fetch('/get_display_config');
+                const config = await response.json();
+                if (config.ticker) {
+                    tickerShow.checked = !!config.ticker.show;
+                    tickerText.value = config.ticker.text || '';
+                }
+            } catch (error) {
+                console.error('Error al cargar configuración del ticker:', error);
+            }
+
+            function guardarTicker() {
+                fetch('/update_display_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ticker: {
+                            show: tickerShow.checked,
+                            text: tickerText.value
+                        }
+                    })
+                }).catch(error => console.error('Error al guardar el ticker:', error));
+            }
+
+            tickerShow.addEventListener('change', guardarTicker);
+            tickerText.addEventListener('blur', guardarTicker);
+        });
+    </script>
 {% endblock body %}
