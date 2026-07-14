@@ -51,6 +51,13 @@ Nueva sección `ticker` en `display_config.json`:
   - Si cambia el texto respecto al render anterior, se fuerza un reflow (quitar y reponer la clase de animación) para que no corte el scroll a mitad de vuelta.
   - Si `data.ticker.show` es false, oculta la banda (`display: none`).
 
+## Navegación a control en vivo (`listado_guiones.html`)
+
+Hoy `/control_graphs/<id>` (ruta y template ya existen en `app/routes/graphs.py` y `app/templates/control_graphs.html`) no tiene ningún link de entrada: cada fila de `listado_guiones.html` solo tiene el botón "ver" (`ver_guion`). Como el control operativo del ticker vive en esa pantalla, se agrega el acceso:
+
+- Vista desktop (tabla) y vista mobile (cards) de `listado_guiones.html`: segundo botón por guion, junto al de "ver" (ícono `fa-broadcast-tower` o similar), con `href="{{ url_for('graphs.control_graphs', id=guion.id) }}"`.
+- Sin cambios de backend: la ruta y el template ya funcionan, solo falta el link.
+
 ## Control operativo (`control_graphs.html`)
 
 - Input de texto + toggle on/off en el header o footer de la tabla de notas (junto al botón "Atrás").
