@@ -359,3 +359,53 @@ function finalizarArrastreLive() {
     guardarSeccion('live', liveState);
     renderizarPanelPropiedades();
 }
+
+const guionId = document.getElementById('guion-data').getAttribute('data-guion-id');
+
+async function cargarNotasYGraphs() {
+    try {
+        const response = await fetch('/textos');
+        const textos = await response.json();
+        const textosFiltrados = textos
+            .filter(t => t.guion_id == guionId)
+            .sort((a, b) => a.numero_de_nota - b.numero_de_nota);
+
+        const contenedor = document.getElementById('lista-notas');
+        contenedor.innerHTML = '';
+
+        textosFiltrados.forEach(t => {
+            const notaDiv = document.createElement('div');
+            notaDiv.className = 'mb-2 border-bottom pb-2';
+
+            const graphsHtml = (t.graphs || []).map(g => `
+                <div class="d-flex justify-content-between align-items-center small ${g.activo ? 'bg-warning' : ''} p-1 rounded">
+                    <span style="cursor:pointer;" onclick="seleccionarGraph(${g.id})">${g.lugar || '(sin lugar)'}${g.tema ? ' — ' + g.tema : ''}</span>
+                    <span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
+                    </span>
+                </div>
+            `).join('');
+
+            notaDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong>#${t.numero_de_nota} ${t.titulo}</strong>
+                    <button class="btn btn-sm btn-outline-primary" onclick="abrirModalGraph(${t.id})"><i class="fas fa-plus"></i></button>
+                </div>
+                ${graphsHtml}
+            `;
+            contenedor.appendChild(notaDiv);
+        });
+    } catch (error) {
+        console.error('Error al cargar notas y graphs:', error);
+    }
+}
+
+function seleccionarGraph(id) {
+    console.log('seleccionarGraph pendiente de implementación completa (Task 8):', id);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarNotasYGraphs();
+    setInterval(cargarNotasYGraphs, 1000);
+});
