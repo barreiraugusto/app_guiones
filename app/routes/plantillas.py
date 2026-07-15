@@ -12,7 +12,7 @@ plantillas_bp = Blueprint('plantillas', __name__)
 
 EXTENSIONES_PERMITIDAS = {'.webm', '.png', '.gif'}
 CAMPOS_DATO_VALIDOS = {'lugar', 'tema', 'entrevistado', 'cita', 'bajada_1', 'bajada_2', None}
-TIPOS_CAPA_VALIDOS = {'imagen', 'video', 'texto'}
+TIPOS_CAPA_VALIDOS = {'imagen', 'video', 'texto', 'forma'}
 
 
 def _serializar_plantilla(plantilla):
@@ -41,6 +41,15 @@ def _serializar_plantilla(plantilla):
                 "animacion_entrada": capa.animacion_entrada,
                 "animacion_salida": capa.animacion_salida,
                 "duracion_transicion_ms": capa.duracion_transicion_ms,
+                "radio_esquina": capa.radio_esquina,
+                "color_fondo": capa.color_fondo,
+                "opacidad": capa.opacidad,
+                "color_borde": capa.color_borde,
+                "ancho_borde": capa.ancho_borde,
+                "usar_gradiente": capa.usar_gradiente,
+                "gradiente_color_inicio": capa.gradiente_color_inicio,
+                "gradiente_color_fin": capa.gradiente_color_fin,
+                "gradiente_angulo": capa.gradiente_angulo,
             }
             for capa in sorted(plantilla.capas, key=lambda c: c.orden)
         ]
@@ -76,6 +85,15 @@ def _crear_capas(plantilla, capas_data):
             animacion_entrada=capa_data.get('animacion_entrada', 'fade'),
             animacion_salida=capa_data.get('animacion_salida', 'fade'),
             duracion_transicion_ms=capa_data.get('duracion_transicion_ms', 400),
+            radio_esquina=capa_data.get('radio_esquina', 0),
+            color_fondo=capa_data.get('color_fondo'),
+            opacidad=capa_data.get('opacidad', 100),
+            color_borde=capa_data.get('color_borde'),
+            ancho_borde=capa_data.get('ancho_borde', 0),
+            usar_gradiente=capa_data.get('usar_gradiente', False),
+            gradiente_color_inicio=capa_data.get('gradiente_color_inicio'),
+            gradiente_color_fin=capa_data.get('gradiente_color_fin'),
+            gradiente_angulo=capa_data.get('gradiente_angulo', 90),
         ))
 
 
