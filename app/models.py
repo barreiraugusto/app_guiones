@@ -54,7 +54,7 @@ class Cita(db.Model):
     graph_id = db.Column(db.Integer, db.ForeignKey('graph.id', ondelete="CASCADE"), nullable=False)
 
     entrevistado = db.relationship('Entrevistado', backref='citas')
-    graph = db.relationship('Graph', backref='citas')
+    graph = db.relationship('Graph', backref='citas', foreign_keys=[graph_id])
 
 
 class Bajada(db.Model):
@@ -93,6 +93,15 @@ class Graph(db.Model):
 
     plantilla_id = db.Column(db.Integer, db.ForeignKey('plantilla.id', ondelete="SET NULL"), nullable=True)
     plantilla = db.relationship('Plantilla')
+
+    bajada_activa_id = db.Column(db.Integer, db.ForeignKey('bajada.id', ondelete="SET NULL"), nullable=True)
+    bajada_activa = db.relationship('Bajada', foreign_keys=[bajada_activa_id])
+
+    cita_activa_id = db.Column(db.Integer, db.ForeignKey('cita.id', ondelete="SET NULL"), nullable=True)
+    cita_activa = db.relationship('Cita', foreign_keys=[cita_activa_id])
+
+    mostrar_lugar = db.Column(db.Boolean, default=True, nullable=False)
+    mostrar_tema = db.Column(db.Boolean, default=True, nullable=False)
 
 
 class Plantilla(db.Model):
