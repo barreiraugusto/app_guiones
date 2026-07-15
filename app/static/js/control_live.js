@@ -114,6 +114,18 @@ function crearElementoTicker() {
     el.style.zIndex = 900;
     el.style.opacity = tickerState.show ? '1' : '0.35';
     el.textContent = tickerState.text || '(ticker vacío)';
+
+    el.addEventListener('mousedown', iniciarArrastreTicker);
+    el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        seleccionarElemento('ticker');
+    });
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.addEventListener('mousedown', iniciarResizeTicker);
+    el.appendChild(handle);
+
     return el;
 }
 
@@ -138,5 +150,134 @@ function seleccionarElemento(nombre) {
 
 function renderizarPanelPropiedades() {
     const panel = document.getElementById('panel-propiedades-control');
+
+    if (elementoSeleccionado === 'ticker') {
+        panel.innerHTML = `
+            <h6>Ticker</h6>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-ticker-show" ${tickerState.show ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-ticker-show">Mostrar</label>
+            </div>
+            <div class="form-group mb-2">
+                <label>Texto</label>
+                <input type="text" class="form-control" id="prop-ticker-text" value="${tickerState.text}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Velocidad (seg/vuelta)</label>
+                <input type="number" class="form-control" id="prop-ticker-speed" min="1" value="${tickerState.speed_seconds}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Color texto</label>
+                <input type="color" class="form-control" id="prop-ticker-color" value="${tickerState.color}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Color fondo</label>
+                <input type="color" class="form-control" id="prop-ticker-bgcolor" value="${tickerState.bg_color}">
+            </div>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-ticker-top" value="${tickerState.top}"></div>
+                <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-ticker-height" value="${tickerState.height}"></div>
+            </div>
+        `;
+
+        document.getElementById('prop-ticker-show').addEventListener('change', (e) => {
+            tickerState.show = e.target.checked;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-text').addEventListener('blur', (e) => {
+            tickerState.text = e.target.value;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-speed').addEventListener('blur', (e) => {
+            tickerState.speed_seconds = parseFloat(e.target.value) || 15;
+            guardarSeccion('ticker', tickerState);
+        });
+        document.getElementById('prop-ticker-color').addEventListener('change', (e) => {
+            tickerState.color = e.target.value;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-bgcolor').addEventListener('change', (e) => {
+            tickerState.bg_color = e.target.value;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-top').addEventListener('blur', (e) => {
+            tickerState.top = parseFloat(e.target.value) || 0;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-height').addEventListener('blur', (e) => {
+            tickerState.height = parseFloat(e.target.value) || 10;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        return;
+    }
+
     panel.innerHTML = '<p class="text-muted">Seleccioná el ticker o el badge Vivo para editar sus propiedades.</p>';
+}
+
+let arrastreTicker = null;
+
+function iniciarArrastreTicker(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    seleccionarElemento('ticker');
+    arrastreTicker = { yInicial: e.clientY, topInicial: tickerState.top };
+    document.addEventListener('mousemove', moverArrastreTicker);
+    document.addEventListener('mouseup', finalizarArrastreTicker);
+}
+
+function moverArrastreTicker(e) {
+    if (!arrastreTicker) return;
+    const deltaY = (e.clientY - arrastreTicker.yInicial) / ESCALA_LIENZO;
+    tickerState.top = Math.max(0, Math.round(arrastreTicker.topInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarArrastreTicker() {
+    if (!arrastreTicker) return;
+    arrastreTicker = null;
+    document.removeEventListener('mousemove', moverArrastreTicker);
+    document.removeEventListener('mouseup', finalizarArrastreTicker);
+    guardarSeccion('ticker', tickerState);
+    renderizarPanelPropiedades();
+}
+
+let resizeTicker = null;
+
+function iniciarResizeTicker(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    seleccionarElemento('ticker');
+    resizeTicker = { yInicial: e.clientY, alturaInicial: tickerState.height };
+    document.addEventListener('mousemove', moverResizeTicker);
+    document.addEventListener('mouseup', finalizarResizeTicker);
+}
+
+function moverResizeTicker(e) {
+    if (!resizeTicker) return;
+    const deltaY = (e.clientY - resizeTicker.yInicial) / ESCALA_LIENZO;
+    tickerState.height = Math.max(10, Math.round(resizeTicker.alturaInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarResizeTicker() {
+    if (!resizeTicker) return;
+    resizeTicker = null;
+    document.removeEventListener('mousemove', moverResizeTicker);
+    document.removeEventListener('mouseup', finalizarResizeTicker);
+    guardarSeccion('ticker', tickerState);
+    renderizarPanelPropiedades();
+}
+
+function guardarSeccion(nombre, datos) {
+    fetch('/update_display_config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [nombre]: datos })
+    }).catch(error => console.error(`Error al guardar ${nombre}:`, error));
 }
