@@ -95,8 +95,68 @@
         </div>
     </div>
 </div>
+
+    <!-- Modal para el formulario de Graph -->
+    <div class="modal fade bd-example-modal-lg" id="formularioGraphModal" tabindex="-1" role="dialog"
+         aria-labelledby="formularioGraphModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white bg-primary">
+                    <h5 class="modal-title" id="formularioGraphModalLabel">Carga de Graphs</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="formularioGraph" onsubmit="guardarGraph(event)">
+                        <input type="hidden" id="graph_id" value="">
+                        <div class="form-group mb-3">
+                            <label for="texto_id">Nota:</label>
+                            <select class="form-control" id="texto_id" required>
+                            </select>
+                        </div>
+                        <div class="row p-0 m-0">
+                            <div class="col-6 p-0 m-0">
+                                <input type="text" class="form-control m-0" id="lugar" placeholder="Lugar">
+                                <input type="text" class="form-control m-0" id="tema" placeholder="Tema">
+                            </div>
+                            <div class="col-6 p-0 m-0">
+                                <input type="text" class="form-control m-0" id="entrevistado"
+                                       placeholder="Entrevistado">
+                                <div class="form-group m-0 mt-2">
+                                    <label for="plantilla_id" class="mb-0">Plantilla:</label>
+                                    <select class="form-control" id="plantilla_id">
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="bajadas-container"></div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="agregarBajada()">
+                            <i class="fas fa-plus"></i> Añadir bajada
+                        </button>
+                        <div id="entrevistados-container"></div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="agregarEntrevistado()">
+                            <i class="fas fa-plus"></i> Añadir entrevistado
+                        </button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-outline-success" id="botonGuardarGraph" form="formularioGraph">
+                        Guardar y cerrar
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="agregarNoCerrar(event)"
+                            id="agregarNoCerrar"><i class="fas fa-plus"></i>&nbsp;Agregar
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="cancelarEdicionGraph()"
+                            id="botonCancelarGraph" style="display: none;">Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock body %}
 
 {% block extra_script %}
 <script src="{{ url_for('static', filename='js/control_live.js') }}"></script>
+<script src="{{ url_for('static', filename='js/graphs.js') }}"></script>
 {% endblock extra_script %}

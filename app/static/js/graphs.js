@@ -112,10 +112,7 @@ async function guardarGraph(event) {
         });
 
         // Recargar la lista de graphs
-        const guion_id = document.getElementById('guion_id').value;
-        if (guion_id) {
-            await seleccionarGuion(guion_id);
-        }
+        await cargarNotasYGraphs();
 
         // Restaurar la selección del texto
         document.getElementById('texto_id').value = textoSeleccionado;
@@ -221,10 +218,7 @@ async function agregarNoCerrar(event) {
         });
 
         // Recargar la lista de graphs
-        const guion_id = document.getElementById('guion_id').value;
-        if (guion_id) {
-            await seleccionarGuion(guion_id);
-        }
+        await cargarNotasYGraphs();
 
         // Restaurar la selección del texto
         document.getElementById('texto_id').value = textoSeleccionado;
@@ -399,10 +393,7 @@ async function eliminarGraph(id) {
             });
 
             // Recargar la lista de graphs
-            const guion_id = document.getElementById('guion_id').value;
-            if (guion_id) {
-                await seleccionarGuion(guion_id);
-            }
+            await cargarNotasYGraphs();
         } catch (error) {
             Swal.fire({
                 icon: 'error',
