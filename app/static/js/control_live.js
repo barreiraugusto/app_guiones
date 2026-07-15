@@ -59,7 +59,18 @@ function renderizarLienzo() {
     const lienzo = document.getElementById('lienzo-control');
     lienzo.innerHTML = '';
 
-    if (plantillaActual) {
+    if (graphComposicionId && plantillaEnEdicion) {
+        plantillaEnEdicion.capas
+            .slice()
+            .sort((a, b) => a.orden - b.orden)
+            .forEach(capa => {
+                const valor = resolverValorCapa(capa, composicion);
+                if (capa.tipo === 'texto' && !valor) return;
+                const el = crearElementoPreviewCapa(capa, valor);
+                lienzo.appendChild(el);
+                if (capa.tipo === 'texto') ajustarTamanoTexto(el, capa.tamano_fuente);
+            });
+    } else if (plantillaActual) {
         plantillaActual.capas
             .slice()
             .sort((a, b) => a.orden - b.orden)
@@ -98,6 +109,60 @@ function crearElementoZocalo(capa) {
     el.style.width = `${capa.ancho}px`;
     el.style.height = `${capa.alto}px`;
     el.style.zIndex = capa.orden;
+    return el;
+}
+
+function resolverValorCapa(capa, comp) {
+    if (capa.tipo !== 'texto') return null;
+    const bajada = comp.bajadas.find(b => b.id === comp.bajada_activa_id);
+    const cita = comp.citas.find(c => c.id === comp.cita_activa_id);
+    const valoresPorCampo = {
+        lugar: comp.mostrar_lugar ? (comp.lugar || '') : '',
+        tema: comp.mostrar_tema ? (comp.tema || '') : '',
+        entrevistado: cita ? cita.entrevistado : '',
+        cita: cita ? cita.texto : '',
+        bajada_1: bajada ? bajada.texto : '',
+        bajada_2: '',
+    };
+    return valoresPorCampo[capa.campo_dato] ?? (capa.texto_fijo || '');
+}
+
+function crearElementoPreviewCapa(capa, valor) {
+    let el;
+    if (capa.tipo === 'texto') {
+        el = document.createElement('div');
+        el.classList.add('elemento-control', 'elemento-editable', 'capa-texto');
+        el.style.fontFamily = capa.fuente;
+        el.style.color = capa.color;
+        el.style.justifyContent = capa.alineacion === 'center' ? 'center' : (capa.alineacion === 'right' ? 'flex-end' : 'flex-start');
+        el.textContent = valor;
+    } else if (capa.tipo === 'video') {
+        el = document.createElement('video');
+        el.classList.add('elemento-control', 'elemento-editable', 'capa-media');
+        el.src = `/static/${capa.archivo}`;
+        el.muted = true;
+        el.autoplay = true;
+        el.loop = !!capa.loop;
+        el.playsInline = true;
+    } else {
+        el = document.createElement('img');
+        el.classList.add('elemento-control', 'elemento-editable', 'capa-media');
+        el.src = `/static/${capa.archivo}`;
+    }
+    el.style.left = `${capa.x}px`;
+    el.style.top = `${capa.y}px`;
+    el.style.width = `${capa.ancho}px`;
+    el.style.height = `${capa.alto}px`;
+    el.style.zIndex = capa.orden;
+
+    el.addEventListener('mousedown', (e) => iniciarArrastreCapa(e, capa.id));
+    el.addEventListener('click', (e) => e.stopPropagation());
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.addEventListener('mousedown', (e) => iniciarResizeCapa(e, capa.id));
+    el.appendChild(handle);
+
     return el;
 }
 
@@ -151,6 +216,7 @@ function crearElementoLive() {
 
 function seleccionarElemento(nombre) {
     graphComposicionId = null;
+    plantillaEnEdicion = null;
     elementoSeleccionado = nombre;
     renderizarLienzo();
     renderizarPanelPropiedades();
@@ -416,6 +482,7 @@ async function cargarNotasYGraphs() {
 
 let graphComposicionId = null;
 let composicion = null;
+let plantillaEnEdicion = null;
 
 async function seleccionarGraph(id) {
     const response = await fetch(`/graphs/${id}`);
@@ -433,6 +500,12 @@ async function seleccionarGraph(id) {
         mostrar_lugar: graph.mostrar_lugar,
         mostrar_tema: graph.mostrar_tema,
     };
+
+    plantillaEnEdicion = null;
+    if (graph.plantilla_id) {
+        const respPlantilla = await fetch(`/api/plantillas/${graph.plantilla_id}`);
+        if (respPlantilla.ok) plantillaEnEdicion = await respPlantilla.json();
+    }
 
     elementoSeleccionado = null;
     renderizarLienzo();
@@ -492,18 +565,22 @@ function renderizarPanelComposicion() {
 
     document.getElementById('comp-mostrar-lugar').addEventListener('change', (e) => {
         composicion.mostrar_lugar = e.target.checked;
+        renderizarLienzo();
     });
     document.getElementById('comp-mostrar-tema').addEventListener('change', (e) => {
         composicion.mostrar_tema = e.target.checked;
+        renderizarLienzo();
     });
     document.querySelectorAll('input[name="bajada-activa"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             composicion.bajada_activa_id = e.target.value ? parseInt(e.target.value) : null;
+            renderizarLienzo();
         });
     });
     document.querySelectorAll('input[name="cita-activa"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             composicion.cita_activa_id = e.target.value ? parseInt(e.target.value) : null;
+            renderizarLienzo();
         });
     });
     document.getElementById('btn-al-aire').addEventListener('click', enviarAlAire);
@@ -532,3 +609,69 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarNotasYGraphs();
     setInterval(cargarNotasYGraphs, 1000);
 });
+
+let arrastreCapa = null;
+
+function iniciarArrastreCapa(e, capaId) {
+    e.preventDefault();
+    e.stopPropagation();
+    const capa = plantillaEnEdicion.capas.find(c => c.id === capaId);
+    arrastreCapa = { capaId, xInicial: e.clientX, yInicial: e.clientY, xCapaInicial: capa.x, yCapaInicial: capa.y };
+    document.addEventListener('mousemove', moverArrastreCapa);
+    document.addEventListener('mouseup', finalizarArrastreCapa);
+}
+
+function moverArrastreCapa(e) {
+    if (!arrastreCapa) return;
+    const capa = plantillaEnEdicion.capas.find(c => c.id === arrastreCapa.capaId);
+    const deltaX = (e.clientX - arrastreCapa.xInicial) / ESCALA_LIENZO;
+    const deltaY = (e.clientY - arrastreCapa.yInicial) / ESCALA_LIENZO;
+    capa.x = Math.max(0, Math.round(arrastreCapa.xCapaInicial + deltaX));
+    capa.y = Math.max(0, Math.round(arrastreCapa.yCapaInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarArrastreCapa() {
+    if (!arrastreCapa) return;
+    arrastreCapa = null;
+    document.removeEventListener('mousemove', moverArrastreCapa);
+    document.removeEventListener('mouseup', finalizarArrastreCapa);
+    guardarPlantillaEnEdicion();
+}
+
+let resizeCapa = null;
+
+function iniciarResizeCapa(e, capaId) {
+    e.preventDefault();
+    e.stopPropagation();
+    const capa = plantillaEnEdicion.capas.find(c => c.id === capaId);
+    resizeCapa = { capaId, xInicial: e.clientX, yInicial: e.clientY, anchoInicial: capa.ancho, altoInicial: capa.alto };
+    document.addEventListener('mousemove', moverResizeCapa);
+    document.addEventListener('mouseup', finalizarResizeCapa);
+}
+
+function moverResizeCapa(e) {
+    if (!resizeCapa) return;
+    const capa = plantillaEnEdicion.capas.find(c => c.id === resizeCapa.capaId);
+    const deltaX = (e.clientX - resizeCapa.xInicial) / ESCALA_LIENZO;
+    const deltaY = (e.clientY - resizeCapa.yInicial) / ESCALA_LIENZO;
+    capa.ancho = Math.max(20, Math.round(resizeCapa.anchoInicial + deltaX));
+    capa.alto = Math.max(20, Math.round(resizeCapa.altoInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarResizeCapa() {
+    if (!resizeCapa) return;
+    resizeCapa = null;
+    document.removeEventListener('mousemove', moverResizeCapa);
+    document.removeEventListener('mouseup', finalizarResizeCapa);
+    guardarPlantillaEnEdicion();
+}
+
+function guardarPlantillaEnEdicion() {
+    fetch(`/api/plantillas/${plantillaEnEdicion.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(plantillaEnEdicion)
+    }).catch(error => console.error('Error al guardar la plantilla:', error));
+}
