@@ -167,7 +167,7 @@ function renderizarPanelPropiedades() {
             </div>
             <div class="form-group mb-2">
                 <label>Texto</label>
-                <input type="text" class="form-control" id="prop-ticker-text" value="${tickerState.text}">
+                <input type="text" class="form-control" id="prop-ticker-text">
             </div>
             <div class="form-group mb-2">
                 <label>Velocidad (seg/vuelta)</label>
@@ -186,6 +186,7 @@ function renderizarPanelPropiedades() {
                 <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-ticker-height" value="${tickerState.height}"></div>
             </div>
         `;
+        document.getElementById('prop-ticker-text').value = tickerState.text;
 
         document.getElementById('prop-ticker-show').addEventListener('change', (e) => {
             tickerState.show = e.target.checked;
@@ -233,13 +234,14 @@ function renderizarPanelPropiedades() {
             </div>
             <div class="form-group mb-2">
                 <label>Texto</label>
-                <input type="text" class="form-control" id="prop-live-text" value="${liveState.text}">
+                <input type="text" class="form-control" id="prop-live-text">
             </div>
             <div class="row">
                 <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-live-top" value="${liveState.top}"></div>
                 <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-live-left" value="${liveState.left}"></div>
             </div>
         `;
+        document.getElementById('prop-live-text').value = liveState.text;
 
         document.getElementById('prop-live-show').addEventListener('change', (e) => {
             liveState.show = e.target.checked;
