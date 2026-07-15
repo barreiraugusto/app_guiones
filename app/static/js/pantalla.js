@@ -44,7 +44,11 @@ function renderizarPlantilla(plantillaData) {
     plantillaData.capas
         .slice()
         .sort((a, b) => a.orden - b.orden)
-        .forEach(capa => root.appendChild(crearElementoCapa(capa)));
+        .forEach(capa => {
+            const el = crearElementoCapa(capa);
+            root.appendChild(el);
+            if (capa.tipo === 'texto') ajustarTamanoTexto(el, capa.tamano_fuente);
+        });
 }
 
 function actualizarTextos(plantillaData) {
@@ -70,11 +74,15 @@ function actualizarTextos(plantillaData) {
     plantillaData.capas.forEach(capa => {
         const elExistente = document.getElementById(`capa-${capa.id}`);
         if (elExistente) {
-            if (capa.tipo === 'texto') elExistente.textContent = capa.valor || '';
+            if (capa.tipo === 'texto') {
+                elExistente.textContent = capa.valor || '';
+                ajustarTamanoTexto(elExistente, capa.tamano_fuente);
+            }
             return;
         }
         const elNuevo = crearElementoCapa(capa);
         root.appendChild(elNuevo);
+        if (capa.tipo === 'texto') ajustarTamanoTexto(elNuevo, capa.tamano_fuente);
         if (capa.animacion_entrada && capa.animacion_entrada !== 'none') {
             elNuevo.style.setProperty('--dur', `${capa.duracion_transicion_ms}ms`);
             elNuevo.classList.add(`anim-${capa.animacion_entrada}-enter`);
