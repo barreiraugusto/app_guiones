@@ -59,7 +59,7 @@
                                class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ url_for('graphs.control_graphs', id=guion.id) }}"
+                            <a href="{{ url_for('main.control_live', guion_id=guion.id) }}"
                                class="btn btn-outline-secondary btn-sm">
                                 <i class="fas fa-broadcast-tower"></i>
                             </a>
@@ -85,7 +85,7 @@
                        class="btn btn-outline-primary">
                         <i class="fas fa-eye"></i>
                     </a>
-                    <a href="{{ url_for('graphs.control_graphs', id=guion.id) }}"
+                    <a href="{{ url_for('main.control_live', guion_id=guion.id) }}"
                        class="btn btn-outline-secondary">
                         <i class="fas fa-broadcast-tower"></i>
                     </a>

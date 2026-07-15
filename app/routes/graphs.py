@@ -9,7 +9,7 @@ from flask import current_app
 
 from sqlalchemy.orm import joinedload, selectinload
 from .. import db
-from ..models import Graph, Texto, Guion, Entrevistado, Bajada, Cita, Plantilla
+from ..models import Graph, Texto, Entrevistado, Bajada, Cita, Plantilla
 from ..config_manager import display_config, save_config
 from ..audit import registrar
 
@@ -299,14 +299,6 @@ def stream_graphs():
                 time.sleep(5)
 
     return Response(stream_with_context(event_stream()), content_type='text/event-stream')
-
-
-@graphs_bp.route('/control_graphs/<int:id>')
-def control_graphs(id):
-    guion = Guion.query.get(id)
-    if guion:
-        return render_template('control_graphs.html', guion=guion)
-    return "Guion no encontrado", 404
 
 
 @graphs_bp.route('/graphs/activo/<int:id>', methods=['PUT'])
