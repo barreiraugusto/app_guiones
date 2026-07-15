@@ -48,10 +48,37 @@ function renderizarPlantilla(plantillaData) {
 }
 
 function actualizarTextos(plantillaData) {
+    const root = document.getElementById('overlay-root');
+    const idsNuevos = new Set(plantillaData.capas.map(c => c.id));
+
+    document.querySelectorAll('#overlay-root .capa').forEach(el => {
+        const capaId = Number(el.id.replace('capa-', ''));
+        if (idsNuevos.has(capaId)) return;
+
+        const capaVieja = capasActuales.find(c => c.id === capaId);
+        const duracion = capaVieja ? (capaVieja.duracion_transicion_ms || 400) : 400;
+        const animacion = capaVieja ? capaVieja.animacion_salida : 'none';
+        if (animacion && animacion !== 'none') {
+            el.style.setProperty('--dur', `${duracion}ms`);
+            el.classList.add(`anim-${animacion}-exit`);
+            setTimeout(() => el.remove(), duracion);
+        } else {
+            el.remove();
+        }
+    });
+
     plantillaData.capas.forEach(capa => {
-        if (capa.tipo !== 'texto') return;
-        const el = document.getElementById(`capa-${capa.id}`);
-        if (el) el.textContent = capa.valor || '';
+        const elExistente = document.getElementById(`capa-${capa.id}`);
+        if (elExistente) {
+            if (capa.tipo === 'texto') elExistente.textContent = capa.valor || '';
+            return;
+        }
+        const elNuevo = crearElementoCapa(capa);
+        root.appendChild(elNuevo);
+        if (capa.animacion_entrada && capa.animacion_entrada !== 'none') {
+            elNuevo.style.setProperty('--dur', `${capa.duracion_transicion_ms}ms`);
+            elNuevo.classList.add(`anim-${capa.animacion_entrada}-enter`);
+        }
     });
 }
 
