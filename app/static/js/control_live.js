@@ -1,18 +1,27 @@
 const ANCHO_LIENZO = 1920;
 const ALTO_LIENZO = 1080;
-const ESCALA_LIENZO = 0.5;
+let ESCALA_LIENZO = 0.5;
 
 let tickerState = {};
 let liveState = {};
 let plantillaActual = null;
 let elementoSeleccionado = null; // 'ticker' | 'live' | null
 
+function aplicarEscalaLienzo() {
+    const wrapper = document.getElementById('lienzo-wrapper');
+    const control = document.getElementById('lienzo-control');
+    ESCALA_LIENZO = wrapper.clientWidth / ANCHO_LIENZO;
+    control.style.transform = `scale(${ESCALA_LIENZO})`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    aplicarEscalaLienzo();
     cargarConfig();
     setupEventSource();
     document.getElementById('lienzo-control').addEventListener('click', () => {
         seleccionarElemento(null);
     });
+    window.addEventListener('resize', aplicarEscalaLienzo);
 });
 
 async function cargarConfig() {
@@ -122,7 +131,7 @@ function resolverValorCapa(capa, comp) {
         tema: comp.mostrar_tema ? (comp.tema || '') : '',
         entrevistado: cita ? cita.entrevistado : '',
         cita: cita ? cita.texto : '',
-        bajada_1: bajada ? bajada.texto : '',
+        bajada_1: cita ? cita.texto : (bajada ? bajada.texto : ''),
         bajada_2: '',
     };
     return valoresPorCampo[capa.campo_dato] ?? (capa.texto_fijo || '');

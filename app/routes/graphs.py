@@ -534,7 +534,7 @@ def _resolver_capas_plantilla(graph_activo):
         'tema': (graph_activo.tema or "") if graph_activo.mostrar_tema else "",
         'entrevistado': entrevistado_texto,
         'cita': cita_texto,
-        'bajada_1': bajada_texto,
+        'bajada_1': cita_texto if cita_activa else bajada_texto,
         'bajada_2': "",
     }
 
