@@ -233,6 +233,7 @@ function renderizarPanelPropiedades() {
                     <option value="lugar">Lugar</option>
                     <option value="tema">Tema</option>
                     <option value="entrevistado">Entrevistado</option>
+                    <option value="cita">Cita</option>
                     <option value="bajada_1">Bajada 1</option>
                     <option value="bajada_2">Bajada 2</option>
                 </select>
