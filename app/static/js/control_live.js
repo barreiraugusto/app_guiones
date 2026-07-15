@@ -360,7 +360,7 @@ function finalizarArrastreLive() {
     renderizarPanelPropiedades();
 }
 
-const guionId = document.getElementById('guion-data').getAttribute('data-guion-id');
+let guionId;
 
 async function cargarNotasYGraphs() {
     try {
@@ -406,6 +406,7 @@ function seleccionarGraph(id) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    guionId = document.getElementById('guion-data').getAttribute('data-guion-id');
     cargarNotasYGraphs();
     setInterval(cargarNotasYGraphs, 1000);
 });
