@@ -208,6 +208,15 @@ function agregarCapa(tipo) {
         animacion_entrada: 'fade',
         animacion_salida: 'fade',
         duracion_transicion_ms: 400,
+        radio_esquina: 0,
+        color_fondo: '#ffffff',
+        opacidad: 100,
+        color_borde: '#000000',
+        ancho_borde: 0,
+        usar_gradiente: false,
+        gradiente_color_inicio: '#ffffff',
+        gradiente_color_fin: '#000000',
+        gradiente_angulo: 90,
     };
     capas.push(nuevaCapa);
     seleccionarCapa(nuevaCapa.id);
@@ -274,6 +283,37 @@ function renderizarPanelPropiedades() {
                     <option value="center">Centro</option>
                     <option value="right">Derecha</option>
                 </select>
+            </div>
+        `;
+    } else if (capa.tipo === 'forma') {
+        camposEspecificos = `
+            <div class="form-group mb-2">
+                <label>Radio de esquina:</label>
+                <input type="number" class="form-control" id="prop-radio-esquina" value="${capa.radio_esquina}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Color de fondo:</label>
+                <input type="color" class="form-control" id="prop-color-fondo" value="${capa.color_fondo || '#ffffff'}">
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-usar-gradiente" ${capa.usar_gradiente ? 'checked' : ''}>
+                <label class="form-check-label">Usar gradiente</label>
+            </div>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Color inicio</label><input type="color" class="form-control" id="prop-gradiente-inicio" value="${capa.gradiente_color_inicio || '#ffffff'}"></div>
+                <div class="col-6 form-group mb-2"><label>Color fin</label><input type="color" class="form-control" id="prop-gradiente-fin" value="${capa.gradiente_color_fin || '#000000'}"></div>
+            </div>
+            <div class="form-group mb-2">
+                <label>Ángulo del gradiente (grados):</label>
+                <input type="number" class="form-control" id="prop-gradiente-angulo" value="${capa.gradiente_angulo}">
+            </div>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Color de borde</label><input type="color" class="form-control" id="prop-color-borde" value="${capa.color_borde || '#000000'}"></div>
+                <div class="col-6 form-group mb-2"><label>Ancho de borde</label><input type="number" class="form-control" id="prop-ancho-borde" value="${capa.ancho_borde}"></div>
+            </div>
+            <div class="form-group mb-2">
+                <label>Opacidad (%):</label>
+                <input type="number" class="form-control" id="prop-opacidad" min="0" max="100" value="${capa.opacidad}">
             </div>
         `;
     } else {
@@ -343,6 +383,16 @@ function renderizarPanelPropiedades() {
         document.getElementById('prop-tamano').addEventListener('change', (e) => actualizarCapaSeleccionada({ tamano_fuente: parseInt(e.target.value) || 24 }));
         document.getElementById('prop-color').addEventListener('change', (e) => actualizarCapaSeleccionada({ color: e.target.value }));
         document.getElementById('prop-alineacion').addEventListener('change', (e) => actualizarCapaSeleccionada({ alineacion: e.target.value }));
+    } else if (capa.tipo === 'forma') {
+        document.getElementById('prop-radio-esquina').addEventListener('change', (e) => actualizarCapaSeleccionada({ radio_esquina: parseInt(e.target.value) || 0 }));
+        document.getElementById('prop-color-fondo').addEventListener('change', (e) => actualizarCapaSeleccionada({ color_fondo: e.target.value }));
+        document.getElementById('prop-usar-gradiente').addEventListener('change', (e) => actualizarCapaSeleccionada({ usar_gradiente: e.target.checked }));
+        document.getElementById('prop-gradiente-inicio').addEventListener('change', (e) => actualizarCapaSeleccionada({ gradiente_color_inicio: e.target.value }));
+        document.getElementById('prop-gradiente-fin').addEventListener('change', (e) => actualizarCapaSeleccionada({ gradiente_color_fin: e.target.value }));
+        document.getElementById('prop-gradiente-angulo').addEventListener('change', (e) => actualizarCapaSeleccionada({ gradiente_angulo: parseInt(e.target.value) || 0 }));
+        document.getElementById('prop-color-borde').addEventListener('change', (e) => actualizarCapaSeleccionada({ color_borde: e.target.value }));
+        document.getElementById('prop-ancho-borde').addEventListener('change', (e) => actualizarCapaSeleccionada({ ancho_borde: parseInt(e.target.value) || 0 }));
+        document.getElementById('prop-opacidad').addEventListener('change', (e) => actualizarCapaSeleccionada({ opacidad: parseInt(e.target.value) || 0 }));
     } else {
         document.getElementById('prop-archivo').addEventListener('change', (e) => subirArchivoCapa(e.target.files[0]));
         if (capa.tipo === 'video') {
