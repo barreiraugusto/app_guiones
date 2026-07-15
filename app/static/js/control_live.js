@@ -139,6 +139,13 @@ function crearElementoLive() {
     el.style.zIndex = 1000;
     el.style.opacity = liveState.show ? '1' : '0.35';
     el.textContent = liveState.text || 'VIVO';
+
+    el.addEventListener('mousedown', iniciarArrastreLive);
+    el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        seleccionarElemento('live');
+    });
+
     return el;
 }
 
@@ -217,6 +224,46 @@ function renderizarPanelPropiedades() {
         return;
     }
 
+    if (elementoSeleccionado === 'live') {
+        panel.innerHTML = `
+            <h6>Vivo</h6>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-live-show" ${liveState.show ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-live-show">Mostrar</label>
+            </div>
+            <div class="form-group mb-2">
+                <label>Texto</label>
+                <input type="text" class="form-control" id="prop-live-text" value="${liveState.text}">
+            </div>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-live-top" value="${liveState.top}"></div>
+                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-live-left" value="${liveState.left}"></div>
+            </div>
+        `;
+
+        document.getElementById('prop-live-show').addEventListener('change', (e) => {
+            liveState.show = e.target.checked;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-live-text').addEventListener('blur', (e) => {
+            liveState.text = e.target.value;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-live-top').addEventListener('blur', (e) => {
+            liveState.top = parseFloat(e.target.value) || 0;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-live-left').addEventListener('blur', (e) => {
+            liveState.left = parseFloat(e.target.value) || 0;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        return;
+    }
+
     panel.innerHTML = '<p class="text-muted">Seleccioná el ticker o el badge Vivo para editar sus propiedades.</p>';
 }
 
@@ -280,4 +327,33 @@ function guardarSeccion(nombre, datos) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [nombre]: datos })
     }).catch(error => console.error(`Error al guardar ${nombre}:`, error));
+}
+
+let arrastreLive = null;
+
+function iniciarArrastreLive(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    seleccionarElemento('live');
+    arrastreLive = { xInicial: e.clientX, yInicial: e.clientY, leftInicial: liveState.left, topInicial: liveState.top };
+    document.addEventListener('mousemove', moverArrastreLive);
+    document.addEventListener('mouseup', finalizarArrastreLive);
+}
+
+function moverArrastreLive(e) {
+    if (!arrastreLive) return;
+    const deltaX = (e.clientX - arrastreLive.xInicial) / ESCALA_LIENZO;
+    const deltaY = (e.clientY - arrastreLive.yInicial) / ESCALA_LIENZO;
+    liveState.left = Math.max(0, Math.round(arrastreLive.leftInicial + deltaX));
+    liveState.top = Math.max(0, Math.round(arrastreLive.topInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarArrastreLive() {
+    if (!arrastreLive) return;
+    arrastreLive = null;
+    document.removeEventListener('mousemove', moverArrastreLive);
+    document.removeEventListener('mouseup', finalizarArrastreLive);
+    guardarSeccion('live', liveState);
+    renderizarPanelPropiedades();
 }
