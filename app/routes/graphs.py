@@ -197,10 +197,19 @@ def obtener_graph(id):
             "activo": graph.activo,
             "plantilla_id": graph.plantilla_id,
             "bajadas": [b.texto for b in bajadas_ordenadas],
+            "bajadas_detalle": [{"id": b.id, "texto": b.texto} for b in bajadas_ordenadas],
             "entrevistados": [
                 {"nombre": nombre, "citas": citas}
                 for nombre, citas in entrevistados_dict.items()
-            ]
+            ],
+            "citas_detalle": [
+                {"id": c.id, "texto": c.texto, "entrevistado": c.entrevistado.nombre}
+                for c in citas_ordenadas
+            ],
+            "bajada_activa_id": graph.bajada_activa_id,
+            "cita_activa_id": graph.cita_activa_id,
+            "mostrar_lugar": graph.mostrar_lugar,
+            "mostrar_tema": graph.mostrar_tema,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -307,6 +316,17 @@ def setGraphsActivo(id):
     if not graph:
         return jsonify({"error": "Graph no encontrado"}), 404
     graph.activo = True
+
+    data = request.get_json(silent=True) or {}
+    if 'bajada_activa_id' in data:
+        graph.bajada_activa_id = data['bajada_activa_id']
+    if 'cita_activa_id' in data:
+        graph.cita_activa_id = data['cita_activa_id']
+    if 'mostrar_lugar' in data:
+        graph.mostrar_lugar = bool(data['mostrar_lugar'])
+    if 'mostrar_tema' in data:
+        graph.mostrar_tema = bool(data['mostrar_tema'])
+
     db.session.commit()
 
     registrar('INFO',
@@ -508,22 +528,29 @@ def _resolver_capas_plantilla(graph_activo):
     if not graph_activo or not graph_activo.plantilla:
         return None
 
-    bajadas = sorted(graph_activo.bajadas, key=lambda b: b.id)
-    bajada_1 = bajadas[0].texto if len(bajadas) > 0 else ""
-    bajada_2 = bajadas[1].texto if len(bajadas) > 1 else ""
-    entrevistado = graph_activo.citas[0].entrevistado.nombre if graph_activo.citas else ""
+    bajada_texto = graph_activo.bajada_activa.texto if graph_activo.bajada_activa else ""
+    cita_activa = graph_activo.cita_activa
+    entrevistado_texto = cita_activa.entrevistado.nombre if cita_activa else ""
+    cita_texto = cita_activa.texto if cita_activa else ""
 
     valores_por_campo = {
-        'lugar': graph_activo.lugar or "",
-        'tema': graph_activo.tema or "",
-        'entrevistado': entrevistado,
-        'bajada_1': bajada_1,
-        'bajada_2': bajada_2,
+        'lugar': (graph_activo.lugar or "") if graph_activo.mostrar_lugar else "",
+        'tema': (graph_activo.tema or "") if graph_activo.mostrar_tema else "",
+        'entrevistado': entrevistado_texto,
+        'cita': cita_texto,
+        'bajada_1': bajada_texto,
+        'bajada_2': "",
     }
 
     plantilla = graph_activo.plantilla
     capas = []
     for capa in sorted(plantilla.capas, key=lambda c: c.orden):
+        valor = None
+        if capa.tipo == 'texto':
+            valor = valores_por_campo.get(capa.campo_dato, capa.texto_fijo or "")
+            if not valor:
+                continue
+
         capa_resuelta = {
             "id": capa.id,
             "orden": capa.orden,
@@ -543,7 +570,7 @@ def _resolver_capas_plantilla(graph_activo):
             "duracion_transicion_ms": capa.duracion_transicion_ms,
         }
         if capa.tipo == 'texto':
-            capa_resuelta["valor"] = valores_por_campo.get(capa.campo_dato, capa.texto_fijo or "")
+            capa_resuelta["valor"] = valor
         capas.append(capa_resuelta)
 
     return {"id": plantilla.id, "ancho": plantilla.ancho, "alto": plantilla.alto, "capas": capas}
