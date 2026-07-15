@@ -394,8 +394,8 @@ async function cargarNotasYGraphs() {
                 <div class="d-flex justify-content-between align-items-center small ${g.activo ? 'bg-warning' : ''} p-1 rounded">
                     <span style="cursor:pointer;" onclick="seleccionarGraph(${g.id})">${g.lugar || '(sin lugar)'}${g.tema ? ' — ' + g.tema : ''}</span>
                     <span>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-sm btn-mini btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-mini btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                     </span>
                 </div>
             `).join('');
@@ -403,7 +403,7 @@ async function cargarNotasYGraphs() {
             notaDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <strong>#${t.numero_de_nota} ${t.titulo}</strong>
-                    <button class="btn btn-sm btn-outline-primary" onclick="abrirModalGraph(${t.id})"><i class="fas fa-plus"></i></button>
+                    <button class="btn btn-sm btn-mini btn-outline-primary" onclick="abrirModalGraph(${t.id})"><i class="fas fa-plus"></i></button>
                 </div>
                 ${graphsHtml}
             `;
