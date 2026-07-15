@@ -150,6 +150,7 @@ function crearElementoLive() {
 }
 
 function seleccionarElemento(nombre) {
+    graphComposicionId = null;
     elementoSeleccionado = nombre;
     renderizarLienzo();
     renderizarPanelPropiedades();
@@ -157,6 +158,11 @@ function seleccionarElemento(nombre) {
 
 function renderizarPanelPropiedades() {
     const panel = document.getElementById('panel-propiedades-control');
+
+    if (graphComposicionId) {
+        renderizarPanelComposicion();
+        return;
+    }
 
     if (elementoSeleccionado === 'ticker') {
         panel.innerHTML = `
@@ -401,8 +407,117 @@ async function cargarNotasYGraphs() {
     }
 }
 
-function seleccionarGraph(id) {
-    console.log('seleccionarGraph pendiente de implementación completa (Task 8):', id);
+let graphComposicionId = null;
+let composicion = null;
+
+async function seleccionarGraph(id) {
+    const response = await fetch(`/graphs/${id}`);
+    if (!response.ok) return;
+    const graph = await response.json();
+
+    graphComposicionId = id;
+    composicion = {
+        lugar: graph.lugar,
+        tema: graph.tema,
+        bajadas: graph.bajadas_detalle,
+        citas: graph.citas_detalle,
+        bajada_activa_id: graph.bajada_activa_id,
+        cita_activa_id: graph.cita_activa_id,
+        mostrar_lugar: graph.mostrar_lugar,
+        mostrar_tema: graph.mostrar_tema,
+    };
+
+    elementoSeleccionado = null;
+    renderizarLienzo();
+    renderizarPanelPropiedades();
+}
+
+function renderizarPanelComposicion() {
+    const panel = document.getElementById('panel-propiedades-control');
+    if (!composicion) return;
+
+    const bajadasHtml = composicion.bajadas.map(b => `
+        <div class="form-check">
+            <input type="radio" class="form-check-input" name="bajada-activa" id="bajada-${b.id}"
+                   value="${b.id}" ${composicion.bajada_activa_id === b.id ? 'checked' : ''}>
+            <label class="form-check-label" for="bajada-${b.id}">${b.texto}</label>
+        </div>
+    `).join('');
+
+    const citasHtml = composicion.citas.map(c => `
+        <div class="form-check">
+            <input type="radio" class="form-check-input" name="cita-activa" id="cita-${c.id}"
+                   value="${c.id}" ${composicion.cita_activa_id === c.id ? 'checked' : ''}>
+            <label class="form-check-label" for="cita-${c.id}">${c.entrevistado}: "${c.texto}"</label>
+        </div>
+    `).join('');
+
+    panel.innerHTML = `
+        <h6>Graph: ${composicion.lugar || '(sin lugar)'}</h6>
+        <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="comp-mostrar-lugar" ${composicion.mostrar_lugar ? 'checked' : ''}>
+            <label class="form-check-label" for="comp-mostrar-lugar">Mostrar lugar (${composicion.lugar || '—'})</label>
+        </div>
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="comp-mostrar-tema" ${composicion.mostrar_tema ? 'checked' : ''}>
+            <label class="form-check-label" for="comp-mostrar-tema">Mostrar tema (${composicion.tema || '—'})</label>
+        </div>
+        <div class="mb-3">
+            <label class="d-block"><strong>Bajada activa</strong></label>
+            <div class="form-check">
+                <input type="radio" class="form-check-input" name="bajada-activa" id="bajada-ninguna"
+                       value="" ${!composicion.bajada_activa_id ? 'checked' : ''}>
+                <label class="form-check-label" for="bajada-ninguna">Ninguna</label>
+            </div>
+            ${bajadasHtml}
+        </div>
+        <div class="mb-3">
+            <label class="d-block"><strong>Cita activa</strong></label>
+            <div class="form-check">
+                <input type="radio" class="form-check-input" name="cita-activa" id="cita-ninguna"
+                       value="" ${!composicion.cita_activa_id ? 'checked' : ''}>
+                <label class="form-check-label" for="cita-ninguna">Ninguna</label>
+            </div>
+            ${citasHtml}
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-al-aire">Al aire</button>
+    `;
+
+    document.getElementById('comp-mostrar-lugar').addEventListener('change', (e) => {
+        composicion.mostrar_lugar = e.target.checked;
+    });
+    document.getElementById('comp-mostrar-tema').addEventListener('change', (e) => {
+        composicion.mostrar_tema = e.target.checked;
+    });
+    document.querySelectorAll('input[name="bajada-activa"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            composicion.bajada_activa_id = e.target.value ? parseInt(e.target.value) : null;
+        });
+    });
+    document.querySelectorAll('input[name="cita-activa"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            composicion.cita_activa_id = e.target.value ? parseInt(e.target.value) : null;
+        });
+    });
+    document.getElementById('btn-al-aire').addEventListener('click', enviarAlAire);
+}
+
+async function enviarAlAire() {
+    if (!graphComposicionId) return;
+    try {
+        await fetch(`/graphs/activo/${graphComposicionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                bajada_activa_id: composicion.bajada_activa_id,
+                cita_activa_id: composicion.cita_activa_id,
+                mostrar_lugar: composicion.mostrar_lugar,
+                mostrar_tema: composicion.mostrar_tema,
+            })
+        });
+    } catch (error) {
+        console.error('Error al enviar al aire:', error);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
