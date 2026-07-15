@@ -226,3 +226,62 @@ def eliminar_plantilla(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"mensaje": f"Error al eliminar la plantilla: {str(e)}"}), 500
+
+
+@plantillas_bp.route('/api/plantillas/<int:id>/duplicar', methods=['POST'])
+def duplicar_plantilla(id):
+    original = Plantilla.query.get(id)
+    if not original:
+        return jsonify({"mensaje": "Plantilla no encontrada"}), 404
+
+    nombre_base = f"{original.nombre} (copia)"
+    nombre_nuevo = nombre_base
+    contador = 2
+    while Plantilla.query.filter_by(nombre=nombre_nuevo).first():
+        nombre_nuevo = f"{nombre_base} {contador}"
+        contador += 1
+
+    try:
+        nueva = Plantilla(nombre=nombre_nuevo, ancho=original.ancho, alto=original.alto)
+        db.session.add(nueva)
+        db.session.flush()
+
+        for capa in sorted(original.capas, key=lambda c: c.orden):
+            nueva.capas.append(PlantillaCapa(
+                orden=capa.orden,
+                tipo=capa.tipo,
+                x=capa.x,
+                y=capa.y,
+                ancho=capa.ancho,
+                alto=capa.alto,
+                archivo=capa.archivo,
+                loop=capa.loop,
+                campo_dato=capa.campo_dato,
+                texto_fijo=capa.texto_fijo,
+                fuente=capa.fuente,
+                tamano_fuente=capa.tamano_fuente,
+                color=capa.color,
+                alineacion=capa.alineacion,
+                animacion_entrada=capa.animacion_entrada,
+                animacion_salida=capa.animacion_salida,
+                duracion_transicion_ms=capa.duracion_transicion_ms,
+                radio_esquina=capa.radio_esquina,
+                color_fondo=capa.color_fondo,
+                opacidad=capa.opacidad,
+                color_borde=capa.color_borde,
+                ancho_borde=capa.ancho_borde,
+                usar_gradiente=capa.usar_gradiente,
+                gradiente_color_inicio=capa.gradiente_color_inicio,
+                gradiente_color_fin=capa.gradiente_color_fin,
+                gradiente_angulo=capa.gradiente_angulo,
+            ))
+
+        db.session.commit()
+
+        registrar('INFO', f'Duplicó plantilla: {original.nombre} -> {nueva.nombre}',
+                  'plantilla', nueva.id, nueva.nombre)
+
+        return jsonify({"mensaje": "Plantilla duplicada", "id": nueva.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"mensaje": f"Error al duplicar la plantilla: {str(e)}"}), 500
