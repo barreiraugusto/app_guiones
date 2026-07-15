@@ -1,6 +1,7 @@
 # app/routes/main.py
 from flask import Blueprint, render_template
 from app import MUSICA_OPCIONES  # Importar la variable
+from ..models import Guion
 
 main_bp = Blueprint('main', __name__)
 
@@ -20,9 +21,12 @@ def principal():
     return render_template('principal.html', musica_opciones=MUSICA_OPCIONES)
 
 
-@main_bp.route('/control_live')
-def control_live():
-    return render_template('control_live.html')
+@main_bp.route('/control_live/<int:guion_id>')
+def control_live(guion_id):
+    guion = Guion.query.get(guion_id)
+    if not guion:
+        return "Guion no encontrado", 404
+    return render_template('control_live.html', guion=guion)
 
 
 
