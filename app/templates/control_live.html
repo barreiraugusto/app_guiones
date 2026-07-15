@@ -1,295 +1,90 @@
 {% extends "base.html" %}
-{% block title %}Administrar{% endblock %}
+{% block title %}Control en vivo{% endblock %}
+
 {% block extra_style %}
-    <style>
-        body {
-            padding-top: 70px;
-        }
+<style>
+    body { padding-top: 70px; }
 
-        .config-section {
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+    #lienzo-wrapper {
+        background: repeating-conic-gradient(#ccc 0% 25%, #eee 0% 50%) 50% / 20px 20px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #999;
+        width: 100%;
+        max-width: 960px;
+        aspect-ratio: 16 / 9;
+    }
 
-        .form-group {
-            margin-bottom: 1rem;
-        }
+    #lienzo-control {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        transform: scale(0.5);
+        transform-origin: top left;
+    }
 
-        .btn-save {
-            width: 100%;
-            padding: 10px;
-            font-weight: bold;
-        }
+    .elemento-control {
+        position: absolute;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
 
-        .status-message {
-            display: none;
-            margin-top: 20px;
-        }
-    </style>
+    .elemento-editable {
+        border: 1px dashed rgba(0, 0, 0, 0.4);
+        cursor: move;
+    }
+
+    .elemento-editable.seleccionada { border: 2px solid #0d6efd; }
+
+    .resize-handle {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: #0d6efd;
+        right: -7px;
+        bottom: -7px;
+        cursor: ns-resize;
+    }
+
+    .capa-media { width: 100%; height: 100%; object-fit: contain; }
+    .capa-texto { display: flex; align-items: center; white-space: pre-wrap; word-wrap: break-word; }
+
+    #ticker-editor {
+        display: flex;
+        align-items: center;
+        font-weight: bold;
+        padding: 0 10px;
+        white-space: nowrap;
+    }
+
+    #live-editor {
+        border-radius: 20px;
+        color: #fff;
+        font-weight: bold;
+        padding: 5px 15px;
+        white-space: nowrap;
+    }
+</style>
 {% endblock extra_style %}
 
 {% block body %}
-    <div class="container">
-        <h2 class="mb-4">Control</h2>
-
-        <form id="displayControlForm">
-            <!-- Sección Posiciones Principales -->
-            <div class="config-section">
-                <h3>Grupo</h3>
-                <div class="form-row">
-                    <div class="form-group col-md-3">
-                        <label for="mainVertical">Vertical (px):</label>
-                        <input type="number" class="form-control" id="mainVertical" min="0" max="1080" required>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label for="mainHorizontal">Horizontal Left (px):</label>
-                        <input type="number" class="form-control" id="mainHorizontal" min="0" required>
-                    </div>
-                </div>
+<div class="container-fluid mt-4">
+    <h2>Control en vivo</h2>
+    <div class="row">
+        <div class="col-md-9">
+            <div id="lienzo-wrapper">
+                <div id="lienzo-control"></div>
             </div>
-
-{#            <!-- Sección Logo -->#}
-{#            <div class="config-section">#}
-{#                <h3>Contenedor de Logo</h3>#}
-{#                <div class="form-group">#}
-{#                    <label for="logoWidth">Ancho Logo (% del contenedor):</label>#}
-{#                    <input type="number" class="form-control" id="logoWidth" min="1" max="100" required>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-{#            <!-- Sección Texto -->#}
-{#            <div class="config-section">#}
-{#                <h3>Contenedor de Texto</h3>#}
-{#                <div class="form-group">#}
-{#                    <label for="textWidth">Ancho Texto (% del contenedor):</label>#}
-{#                    <input type="number" class="form-control" id="textWidth" min="1" max="100" required>#}
-{#                </div>#}
-{#            </div>#}
-
-            <!-- Sección Badges -->
-            <!-- Dentro de la sección "Badges Superiores" -->
-            <div class="config-section">
-                <h3>Badges Superiores</h3>
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <h5>Lugar</h5>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="lugarX">Posición X (px):</label>
-                                <input type="number" class="form-control" id="lugarX" min="0" value="0">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="lugarY">Posición Y (px):</label>
-                                <input type="number" class="form-control" id="lugarY" min="0" value="0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group col-md-6">
-                        <h5>Nombre</h5>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="nombreX">Posición X (px):</label>
-                                <input type="number" class="form-control" id="nombreX" min="0" value="0">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="nombreY">Posición Y (px):</label>
-                                <input type="number" class="form-control" id="nombreY" min="0" value="0">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        </div>
+        <div class="col-md-3">
+            <div id="panel-propiedades-control" class="card p-3">
+                <p class="text-muted">Seleccioná el ticker o el badge Vivo para editar sus propiedades.</p>
             </div>
-
-            <!-- Sección Vivo -->
-            <div class="config-section">
-                <h3>Badge "Vivo"</h3>
-                <div class="form-row">
-                    <div class="form-group col-md-4">
-                        <label for="liveShow">Mostrar:</label>
-                        <select class="form-control" id="liveShow" required>
-                            <option value="true">Sí</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label for="liveText">Texto:</label>
-                        <input type="text" class="form-control" id="liveText" required>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label for="liveTop">Top (px):</label>
-                        <input type="number" class="form-control" id="liveTop" min="0" required>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label for="liveRight">Right (px):</label>
-                        <input type="number" class="form-control" id="liveRight" min="0" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección Ticker -->
-            <div class="config-section">
-                <h3>Ticker</h3>
-                <div class="form-row">
-                    <div class="form-group col-md-3">
-                        <label for="tickerSpeed">Velocidad (seg/vuelta):</label>
-                        <input type="number" class="form-control" id="tickerSpeed" min="1" step="1" required>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label for="tickerColor">Color texto:</label>
-                        <input type="color" class="form-control" id="tickerColor" required>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label for="tickerBgColor">Color fondo:</label>
-                        <input type="color" class="form-control" id="tickerBgColor" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group col-md-3">
-                        <label for="tickerTop">Top (px):</label>
-                        <input type="number" class="form-control" id="tickerTop" min="0" required>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label for="tickerHeight">Alto (px):</label>
-                        <input type="number" class="form-control" id="tickerHeight" min="1" required>
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-save mb-3">
-                <i class="fas fa-save"></i> Guardar Configuración
-            </button>
-
-            <div id="statusMessage" class="alert alert-success status-message" role="alert">
-                Configuración actualizada correctamente!
-            </div>
-        </form>
+        </div>
     </div>
+</div>
+{% endblock body %}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async function () {
-            // Elementos del DOM
-            const form = document.getElementById('displayControlForm');
-            const statusMessage = document.getElementById('statusMessage');
-
-            // Cargar configuración actual
-            async function loadConfig() {
-                try {
-                    const response = await fetch('/get_display_config');
-                    if (!response.ok) throw new Error('Error al cargar configuración');
-
-                    const config = await response.json();
-                    populateForm(config);
-                } catch (error) {
-                    console.error('Error:', error);
-                    showStatus('Error al cargar configuración', 'danger');
-                }
-            }
-
-            // Rellenar formulario con la configuración
-            function populateForm(config) {
-                // Layout
-                if (config.layout) {
-                    document.getElementById('mainVertical').value = parseFloat(config.layout.main_vertical) || 850;
-                    document.getElementById('mainHorizontal').value = parseFloat(config.layout.main_horizontal) || 50;
-                    {#document.getElementById('logoWidth').value = parseFloat(config.layout.logo_width) || 10;#}
-                    {#document.getElementById('textWidth').value = parseFloat(config.layout.text_width) || 70;#}
-                }
-
-                // Badges
-                if (config.badges) {
-                    document.getElementById('lugarX').value = parseFloat(config.badges.lugar_x) || 1571;
-                    document.getElementById('lugarY').value = parseFloat(config.badges.lugar_y) || 153;
-                    document.getElementById('nombreX').value = parseFloat(config.badges.nombre_x) || 988;
-                    document.getElementById('nombreY').value = parseFloat(config.badges.nombre_y) || 106;
-                }
-
-                // Live badge
-                if (config.live) {
-                    document.getElementById('liveShow').value = config.live.show ? 'true' : 'false';
-                    document.getElementById('liveText').value = config.live.text || 'VIVO';
-                    document.getElementById('liveTop').value = parseFloat(config.live.top) || 20;
-                    document.getElementById('liveRight').value = parseFloat(config.live.right) || 20;
-                }
-
-                // Ticker
-                document.getElementById('tickerSpeed').value = parseFloat(config.ticker?.speed_seconds) || 15;
-                document.getElementById('tickerColor').value = config.ticker?.color || '#ffffff';
-                document.getElementById('tickerBgColor').value = config.ticker?.bg_color || '#000000';
-                document.getElementById('tickerTop').value = parseFloat(config.ticker?.top) || 1000;
-                document.getElementById('tickerHeight').value = parseFloat(config.ticker?.height) || 50;
-            }
-
-            // Mostrar mensaje de estado
-            function showStatus(message, type = 'success') {
-                statusMessage.textContent = message;
-                statusMessage.className = `alert alert-${type} status-message`;
-                statusMessage.style.display = 'block';
-
-                setTimeout(() => {
-                    statusMessage.style.display = 'none';
-                }, 3000);
-            }
-
-            // Manejar envío del formulario
-            form.onsubmit = async function (e) {
-                e.preventDefault();
-
-                const config = {
-                    layout: {
-                        main_vertical: document.getElementById('mainVertical').value + 'px',
-                        main_horizontal: document.getElementById('mainHorizontal').value + 'px',
-                        {#logo_width: document.getElementById('logoWidth').value + '%',#}
-                        {#text_width: document.getElementById('textWidth').value + '%'#}
-                    },
-                    badges: {
-                        lugar_x: document.getElementById('lugarX').value + 'px',
-                        lugar_y: document.getElementById('lugarY').value + 'px',
-                        nombre_x: document.getElementById('nombreX').value + 'px',
-                        nombre_y: document.getElementById('nombreY').value + 'px'
-                    },
-                    live: {
-                        show: document.getElementById('liveShow').value === 'true',
-                        text: document.getElementById('liveText').value.trim() || 'VIVO',
-                        top: document.getElementById('liveTop').value + 'px',
-                        right: document.getElementById('liveRight').value + 'px'
-                    },
-                    ticker: {
-                        speed_seconds: parseFloat(document.getElementById('tickerSpeed').value) || 15,
-                        color: document.getElementById('tickerColor').value,
-                        bg_color: document.getElementById('tickerBgColor').value,
-                        top: document.getElementById('tickerTop').value + 'px',
-                        height: document.getElementById('tickerHeight').value + 'px'
-                    }
-                };
-
-                try {
-                    const response = await fetch('/update_display_config', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify(config)
-                    });
-
-                    if (response.ok) {
-                        showStatus('Configuración actualizada correctamente');
-                    } else {
-                        throw new Error('Error en la respuesta del servidor');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    showStatus('Error al actualizar la configuración', 'danger');
-                }
-            };
-
-            // Inicializar
-            await loadConfig();
-        });
-
-    </script>
-{% endblock %}
+{% block extra_script %}
+<script src="{{ url_for('static', filename='js/control_live.js') }}"></script>
+{% endblock extra_script %}
