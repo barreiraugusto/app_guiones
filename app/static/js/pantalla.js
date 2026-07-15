@@ -107,7 +107,7 @@ function updateDisplay(data) {
         liveBadge.textContent = data.live.text || 'VIVO';
         liveBadge.style.display = data.live.show ? 'block' : 'none';
         liveBadge.style.top = data.live.top || '20px';
-        liveBadge.style.right = data.live.right || '20px';
+        liveBadge.style.left = data.live.left || '20px';
     }
 
     const root = document.getElementById('overlay-root');
