@@ -146,6 +146,16 @@ class PlantillaCapa(db.Model):
     animacion_salida = db.Column(db.String(10), nullable=False, default='fade')
     duracion_transicion_ms = db.Column(db.Integer, nullable=False, default=400)
 
+    radio_esquina = db.Column(db.Integer, nullable=False, default=0)
+    color_fondo = db.Column(db.String(20), nullable=True)
+    opacidad = db.Column(db.Integer, nullable=False, default=100)
+    color_borde = db.Column(db.String(20), nullable=True)
+    ancho_borde = db.Column(db.Integer, nullable=False, default=0)
+    usar_gradiente = db.Column(db.Boolean, nullable=False, default=False)
+    gradiente_color_inicio = db.Column(db.String(20), nullable=True)
+    gradiente_color_fin = db.Column(db.String(20), nullable=True)
+    gradiente_angulo = db.Column(db.Integer, nullable=False, default=90)
+
 
 class AuditLog(db.Model):
     """Registro de acciones de usuarios para auditoría."""
