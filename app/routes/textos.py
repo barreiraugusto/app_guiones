@@ -397,13 +397,8 @@ def setTextoActivo(id):
         return jsonify({"mensaje": "Texto no encontrado"}), 404
 
     try:
-        # Desactivar todos los textos y graphs en una sola operación
         Texto.query.filter_by(activo=True).update({Texto.activo: False})
-        Graph.query.filter_by(activo=True).update({Graph.activo: False})
-
         texto.activo = True
-        for graph in texto.graphs:
-            graph.activo = True
 
         db.session.commit()
 

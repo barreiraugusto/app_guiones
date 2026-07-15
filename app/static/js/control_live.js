@@ -454,7 +454,7 @@ async function cargarNotasYGraphs() {
 
         textosFiltrados.forEach(t => {
             const notaDiv = document.createElement('div');
-            notaDiv.className = 'mb-2 border-bottom pb-2';
+            notaDiv.className = 'mb-2 border-bottom pb-2' + (t.activo ? ' bg-warning' : '');
 
             const graphsHtml = (t.graphs || []).map(g => `
                 <div class="d-flex justify-content-between align-items-center small ${g.activo ? 'bg-warning' : ''} p-1 rounded">
