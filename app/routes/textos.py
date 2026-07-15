@@ -406,7 +406,7 @@ def setTextoActivo(id):
                   f'Activó nota #{texto.numero_de_nota}: {texto.titulo}',
                   'texto', id, texto.titulo)
 
-        return jsonify({"mensaje": "Texto y graphs asociados activados"})
+        return jsonify({"mensaje": "Texto activado"})
     except Exception as e:
         db.session.rollback()
         return jsonify({"mensaje": f"Error al activar texto: {str(e)}"}), 500
