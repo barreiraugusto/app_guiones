@@ -69,6 +69,7 @@ function renderizarLienzo() {
                 const el = crearElementoPreviewCapa(capa, valor);
                 lienzo.appendChild(el);
                 if (capa.tipo === 'texto') ajustarTamanoTexto(el, capa.tamano_fuente);
+                agregarResizeHandle(el, capa.id);
             });
     } else if (plantillaActual) {
         plantillaActual.capas
@@ -158,12 +159,14 @@ function crearElementoPreviewCapa(capa, valor) {
     el.addEventListener('mousedown', (e) => iniciarArrastreCapa(e, capa.id));
     el.addEventListener('click', (e) => e.stopPropagation());
 
+    return el;
+}
+
+function agregarResizeHandle(el, capaId) {
     const handle = document.createElement('div');
     handle.className = 'resize-handle';
-    handle.addEventListener('mousedown', (e) => iniciarResizeCapa(e, capa.id));
+    handle.addEventListener('mousedown', (e) => iniciarResizeCapa(e, capaId));
     el.appendChild(handle);
-
-    return el;
 }
 
 function crearElementoTicker() {
