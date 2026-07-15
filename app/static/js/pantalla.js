@@ -22,6 +22,19 @@ function crearElementoCapa(capa) {
         el.autoplay = true;
         el.loop = !!capa.loop;
         el.playsInline = true;
+    } else if (capa.tipo === 'forma') {
+        el = document.createElement('div');
+        el.classList.add('capa');
+        el.style.borderRadius = `${capa.radio_esquina}px`;
+        el.style.opacity = capa.opacidad / 100;
+        if (capa.ancho_borde > 0) {
+            el.style.border = `${capa.ancho_borde}px solid ${capa.color_borde || '#000000'}`;
+        }
+        if (capa.usar_gradiente) {
+            el.style.background = `linear-gradient(${capa.gradiente_angulo}deg, ${capa.gradiente_color_inicio}, ${capa.gradiente_color_fin})`;
+        } else {
+            el.style.background = capa.color_fondo || 'transparent';
+        }
     } else {
         el = document.createElement('img');
         el.classList.add('capa', 'capa-media');

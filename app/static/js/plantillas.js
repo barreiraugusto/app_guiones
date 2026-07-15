@@ -93,6 +93,19 @@ function crearElementoEditable(capa) {
         const justify = capa.alineacion === 'center' ? 'center' : (capa.alineacion === 'right' ? 'flex-end' : 'flex-start');
         const texto = capa.texto_fijo || (capa.campo_dato ? `{{${capa.campo_dato}}}` : 'Texto libre');
         div.innerHTML = `<div class="capa-texto-preview" style="font-family:${capa.fuente};font-size:${capa.tamano_fuente}px;color:${capa.color};justify-content:${justify};">${texto}</div>`;
+    } else if (capa.tipo === 'forma') {
+        div.style.borderRadius = `${capa.radio_esquina}px`;
+        div.style.opacity = capa.opacidad / 100;
+        if (capa.ancho_borde > 0) {
+            div.style.borderWidth = `${capa.ancho_borde}px`;
+            div.style.borderStyle = 'solid';
+            div.style.borderColor = capa.color_borde || '#000000';
+        }
+        if (capa.usar_gradiente) {
+            div.style.background = `linear-gradient(${capa.gradiente_angulo}deg, ${capa.gradiente_color_inicio}, ${capa.gradiente_color_fin})`;
+        } else {
+            div.style.background = capa.color_fondo || 'transparent';
+        }
     } else {
         div.style.background = 'rgba(255,0,0,0.15)';
     }
