@@ -311,9 +311,13 @@ def setGraphsActivo(id):
 
     data = request.get_json(silent=True) or {}
     if 'bajada_activa_id' in data:
-        graph.bajada_activa_id = data['bajada_activa_id']
+        bajada_id = data['bajada_activa_id']
+        if bajada_id is None or any(b.id == bajada_id for b in graph.bajadas):
+            graph.bajada_activa_id = bajada_id
     if 'cita_activa_id' in data:
-        graph.cita_activa_id = data['cita_activa_id']
+        cita_id = data['cita_activa_id']
+        if cita_id is None or any(c.id == cita_id for c in graph.citas):
+            graph.cita_activa_id = cita_id
     if 'mostrar_lugar' in data:
         graph.mostrar_lugar = bool(data['mostrar_lugar'])
     if 'mostrar_tema' in data:

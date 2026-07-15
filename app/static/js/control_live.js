@@ -376,6 +376,13 @@ async function cargarNotasYGraphs() {
             .filter(t => t.guion_id == guionId)
             .sort((a, b) => a.numero_de_nota - b.numero_de_nota);
 
+        const selTexto = document.getElementById('texto_id');
+        if (selTexto) {
+            selTexto.innerHTML = textosFiltrados
+                .map(t => `<option value="${t.id}">Nota: ${t.numero_de_nota} - ${t.titulo}</option>`)
+                .join('');
+        }
+
         const contenedor = document.getElementById('lista-notas');
         contenedor.innerHTML = '';
 
