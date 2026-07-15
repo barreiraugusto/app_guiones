@@ -11,7 +11,7 @@ from ..audit import registrar
 plantillas_bp = Blueprint('plantillas', __name__)
 
 EXTENSIONES_PERMITIDAS = {'.webm', '.png', '.gif'}
-CAMPOS_DATO_VALIDOS = {'lugar', 'tema', 'entrevistado', 'bajada_1', 'bajada_2', None}
+CAMPOS_DATO_VALIDOS = {'lugar', 'tema', 'entrevistado', 'cita', 'bajada_1', 'bajada_2', None}
 TIPOS_CAPA_VALIDOS = {'imagen', 'video', 'texto'}
 
 
