@@ -22,6 +22,9 @@ async function cargarListadoPlantillas() {
             <div class="card plantilla-card h-100" onclick="abrirPlantilla(${p.id})">
                 <div class="card-body">
                     <h5 class="card-title">${p.nombre}</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); duplicarPlantilla(${p.id})">
+                        <i class="fas fa-copy"></i> Duplicar
+                    </button>
                 </div>
             </div>
         `;
@@ -477,6 +480,20 @@ async function eliminarPlantillaActual() {
         }
         Swal.fire({ icon: 'success', title: 'Plantilla eliminada', showConfirmButton: false, timer: 1000 });
         cerrarEditor();
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+    }
+}
+
+async function duplicarPlantilla(id) {
+    try {
+        const response = await fetch(`/api/plantillas/${id}/duplicar`, { method: 'POST' });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.mensaje || 'Error al duplicar la plantilla');
+        }
+        const data = await response.json();
+        await abrirPlantilla(data.id);
     } catch (error) {
         Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }
