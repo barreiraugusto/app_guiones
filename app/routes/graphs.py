@@ -564,6 +564,15 @@ def _resolver_capas_plantilla(graph_activo):
             "animacion_entrada": capa.animacion_entrada,
             "animacion_salida": capa.animacion_salida,
             "duracion_transicion_ms": capa.duracion_transicion_ms,
+            "radio_esquina": capa.radio_esquina,
+            "color_fondo": capa.color_fondo,
+            "opacidad": capa.opacidad,
+            "color_borde": capa.color_borde,
+            "ancho_borde": capa.ancho_borde,
+            "usar_gradiente": capa.usar_gradiente,
+            "gradiente_color_inicio": capa.gradiente_color_inicio,
+            "gradiente_color_fin": capa.gradiente_color_fin,
+            "gradiente_angulo": capa.gradiente_angulo,
         }
         if capa.tipo == 'texto':
             capa_resuelta["valor"] = valor
