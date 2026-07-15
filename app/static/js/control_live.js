@@ -470,7 +470,7 @@ async function cargarNotasYGraphs() {
             `).join('');
 
             notaDiv.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center px-1">
                     <strong>#${t.numero_de_nota} ${t.titulo}</strong>
                     <button class="btn btn-sm btn-mini btn-outline-primary" onclick="abrirModalGraph(${t.id})"><i class="fas fa-plus"></i></button>
                 </div>
