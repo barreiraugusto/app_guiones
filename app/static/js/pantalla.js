@@ -68,6 +68,11 @@ function aplicarAnimacion(tipo) {
     });
 }
 
+function conPx(valor, porDefecto) {
+    if (valor === undefined || valor === null || valor === '') return porDefecto;
+    return typeof valor === 'number' ? `${valor}px` : valor;
+}
+
 function updateTicker(ticker) {
     const band = document.getElementById('tickerBand');
     const textEl = document.getElementById('tickerText');
@@ -79,8 +84,8 @@ function updateTicker(ticker) {
         return;
     }
 
-    band.style.top = cfg.top || '1000px';
-    band.style.height = cfg.height || '50px';
+    band.style.top = conPx(cfg.top, '1000px');
+    band.style.height = conPx(cfg.height, '50px');
     band.style.backgroundColor = cfg.bg_color || '#000000';
     textEl.style.color = cfg.color || '#ffffff';
     band.style.display = 'flex';
@@ -106,8 +111,8 @@ function updateDisplay(data) {
     if (data.live) {
         liveBadge.textContent = data.live.text || 'VIVO';
         liveBadge.style.display = data.live.show ? 'block' : 'none';
-        liveBadge.style.top = data.live.top || '20px';
-        liveBadge.style.left = data.live.left || '20px';
+        liveBadge.style.top = conPx(data.live.top, '20px');
+        liveBadge.style.left = conPx(data.live.left, '20px');
     }
 
     const root = document.getElementById('overlay-root');
