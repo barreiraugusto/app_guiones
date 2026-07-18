@@ -57,16 +57,38 @@ input).
 
 ## Salida real (`app/static/js/pantalla.js`)
 
-En `updateTicker(ticker)`, junto a donde ya se aplican `left`/`width`/`top`/
-`height`, agregar:
+**No se puede aplicar como `band.style.transform` directo.** La banda tiene una
+animación de entrada/salida (`anim-ticker-enter`/`anim-ticker-exit`, ver spec del
+ticker "ancho y deslizamiento") con `animation-fill-mode: forwards`, y la clase de
+entrada nunca se remueve mientras el ticker está visible — así que esa animación
+controla la propiedad `transform` por completo durante toda la vida del elemento
+mostrado, tapando cualquier `transform` inline. La rotación debe inyectarse dentro
+de los propios keyframes vía una custom property:
+
+En `app/templates/pantalla.html`, los keyframes `tickerSlideIn`/`tickerSlideOut`
+deben componer `rotate(var(--angulo, 0deg))` junto al `translateX` existente, en
+ese orden (`translateX(...) rotate(...)`, no al revés — con `rotate` primero en
+la lista, el desplazamiento quedaría en diagonal en vez de horizontal, porque
+`translateX` se aplicaría dentro del sistema de coordenadas ya rotado):
+
+```css
+@keyframes tickerSlideIn  { from { opacity: 0; transform: translateX(100%) rotate(var(--angulo, 0deg)); } to { opacity: 1; transform: translateX(0) rotate(var(--angulo, 0deg)); } }
+@keyframes tickerSlideOut { from { opacity: 1; transform: translateX(0) rotate(var(--angulo, 0deg)); } to { opacity: 0; transform: translateX(100%) rotate(var(--angulo, 0deg)); } }
+```
+
+Y en `updateTicker(ticker)`, junto a donde ya se aplican `left`/`width`/`top`/
+`height`, setear la custom property (no `style.transform`):
 
 ```js
-band.style.transform = `rotate(${parseFloat(cfg.angulo) || 0}deg)`;
+band.style.setProperty('--angulo', `${parseFloat(cfg.angulo) || 0}deg`);
 ```
 
 La rotación usa el `transform-origin` por defecto de CSS (`center`), así que la
 banda gira sobre su propio centro sin desplazar la posición de referencia
-(`left`/`top`) de la caja sin rotar.
+(`left`/`top`) de la caja sin rotar. Verificado empíricamente: la matriz final
+tiene el componente de rotación correcto y la trayectoria intermedia de la
+animación de entrada no tiene componente vertical (el desplazamiento sigue siendo
+horizontal recto).
 
 ## Fuera de alcance
 

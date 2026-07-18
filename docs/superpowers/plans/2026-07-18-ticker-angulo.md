@@ -149,29 +149,66 @@ git commit -m "feat: ángulo de rotación configurable para el ticker en el edit
 
 **Files:**
 - Modify: `app/static/js/pantalla.js:141-174` (`updateTicker`)
+- Modify: `app/templates/pantalla.html` (keyframes `tickerSlideIn`/`tickerSlideOut`)
 
 **Interfaces:**
 - Consumes: `cfg.angulo` (llega tal cual desde `display_config.json` vía Task 1,
   sin transformación de backend).
 
-- [ ] **Step 1: Aplicar la rotación en `updateTicker`**
+**⚠️ Nota de una corrección post-implementación (encontrada en review, no en el
+diseño original de este plan):** no se puede aplicar la rotación como
+`band.style.transform` directo. La banda tiene una animación de entrada/salida
+(`anim-ticker-enter`/`anim-ticker-exit`, `animation-fill-mode: forwards`) cuya
+clase de entrada nunca se remueve mientras el ticker está visible — esa animación
+controla la propiedad `transform` por completo durante toda la vida del elemento
+mostrado, tapando cualquier `transform` inline seteado por JS. La rotación debe
+inyectarse dentro de los propios keyframes vía una custom property `--angulo`.
+
+- [ ] **Step 1: Componer la rotación en los keyframes del ticker**
+
+En `app/templates/pantalla.html`, reemplazar:
+
+```css
+        @keyframes tickerSlideIn  { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes tickerSlideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+```
+
+por:
+
+```css
+        @keyframes tickerSlideIn  { from { opacity: 0; transform: translateX(100%) rotate(var(--angulo, 0deg)); } to { opacity: 1; transform: translateX(0) rotate(var(--angulo, 0deg)); } }
+        @keyframes tickerSlideOut { from { opacity: 1; transform: translateX(0) rotate(var(--angulo, 0deg)); } to { opacity: 0; transform: translateX(100%) rotate(var(--angulo, 0deg)); } }
+```
+
+`rotate` va después de `translateX` en la lista — con el orden invertido el
+desplazamiento quedaría en diagonal en vez de horizontal, porque `translateX` se
+aplicaría dentro del sistema de coordenadas ya rotado.
+
+- [ ] **Step 2: Setear la custom property en `updateTicker`**
 
 En `app/static/js/pantalla.js`, dentro de `updateTicker`, agregar después de
 `band.style.height = conPx(cfg.height, '50px');`:
 
 ```javascript
-    band.style.transform = `rotate(${parseFloat(cfg.angulo) || 0}deg)`;
+    band.style.setProperty('--angulo', `${parseFloat(cfg.angulo) || 0}deg`);
 ```
 
-- [ ] **Step 2: Verificación de sintaxis**
+- [ ] **Step 3: Verificación de sintaxis**
 
 ```bash
 cd /home/augusto/Documentos/CODIGOS/APP_GUIONES/app_guiones
 sed 's/^export //; s/??/||/g' app/static/js/pantalla.js > /tmp/pj_angulo_checkable.js
 node --check /tmp/pj_angulo_checkable.js && echo "sintaxis OK"
+python3 -c "
+import re
+html = open('app/templates/pantalla.html').read()
+css = re.search(r'<style>(.*?)</style>', html, re.DOTALL).group(1)
+assert css.count('{') == css.count('}'), 'llaves desbalanceadas'
+print('CSS balanceado:', css.count('{'), 'bloques')
+"
 ```
 
-- [ ] **Step 3: Verificación manual en navegador**
+- [ ] **Step 4: Verificación manual en navegador**
 
 ```bash
 cd /home/augusto/Documentos/CODIGOS/APP_GUIONES/app_guiones
@@ -183,18 +220,23 @@ datos de prueba en la consola del navegador (mismo enfoque ya usado varias veces
 en este proyecto: parchear el módulo para exponer `updateDisplay`/`updateTicker`
 a `window` vía `fetch('/static/js/pantalla.js')` + quitar `export`). Llamar a
 `window.updateTicker({ show: true, text: 'PRUEBA', angulo: 20, left: 200,
-width: 800 })` y confirmar mediante `getComputedStyle(document.getElementById
-('tickerBand')).transform` que el valor resultante corresponde a una rotación de
-20 grados (no `"none"` ni `matrix(1, 0, 0, 1, ...)` sin componente de rotación).
-Confirmar visualmente con una captura de pantalla que la banda se ve inclinada.
+width: 800 })` y, con la animación de entrada aún corriendo, usar
+`document.getElementById('tickerBand').getAnimations()[0]` para adelantar
+`currentTime` manualmente hasta el final (400) y leer `getComputedStyle(band)
+.transform` en varios puntos del recorrido (0, 200, 400) — el componente de
+rotación (derivable de la matriz: `a=cos(ángulo)`, `b=sin(ángulo)`) debe
+mantenerse constante durante todo el trayecto, y el componente de traslación en Y
+debe ser 0 en todo momento (el desplazamiento debe ser horizontal recto, no
+diagonal). Confirmar visualmente con una captura de pantalla que la banda se ve
+inclinada.
 
 Parar el servidor de prueba al terminar (`pkill -f "flask run --port 5062"`).
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 Mismo criterio de git state que Task 1.
 
 ```bash
-git add app/static/js/pantalla.js
+git add app/static/js/pantalla.js app/templates/pantalla.html
 git commit -m "feat: aplicar ángulo de rotación del ticker en la salida real"
 ```
