@@ -12,6 +12,8 @@ function crearElementoCapa(capa) {
         el.style.fontFamily = capa.fuente;
         el.style.fontSize = `${capa.tamano_fuente}px`;
         el.style.color = capa.color;
+        el.style.fontWeight = capa.negrita ? 'bold' : 'normal';
+        el.style.fontStyle = capa.cursiva ? 'italic' : 'normal';
         el.style.justifyContent = capa.alineacion === 'center' ? 'center' : (capa.alineacion === 'right' ? 'flex-end' : 'flex-start');
         el.textContent = capa.valor || '';
     } else if (capa.tipo === 'video') {
