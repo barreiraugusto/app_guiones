@@ -3,6 +3,9 @@ let plantillaVisible = false;
 let capasActuales = [];
 let clearTimeoutId = null;
 let tickerLastText = null;
+let tickerLastDireccion = null;
+let tickerVisible = false;
+let tickerHideTimeoutId = null;
 
 function crearElementoCapa(capa) {
     let el;
@@ -129,26 +132,53 @@ function updateTicker(ticker) {
     const cfg = ticker || {};
 
     if (!cfg.show) {
-        band.style.display = 'none';
-        tickerLastText = null;
+        if (tickerVisible) {
+            band.classList.remove('anim-ticker-enter');
+            band.classList.add('anim-ticker-exit');
+            tickerVisible = false;
+            tickerLastText = null;
+            if (tickerHideTimeoutId !== null) clearTimeout(tickerHideTimeoutId);
+            tickerHideTimeoutId = setTimeout(() => {
+                band.style.display = 'none';
+                band.classList.remove('anim-ticker-exit');
+                tickerHideTimeoutId = null;
+            }, 400);
+        }
         return;
     }
 
+    if (tickerHideTimeoutId !== null) {
+        clearTimeout(tickerHideTimeoutId);
+        tickerHideTimeoutId = null;
+        band.classList.remove('anim-ticker-exit');
+    }
+
+    band.style.left = conPx(cfg.left, '0px');
+    band.style.width = conPx(cfg.width, '1920px');
     band.style.top = conPx(cfg.top, '1000px');
     band.style.height = conPx(cfg.height, '50px');
     band.style.backgroundColor = cfg.bg_color || '#000000';
     textEl.style.color = cfg.color || '#ffffff';
     band.style.display = 'flex';
 
+    if (!tickerVisible) {
+        band.classList.add('anim-ticker-enter');
+        tickerVisible = true;
+    }
+
     const speed = parseFloat(cfg.speed_seconds) || 15;
     const text = cfg.text || '';
+    const direccion = cfg.scroll_direccion === 'derecha' ? 'derecha' : 'izquierda';
 
-    if (text !== tickerLastText) {
+    if (text !== tickerLastText || direccion !== tickerLastDireccion) {
         textEl.textContent = text;
+        textEl.classList.remove('ticker-dir-izquierda', 'ticker-dir-derecha');
+        textEl.classList.add(`ticker-dir-${direccion}`);
         textEl.style.animation = 'none';
         void textEl.offsetWidth;
-        textEl.style.animation = `ticker-scroll ${speed}s linear infinite`;
+        textEl.style.animation = `ticker-scroll-${direccion} ${speed}s linear infinite`;
         tickerLastText = text;
+        tickerLastDireccion = direccion;
     } else {
         textEl.style.animationDuration = `${speed}s`;
     }
