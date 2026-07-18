@@ -1,6 +1,7 @@
 const ANCHO_LIENZO = 1920;
 const ALTO_LIENZO = 1080;
 const ESCALA_LIENZO = 0.5;
+const FUENTES_FIJAS = ['Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Impact', 'Segoe UI'];
 
 let plantillaEditandoId = null;
 let capas = [];
@@ -95,7 +96,9 @@ function crearElementoEditable(capa) {
     } else if (capa.tipo === 'texto') {
         const justify = capa.alineacion === 'center' ? 'center' : (capa.alineacion === 'right' ? 'flex-end' : 'flex-start');
         const texto = capa.texto_fijo || (capa.campo_dato ? `{{${capa.campo_dato}}}` : 'Texto libre');
-        div.innerHTML = `<div class="capa-texto-preview" style="font-family:${capa.fuente};font-size:${capa.tamano_fuente}px;color:${capa.color};justify-content:${justify};">${texto}</div>`;
+        const peso = capa.negrita ? 'bold' : 'normal';
+        const estilo = capa.cursiva ? 'italic' : 'normal';
+        div.innerHTML = `<div class="capa-texto-preview" style="font-family:${capa.fuente};font-size:${capa.tamano_fuente}px;color:${capa.color};justify-content:${justify};font-weight:${peso};font-style:${estilo};">${texto}</div>`;
     } else if (capa.tipo === 'forma') {
         div.style.borderRadius = `${capa.radio_esquina}px`;
         div.style.opacity = capa.opacidad / 100;
@@ -208,6 +211,8 @@ function agregarCapa(tipo) {
         tamano_fuente: 24,
         color: '#ffffff',
         alineacion: 'left',
+        negrita: false,
+        cursiva: false,
         animacion_entrada: 'fade',
         animacion_salida: 'fade',
         duracion_transicion_ms: 400,
@@ -250,6 +255,7 @@ function renderizarPanelPropiedades() {
 
     let camposEspecificos = '';
     if (capa.tipo === 'texto') {
+        const esFuentePersonalizada = !FUENTES_FIJAS.includes(capa.fuente);
         camposEspecificos = `
             <div class="form-group mb-2">
                 <label>Vincular a:</label>
@@ -269,7 +275,11 @@ function renderizarPanelPropiedades() {
             </div>
             <div class="form-group mb-2">
                 <label>Fuente:</label>
-                <input type="text" class="form-control" id="prop-fuente" value="${capa.fuente}">
+                <select class="form-control" id="prop-fuente">
+                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${!esFuentePersonalizada && capa.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                    <option value="__custom__" ${esFuentePersonalizada ? 'selected' : ''}>Personalizada...</option>
+                </select>
+                <input type="text" class="form-control mt-1" id="prop-fuente-custom" value="${capa.fuente}" style="${esFuentePersonalizada ? '' : 'display:none;'}">
             </div>
             <div class="form-group mb-2">
                 <label>Tamaño:</label>
@@ -286,6 +296,14 @@ function renderizarPanelPropiedades() {
                     <option value="center">Centro</option>
                     <option value="right">Derecha</option>
                 </select>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-negrita" ${capa.negrita ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-negrita">Negrita</label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-cursiva" ${capa.cursiva ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-cursiva">Cursiva</label>
             </div>
         `;
     } else if (capa.tipo === 'forma') {
@@ -382,10 +400,22 @@ function renderizarPanelPropiedades() {
         document.getElementById('prop-alineacion').value = capa.alineacion;
         document.getElementById('prop-campo-dato').addEventListener('change', (e) => actualizarCapaSeleccionada({ campo_dato: e.target.value || null }));
         document.getElementById('prop-texto-fijo').addEventListener('change', (e) => actualizarCapaSeleccionada({ texto_fijo: e.target.value }));
-        document.getElementById('prop-fuente').addEventListener('change', (e) => actualizarCapaSeleccionada({ fuente: e.target.value }));
+        document.getElementById('prop-fuente').addEventListener('change', (e) => {
+            const inputCustom = document.getElementById('prop-fuente-custom');
+            if (e.target.value === '__custom__') {
+                inputCustom.style.display = '';
+                inputCustom.focus();
+            } else {
+                inputCustom.style.display = 'none';
+                actualizarCapaSeleccionada({ fuente: e.target.value });
+            }
+        });
+        document.getElementById('prop-fuente-custom').addEventListener('change', (e) => actualizarCapaSeleccionada({ fuente: e.target.value }));
         document.getElementById('prop-tamano').addEventListener('change', (e) => actualizarCapaSeleccionada({ tamano_fuente: parseInt(e.target.value) || 24 }));
         document.getElementById('prop-color').addEventListener('change', (e) => actualizarCapaSeleccionada({ color: e.target.value }));
         document.getElementById('prop-alineacion').addEventListener('change', (e) => actualizarCapaSeleccionada({ alineacion: e.target.value }));
+        document.getElementById('prop-negrita').addEventListener('change', (e) => actualizarCapaSeleccionada({ negrita: e.target.checked }));
+        document.getElementById('prop-cursiva').addEventListener('change', (e) => actualizarCapaSeleccionada({ cursiva: e.target.checked }));
     } else if (capa.tipo === 'forma') {
         document.getElementById('prop-radio-esquina').addEventListener('change', (e) => actualizarCapaSeleccionada({ radio_esquina: parseInt(e.target.value) || 0 }));
         document.getElementById('prop-color-fondo').addEventListener('change', (e) => actualizarCapaSeleccionada({ color_fondo: e.target.value }));
