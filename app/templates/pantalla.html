@@ -28,8 +28,6 @@
 
         #tickerBand {
             position: fixed;
-            left: 0;
-            width: 100%;
             display: none;
             align-items: center;
             overflow: hidden;
@@ -40,14 +38,20 @@
         #tickerText {
             display: inline-block;
             white-space: nowrap;
-            padding-left: 100%;
             font-size: 32px;
             font-weight: bold;
         }
 
-        @keyframes ticker-scroll {
+        .ticker-dir-izquierda { padding-left: 100%; }
+        .ticker-dir-derecha   { padding-right: 100%; }
+
+        @keyframes ticker-scroll-izquierda {
             from { transform: translateX(0); }
             to   { transform: translateX(-100%); }
+        }
+        @keyframes ticker-scroll-derecha {
+            from { transform: translateX(-100%); }
+            to   { transform: translateX(0); }
         }
 
         #overlay-root {
@@ -84,6 +88,12 @@
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         @keyframes slideIn  { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-40px); } }
+
+        .anim-ticker-enter { animation: tickerSlideIn 400ms ease forwards; }
+        .anim-ticker-exit  { animation: tickerSlideOut 400ms ease forwards; }
+
+        @keyframes tickerSlideIn  { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes tickerSlideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
     </style>
 </head>
 <body>
