@@ -39,6 +39,7 @@ async function cargarConfig() {
         left: parseFloat(config.ticker && config.ticker.left) || 0,
         width: parseFloat(config.ticker && config.ticker.width) || ANCHO_LIENZO,
         scroll_direccion: (config.ticker && config.ticker.scroll_direccion) || 'izquierda',
+        angulo: Math.max(-45, Math.min(45, parseFloat(config.ticker && config.ticker.angulo) || 0)),
     };
 
     liveState = {
@@ -223,6 +224,7 @@ function crearElementoTicker() {
     el.style.color = tickerState.color;
     el.style.zIndex = 900;
     el.style.opacity = tickerState.show ? '1' : '0.35';
+    el.style.transform = `rotate(${tickerState.angulo}deg)`;
     el.textContent = tickerState.text || '(ticker vacío)';
 
     el.addEventListener('mousedown', iniciarArrastreTicker);
@@ -313,6 +315,10 @@ function renderizarPanelPropiedades() {
                     <option value="derecha">Izquierda → Derecha</option>
                 </select>
             </div>
+            <div class="form-group mb-2">
+                <label>Ángulo</label>
+                <input type="number" class="form-control" id="prop-ticker-angulo" min="-45" max="45" value="${tickerState.angulo}">
+            </div>
         `;
         document.getElementById('prop-ticker-text').value = tickerState.text;
 
@@ -364,6 +370,11 @@ function renderizarPanelPropiedades() {
         document.getElementById('prop-ticker-scroll-direccion').addEventListener('change', (e) => {
             tickerState.scroll_direccion = e.target.value;
             guardarSeccion('ticker', tickerState);
+        });
+        document.getElementById('prop-ticker-angulo').addEventListener('blur', (e) => {
+            tickerState.angulo = Math.max(-45, Math.min(45, parseFloat(e.target.value) || 0));
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
         });
         return;
     }
