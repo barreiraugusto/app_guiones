@@ -561,6 +561,8 @@ def _resolver_capas_plantilla(graph_activo):
             "tamano_fuente": capa.tamano_fuente,
             "color": capa.color,
             "alineacion": capa.alineacion,
+            "negrita": capa.negrita,
+            "cursiva": capa.cursiva,
             "animacion_entrada": capa.animacion_entrada,
             "animacion_salida": capa.animacion_salida,
             "duracion_transicion_ms": capa.duracion_transicion_ms,
