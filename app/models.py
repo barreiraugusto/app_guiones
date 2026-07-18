@@ -141,6 +141,8 @@ class PlantillaCapa(db.Model):
     tamano_fuente = db.Column(db.Integer, nullable=False, default=24)
     color = db.Column(db.String(20), nullable=False, default='#ffffff')
     alineacion = db.Column(db.String(10), nullable=False, default='left')
+    negrita = db.Column(db.Boolean, nullable=False, default=False)
+    cursiva = db.Column(db.Boolean, nullable=False, default=False)
 
     animacion_entrada = db.Column(db.String(10), nullable=False, default='fade')
     animacion_salida = db.Column(db.String(10), nullable=False, default='fade')
