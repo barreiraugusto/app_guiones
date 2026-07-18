@@ -157,6 +157,7 @@ function updateTicker(ticker) {
     band.style.width = conPx(cfg.width, '1920px');
     band.style.top = conPx(cfg.top, '1000px');
     band.style.height = conPx(cfg.height, '50px');
+    band.style.transform = `rotate(${parseFloat(cfg.angulo) || 0}deg)`;
     band.style.backgroundColor = cfg.bg_color || '#000000';
     textEl.style.color = cfg.color || '#ffffff';
     band.style.display = 'flex';
