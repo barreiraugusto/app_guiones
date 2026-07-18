@@ -36,6 +36,9 @@ async function cargarConfig() {
         bg_color: (config.ticker && config.ticker.bg_color) || '#000000',
         top: parseFloat(config.ticker && config.ticker.top) || 1000,
         height: parseFloat(config.ticker && config.ticker.height) || 50,
+        left: parseFloat(config.ticker && config.ticker.left) || 0,
+        width: parseFloat(config.ticker && config.ticker.width) || ANCHO_LIENZO,
+        scroll_direccion: (config.ticker && config.ticker.scroll_direccion) || 'izquierda',
     };
 
     liveState = {
@@ -212,8 +215,8 @@ function crearElementoTicker() {
     const el = document.createElement('div');
     el.id = 'ticker-editor';
     el.className = 'elemento-control elemento-editable' + (elementoSeleccionado === 'ticker' ? ' seleccionada' : '');
-    el.style.left = '0px';
-    el.style.width = `${ANCHO_LIENZO}px`;
+    el.style.left = `${tickerState.left}px`;
+    el.style.width = `${tickerState.width}px`;
     el.style.top = `${tickerState.top}px`;
     el.style.height = `${tickerState.height}px`;
     el.style.backgroundColor = tickerState.bg_color;
@@ -299,6 +302,17 @@ function renderizarPanelPropiedades() {
                 <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-ticker-top" value="${tickerState.top}"></div>
                 <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-ticker-height" value="${tickerState.height}"></div>
             </div>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-ticker-left" value="${tickerState.left}"></div>
+                <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-ticker-width" value="${tickerState.width}"></div>
+            </div>
+            <div class="form-group mb-2">
+                <label>Dirección del texto</label>
+                <select class="form-control" id="prop-ticker-scroll-direccion">
+                    <option value="izquierda">Derecha → Izquierda</option>
+                    <option value="derecha">Izquierda → Derecha</option>
+                </select>
+            </div>
         `;
         document.getElementById('prop-ticker-text').value = tickerState.text;
 
@@ -335,6 +349,21 @@ function renderizarPanelPropiedades() {
             tickerState.height = parseFloat(e.target.value) || 10;
             guardarSeccion('ticker', tickerState);
             renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-left').addEventListener('blur', (e) => {
+            tickerState.left = parseFloat(e.target.value) || 0;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-width').addEventListener('blur', (e) => {
+            tickerState.width = Math.max(20, parseFloat(e.target.value) || 20);
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-scroll-direccion').value = tickerState.scroll_direccion;
+        document.getElementById('prop-ticker-scroll-direccion').addEventListener('change', (e) => {
+            tickerState.scroll_direccion = e.target.value;
+            guardarSeccion('ticker', tickerState);
         });
         return;
     }
@@ -389,14 +418,19 @@ function iniciarArrastreTicker(e) {
     e.preventDefault();
     e.stopPropagation();
     seleccionarElemento('ticker');
-    arrastreTicker = { yInicial: e.clientY, topInicial: tickerState.top };
+    arrastreTicker = {
+        xInicial: e.clientX, yInicial: e.clientY,
+        leftInicial: tickerState.left, topInicial: tickerState.top,
+    };
     document.addEventListener('mousemove', moverArrastreTicker);
     document.addEventListener('mouseup', finalizarArrastreTicker);
 }
 
 function moverArrastreTicker(e) {
     if (!arrastreTicker) return;
+    const deltaX = (e.clientX - arrastreTicker.xInicial) / ESCALA_LIENZO;
     const deltaY = (e.clientY - arrastreTicker.yInicial) / ESCALA_LIENZO;
+    tickerState.left = Math.max(0, Math.round(arrastreTicker.leftInicial + deltaX));
     tickerState.top = Math.max(0, Math.round(arrastreTicker.topInicial + deltaY));
     renderizarLienzo();
 }
@@ -416,14 +450,19 @@ function iniciarResizeTicker(e) {
     e.preventDefault();
     e.stopPropagation();
     seleccionarElemento('ticker');
-    resizeTicker = { yInicial: e.clientY, alturaInicial: tickerState.height };
+    resizeTicker = {
+        xInicial: e.clientX, yInicial: e.clientY,
+        anchoInicial: tickerState.width, alturaInicial: tickerState.height,
+    };
     document.addEventListener('mousemove', moverResizeTicker);
     document.addEventListener('mouseup', finalizarResizeTicker);
 }
 
 function moverResizeTicker(e) {
     if (!resizeTicker) return;
+    const deltaX = (e.clientX - resizeTicker.xInicial) / ESCALA_LIENZO;
     const deltaY = (e.clientY - resizeTicker.yInicial) / ESCALA_LIENZO;
+    tickerState.width = Math.max(20, Math.round(resizeTicker.anchoInicial + deltaX));
     tickerState.height = Math.max(10, Math.round(resizeTicker.alturaInicial + deltaY));
     renderizarLienzo();
 }
