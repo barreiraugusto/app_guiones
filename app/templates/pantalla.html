@@ -92,8 +92,8 @@
         .anim-ticker-enter { animation: tickerSlideIn 400ms ease forwards; }
         .anim-ticker-exit  { animation: tickerSlideOut 400ms ease forwards; }
 
-        @keyframes tickerSlideIn  { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes tickerSlideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+        @keyframes tickerSlideIn  { from { opacity: 0; transform: translateX(100%) rotate(var(--angulo, 0deg)); } to { opacity: 1; transform: translateX(0) rotate(var(--angulo, 0deg)); } }
+        @keyframes tickerSlideOut { from { opacity: 1; transform: translateX(0) rotate(var(--angulo, 0deg)); } to { opacity: 0; transform: translateX(100%) rotate(var(--angulo, 0deg)); } }
     </style>
 </head>
 <body>
