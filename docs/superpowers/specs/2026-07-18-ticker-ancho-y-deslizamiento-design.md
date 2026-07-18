@@ -144,11 +144,19 @@ de las reglas ya existentes para `#tickerText`/`@keyframes ticker-scroll`:
 
 ```css
 .ticker-dir-izquierda { padding-left: 100%; }
-.ticker-dir-derecha   { padding-right: 100%; }
+.ticker-dir-derecha   { padding-left: 100%; }
 
 @keyframes ticker-scroll-izquierda { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 @keyframes ticker-scroll-derecha   { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 ```
+
+Las dos clases usan el mismo `padding-left: 100%` (solo cambia el keyframe): el
+padding es lo que ubica el texto fuera de la banda al inicio del ciclo de scroll
+independientemente de hacia dónde se mueva después, así que debe ser igual en
+ambas direcciones para que el texto entre y salga completamente fuera de la vista
+en los dos extremos de la animación. Usar `padding-right` en la variante `derecha`
+deja al texto detenido y visible en el borde izquierdo en vez de completar el
+barrido — verificado empíricamente durante la implementación.
 
 (la regla actual `#tickerText { padding-left: 100%; }` se reemplaza por la clase
 `.ticker-dir-izquierda`, y `@keyframes ticker-scroll` se renombra a

@@ -410,7 +410,7 @@ por:
         }
 
         .ticker-dir-izquierda { padding-left: 100%; }
-        .ticker-dir-derecha   { padding-right: 100%; }
+        .ticker-dir-derecha   { padding-left: 100%; }
 
         @keyframes ticker-scroll-izquierda {
             from { transform: translateX(0); }
@@ -421,6 +421,12 @@ por:
             to   { transform: translateX(0); }
         }
 ```
+
+(las dos clases usan el mismo `padding-left: 100%` — solo cambia el keyframe. El
+padding ubica el texto fuera de la banda al inicio del ciclo, independientemente de
+hacia dónde se mueva después; usar `padding-right` en `derecha` deja el texto
+detenido y visible en el borde izquierdo en vez de completar el barrido fuera de
+pantalla, verificado empíricamente durante la implementación de este plan)
 
 - [ ] **Step 3: Agregar las clases de animación de entrada/salida de la banda**
 
