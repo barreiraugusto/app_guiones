@@ -6,8 +6,11 @@ let ESCALA_LIENZO = 0.5;
 let tickerState = {};
 let liveState = {};
 let moscaState = {};
+let cronometroState = {};
+let marcadorState = {};
 let plantillaActual = null;
-let elementoSeleccionado = null; // 'ticker' | 'live' | 'mosca' | null
+let elementoSeleccionado = null; // 'ticker' | 'live' | 'mosca' | 'cronometro' | 'marcador' | null
+let cronometroTerminado = false; // evita repetir el guardado de auto-detención en cada tick
 
 function aplicarEscalaLienzo() {
     const wrapper = document.getElementById('lienzo-wrapper');
@@ -40,12 +43,97 @@ document.addEventListener('DOMContentLoaded', () => {
         guardarSeccion('mosca', { show: moscaState.show });
         renderizarLienzo();
     });
+
+    document.getElementById('cron-mostrar').addEventListener('change', (e) => {
+        cronometroState.show = e.target.checked;
+        guardarSeccion('cronometro', cronometroState);
+        renderizarLienzo();
+    });
+    document.getElementById('cron-mostrar-horas').addEventListener('change', (e) => {
+        cronometroState.mostrar_horas = e.target.checked;
+        guardarSeccion('cronometro', cronometroState);
+        renderizarLienzo();
+        renderizarPanelControlRapido();
+    });
+    document.getElementById('cron-horas').addEventListener('blur', (e) => {
+        cronometroState.duracion_horas = Math.max(0, parseInt(e.target.value) || 0);
+        guardarSeccion('cronometro', cronometroState);
+        renderizarLienzo();
+        renderizarPanelControlRapido();
+    });
+    document.getElementById('cron-minutos').addEventListener('blur', (e) => {
+        cronometroState.duracion_minutos = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+        guardarSeccion('cronometro', cronometroState);
+        renderizarLienzo();
+        renderizarPanelControlRapido();
+    });
+    document.getElementById('cron-segundos').addEventListener('blur', (e) => {
+        cronometroState.duracion_segundos = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+        guardarSeccion('cronometro', cronometroState);
+        renderizarLienzo();
+        renderizarPanelControlRapido();
+    });
+    document.getElementById('cron-btn-inicio').addEventListener('click', iniciarCronometro);
+    document.getElementById('cron-btn-stop').addEventListener('click', pausarCronometro);
+    document.getElementById('cron-btn-restablecer').addEventListener('click', restablecerCronometro);
+
+    document.getElementById('marc-mostrar').addEventListener('change', (e) => {
+        marcadorState.show = e.target.checked;
+        guardarSeccion('marcador', marcadorState);
+        renderizarLienzo();
+    });
+    document.getElementById('marc-nombre-1').addEventListener('blur', (e) => {
+        marcadorState.nombre_equipo_1 = e.target.value || 'Equipo 1';
+        guardarSeccion('marcador', marcadorState);
+        renderizarLienzo();
+    });
+    document.getElementById('marc-nombre-2').addEventListener('blur', (e) => {
+        marcadorState.nombre_equipo_2 = e.target.value || 'Equipo 2';
+        guardarSeccion('marcador', marcadorState);
+        renderizarLienzo();
+    });
+    document.getElementById('marc-mas-1').addEventListener('click', () => sumarTanto(1));
+    document.getElementById('marc-menos-1').addEventListener('click', () => restarTanto(1));
+    document.getElementById('marc-mas-2').addEventListener('click', () => sumarTanto(2));
+    document.getElementById('marc-menos-2').addEventListener('click', () => restarTanto(2));
+    document.getElementById('marc-reiniciar').addEventListener('click', reiniciarMarcador);
+
+    setInterval(() => {
+        if (cronometroState.estado === 'corriendo') {
+            if (segundosRestantesCronometro(cronometroState) <= 0 && !cronometroTerminado) {
+                cronometroTerminado = true;
+                cronometroState.estado = 'detenido';
+                cronometroState.epoch_inicio = null;
+                cronometroState.segundos_restantes = null;
+                guardarSeccion('cronometro', cronometroState);
+            }
+            renderizarLienzo();
+            renderizarPanelControlRapido();
+        }
+    }, 1000);
 });
 
 function renderizarPanelControlRapido() {
     document.getElementById('panel-mostrar-ticker').checked = !!tickerState.show;
     document.getElementById('panel-mostrar-vivo').checked = !!liveState.show;
     document.getElementById('panel-mostrar-mosca').checked = !!moscaState.show;
+
+    document.getElementById('cron-mostrar').checked = !!cronometroState.show;
+    document.getElementById('cron-mostrar-horas').checked = !!cronometroState.mostrar_horas;
+    const cronEditable = cronometroState.estado === 'detenido';
+    document.getElementById('cron-horas').disabled = !cronEditable;
+    document.getElementById('cron-minutos').disabled = !cronEditable;
+    document.getElementById('cron-segundos').disabled = !cronEditable;
+    if (document.activeElement.id !== 'cron-horas') document.getElementById('cron-horas').value = cronometroState.duracion_horas;
+    if (document.activeElement.id !== 'cron-minutos') document.getElementById('cron-minutos').value = cronometroState.duracion_minutos;
+    if (document.activeElement.id !== 'cron-segundos') document.getElementById('cron-segundos').value = cronometroState.duracion_segundos;
+    document.getElementById('cron-display').textContent = formatearTiempoCronometro(segundosRestantesCronometro(cronometroState), cronometroState.mostrar_horas);
+
+    document.getElementById('marc-mostrar').checked = !!marcadorState.show;
+    if (document.activeElement.id !== 'marc-nombre-1') document.getElementById('marc-nombre-1').value = marcadorState.nombre_equipo_1;
+    if (document.activeElement.id !== 'marc-nombre-2') document.getElementById('marc-nombre-2').value = marcadorState.nombre_equipo_2;
+    document.getElementById('marc-tantos-1').textContent = marcadorState.tantos_equipo_1;
+    document.getElementById('marc-tantos-2').textContent = marcadorState.tantos_equipo_2;
 }
 
 async function cargarConfig() {
@@ -84,6 +172,45 @@ async function cargarConfig() {
     moscaState = {
         show: !!(config.mosca && config.mosca.show),
         capa: (config.mosca && config.mosca.capa) || null,
+    };
+
+    cronometroState = {
+        show: !!(config.cronometro && config.cronometro.show),
+        left: parseFloat(config.cronometro && config.cronometro.left) || 0,
+        top: parseFloat(config.cronometro && config.cronometro.top) || 0,
+        width: parseFloat(config.cronometro && config.cronometro.width) || 300,
+        height: parseFloat(config.cronometro && config.cronometro.height) || 80,
+        mostrar_horas: (config.cronometro && config.cronometro.mostrar_horas) !== undefined ? !!config.cronometro.mostrar_horas : true,
+        duracion_horas: parseInt(config.cronometro && config.cronometro.duracion_horas) || 0,
+        duracion_minutos: config.cronometro && config.cronometro.duracion_minutos !== undefined ? parseInt(config.cronometro.duracion_minutos) : 5,
+        duracion_segundos: parseInt(config.cronometro && config.cronometro.duracion_segundos) || 0,
+        estado: (config.cronometro && config.cronometro.estado) || 'detenido',
+        epoch_inicio: (config.cronometro && config.cronometro.epoch_inicio) || null,
+        segundos_restantes: (config.cronometro && config.cronometro.segundos_restantes) !== undefined ? config.cronometro.segundos_restantes : null,
+        fuente: (config.cronometro && config.cronometro.fuente) || 'Arial',
+        tamano_fuente: parseFloat(config.cronometro && config.cronometro.tamano_fuente) || 40,
+        negrita: (config.cronometro && config.cronometro.negrita) !== undefined ? !!config.cronometro.negrita : true,
+        cursiva: !!(config.cronometro && config.cronometro.cursiva),
+        color: (config.cronometro && config.cronometro.color) || '#ffffff',
+        bg_color: (config.cronometro && config.cronometro.bg_color) || '#000000',
+    };
+
+    marcadorState = {
+        show: !!(config.marcador && config.marcador.show),
+        left: parseFloat(config.marcador && config.marcador.left) || 0,
+        top: parseFloat(config.marcador && config.marcador.top) || 0,
+        width: parseFloat(config.marcador && config.marcador.width) || 400,
+        height: parseFloat(config.marcador && config.marcador.height) || 100,
+        nombre_equipo_1: (config.marcador && config.marcador.nombre_equipo_1) || 'Equipo 1',
+        nombre_equipo_2: (config.marcador && config.marcador.nombre_equipo_2) || 'Equipo 2',
+        tantos_equipo_1: parseInt(config.marcador && config.marcador.tantos_equipo_1) || 0,
+        tantos_equipo_2: parseInt(config.marcador && config.marcador.tantos_equipo_2) || 0,
+        fuente: (config.marcador && config.marcador.fuente) || 'Arial',
+        tamano_fuente: parseFloat(config.marcador && config.marcador.tamano_fuente) || 36,
+        negrita: (config.marcador && config.marcador.negrita) !== undefined ? !!config.marcador.negrita : true,
+        cursiva: !!(config.marcador && config.marcador.cursiva),
+        color: (config.marcador && config.marcador.color) || '#ffffff',
+        bg_color: (config.marcador && config.marcador.bg_color) || '#000000',
     };
 
     renderizarLienzo();
@@ -149,6 +276,8 @@ function renderizarLienzo() {
     lienzo.appendChild(crearElementoLive());
     const elMosca = crearElementoMosca();
     if (elMosca) lienzo.appendChild(elMosca);
+    lienzo.appendChild(crearElementoCronometro());
+    lienzo.appendChild(crearElementoMarcador());
 
     renderizarPanelControlRapido();
 }
@@ -270,6 +399,155 @@ function agregarResizeHandle(el, capaId) {
     handle.className = 'resize-handle';
     handle.addEventListener('mousedown', (e) => iniciarResizeCapa(e, capaId));
     el.appendChild(handle);
+}
+
+function segundosRestantesCronometro(cfg) {
+    const duracionTotal = (cfg.duracion_horas || 0) * 3600 + (cfg.duracion_minutos || 0) * 60 + (cfg.duracion_segundos || 0);
+    if (cfg.estado === 'corriendo' && cfg.epoch_inicio) {
+        return Math.max(0, duracionTotal - (Date.now() / 1000 - cfg.epoch_inicio));
+    }
+    if (cfg.estado === 'pausado' && cfg.segundos_restantes !== null) {
+        return cfg.segundos_restantes;
+    }
+    return duracionTotal;
+}
+
+function formatearTiempoCronometro(segundos, mostrarHoras) {
+    const totalSeg = Math.ceil(segundos);
+    if (mostrarHoras) {
+        const h = Math.floor(totalSeg / 3600);
+        const m = Math.floor((totalSeg % 3600) / 60);
+        const s = totalSeg % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+    const m = Math.floor(totalSeg / 60);
+    const s = totalSeg % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function iniciarCronometro() {
+    const duracionTotal = (cronometroState.duracion_horas || 0) * 3600 + (cronometroState.duracion_minutos || 0) * 60 + (cronometroState.duracion_segundos || 0);
+    if (cronometroState.estado === 'detenido') {
+        cronometroState.epoch_inicio = Date.now() / 1000;
+    } else if (cronometroState.estado === 'pausado') {
+        cronometroState.epoch_inicio = Date.now() / 1000 - (duracionTotal - cronometroState.segundos_restantes);
+    } else {
+        return;
+    }
+    cronometroState.estado = 'corriendo';
+    cronometroState.segundos_restantes = null;
+    cronometroTerminado = false;
+    guardarSeccion('cronometro', cronometroState);
+    renderizarLienzo();
+    renderizarPanelControlRapido();
+}
+
+function pausarCronometro() {
+    if (cronometroState.estado !== 'corriendo') return;
+    cronometroState.segundos_restantes = segundosRestantesCronometro(cronometroState);
+    cronometroState.estado = 'pausado';
+    cronometroState.epoch_inicio = null;
+    guardarSeccion('cronometro', cronometroState);
+    renderizarLienzo();
+    renderizarPanelControlRapido();
+}
+
+function restablecerCronometro() {
+    cronometroState.estado = 'detenido';
+    cronometroState.epoch_inicio = null;
+    cronometroState.segundos_restantes = null;
+    cronometroTerminado = false;
+    guardarSeccion('cronometro', cronometroState);
+    renderizarLienzo();
+    renderizarPanelControlRapido();
+}
+
+function sumarTanto(equipo) {
+    if (equipo === 1) marcadorState.tantos_equipo_1 += 1;
+    else marcadorState.tantos_equipo_2 += 1;
+    guardarSeccion('marcador', marcadorState);
+    renderizarLienzo();
+    renderizarPanelControlRapido();
+}
+
+function restarTanto(equipo) {
+    if (equipo === 1) marcadorState.tantos_equipo_1 = Math.max(0, marcadorState.tantos_equipo_1 - 1);
+    else marcadorState.tantos_equipo_2 = Math.max(0, marcadorState.tantos_equipo_2 - 1);
+    guardarSeccion('marcador', marcadorState);
+    renderizarLienzo();
+    renderizarPanelControlRapido();
+}
+
+function reiniciarMarcador() {
+    marcadorState.tantos_equipo_1 = 0;
+    marcadorState.tantos_equipo_2 = 0;
+    guardarSeccion('marcador', marcadorState);
+    renderizarLienzo();
+    renderizarPanelControlRapido();
+}
+
+function crearElementoCronometro() {
+    const el = document.createElement('div');
+    el.id = 'cronometro-editor';
+    el.className = 'elemento-control elemento-editable' + (elementoSeleccionado === 'cronometro' ? ' seleccionada' : '');
+    el.style.left = `${cronometroState.left}px`;
+    el.style.top = `${cronometroState.top}px`;
+    el.style.width = `${cronometroState.width}px`;
+    el.style.height = `${cronometroState.height}px`;
+    el.style.backgroundColor = cronometroState.bg_color;
+    el.style.color = cronometroState.color;
+    el.style.zIndex = 900;
+    el.style.opacity = cronometroState.show ? '1' : '0.35';
+    el.style.fontFamily = cronometroState.fuente;
+    el.style.fontSize = `${cronometroState.tamano_fuente}px`;
+    el.style.fontWeight = cronometroState.negrita ? 'bold' : 'normal';
+    el.style.fontStyle = cronometroState.cursiva ? 'italic' : 'normal';
+    el.textContent = formatearTiempoCronometro(segundosRestantesCronometro(cronometroState), cronometroState.mostrar_horas);
+
+    el.addEventListener('mousedown', iniciarArrastreCronometro);
+    el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        seleccionarElemento('cronometro');
+    });
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.addEventListener('mousedown', iniciarResizeCronometro);
+    el.appendChild(handle);
+
+    return el;
+}
+
+function crearElementoMarcador() {
+    const el = document.createElement('div');
+    el.id = 'marcador-editor';
+    el.className = 'elemento-control elemento-editable' + (elementoSeleccionado === 'marcador' ? ' seleccionada' : '');
+    el.style.left = `${marcadorState.left}px`;
+    el.style.top = `${marcadorState.top}px`;
+    el.style.width = `${marcadorState.width}px`;
+    el.style.height = `${marcadorState.height}px`;
+    el.style.backgroundColor = marcadorState.bg_color;
+    el.style.color = marcadorState.color;
+    el.style.zIndex = 900;
+    el.style.opacity = marcadorState.show ? '1' : '0.35';
+    el.style.fontFamily = marcadorState.fuente;
+    el.style.fontSize = `${marcadorState.tamano_fuente}px`;
+    el.style.fontWeight = marcadorState.negrita ? 'bold' : 'normal';
+    el.style.fontStyle = marcadorState.cursiva ? 'italic' : 'normal';
+    el.textContent = `${marcadorState.nombre_equipo_1} ${marcadorState.tantos_equipo_1} - ${marcadorState.tantos_equipo_2} ${marcadorState.nombre_equipo_2}`;
+
+    el.addEventListener('mousedown', iniciarArrastreMarcador);
+    el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        seleccionarElemento('marcador');
+    });
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.addEventListener('mousedown', iniciarResizeMarcador);
+    el.appendChild(handle);
+
+    return el;
 }
 
 function crearElementoTicker() {
@@ -629,7 +907,219 @@ function renderizarPanelPropiedades() {
         return;
     }
 
-    panel.innerHTML = '<p class="text-muted">Seleccioná el ticker, el badge Vivo o la Mosca para editar sus propiedades.</p>';
+    if (elementoSeleccionado === 'cronometro') {
+        panel.innerHTML = `
+            <h6>Cronómetro</h6>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-cron-top" value="${cronometroState.top}"></div>
+                <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-cron-height" value="${cronometroState.height}"></div>
+            </div>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-cron-left" value="${cronometroState.left}"></div>
+                <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-cron-width" value="${cronometroState.width}"></div>
+            </div>
+            <div class="form-group mb-2">
+                <label>Color texto</label>
+                <input type="color" class="form-control" id="prop-cron-color" value="${cronometroState.color}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Color fondo</label>
+                <input type="color" class="form-control" id="prop-cron-bgcolor" value="${cronometroState.bg_color}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Fuente</label>
+                <select class="form-control" id="prop-cron-fuente">
+                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(cronometroState.fuente) && cronometroState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                    <option value="__custom__" ${!FUENTES_FIJAS.includes(cronometroState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                </select>
+                <input type="text" class="form-control mt-1" id="prop-cron-fuente-custom" value="${cronometroState.fuente}" style="${!FUENTES_FIJAS.includes(cronometroState.fuente) ? '' : 'display:none;'}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Tamaño de fuente</label>
+                <input type="number" class="form-control" id="prop-cron-tamano" value="${cronometroState.tamano_fuente}">
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-cron-negrita" ${cronometroState.negrita ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-cron-negrita">Negrita</label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-cron-cursiva" ${cronometroState.cursiva ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-cron-cursiva">Cursiva</label>
+            </div>
+        `;
+
+        document.getElementById('prop-cron-top').addEventListener('blur', (e) => {
+            cronometroState.top = parseFloat(e.target.value) || 0;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-height').addEventListener('blur', (e) => {
+            cronometroState.height = Math.max(10, parseFloat(e.target.value) || 10);
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-left').addEventListener('blur', (e) => {
+            cronometroState.left = parseFloat(e.target.value) || 0;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-width').addEventListener('blur', (e) => {
+            cronometroState.width = Math.max(20, parseFloat(e.target.value) || 20);
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-color').addEventListener('change', (e) => {
+            cronometroState.color = e.target.value;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-bgcolor').addEventListener('change', (e) => {
+            cronometroState.bg_color = e.target.value;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-fuente').addEventListener('change', (e) => {
+            const inputCustom = document.getElementById('prop-cron-fuente-custom');
+            if (e.target.value === '__custom__') {
+                inputCustom.style.display = '';
+                inputCustom.focus();
+            } else {
+                inputCustom.style.display = 'none';
+                cronometroState.fuente = e.target.value;
+                guardarSeccion('cronometro', cronometroState);
+                renderizarLienzo();
+            }
+        });
+        document.getElementById('prop-cron-fuente-custom').addEventListener('change', (e) => {
+            cronometroState.fuente = e.target.value;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-tamano').addEventListener('blur', (e) => {
+            cronometroState.tamano_fuente = parseFloat(e.target.value) || 40;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-negrita').addEventListener('change', (e) => {
+            cronometroState.negrita = e.target.checked;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-cursiva').addEventListener('change', (e) => {
+            cronometroState.cursiva = e.target.checked;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        return;
+    }
+
+    if (elementoSeleccionado === 'marcador') {
+        panel.innerHTML = `
+            <h6>Marcador</h6>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-marc-top" value="${marcadorState.top}"></div>
+                <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-marc-height" value="${marcadorState.height}"></div>
+            </div>
+            <div class="row">
+                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-marc-left" value="${marcadorState.left}"></div>
+                <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-marc-width" value="${marcadorState.width}"></div>
+            </div>
+            <div class="form-group mb-2">
+                <label>Color texto</label>
+                <input type="color" class="form-control" id="prop-marc-color" value="${marcadorState.color}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Color fondo</label>
+                <input type="color" class="form-control" id="prop-marc-bgcolor" value="${marcadorState.bg_color}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Fuente</label>
+                <select class="form-control" id="prop-marc-fuente">
+                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(marcadorState.fuente) && marcadorState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                    <option value="__custom__" ${!FUENTES_FIJAS.includes(marcadorState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                </select>
+                <input type="text" class="form-control mt-1" id="prop-marc-fuente-custom" value="${marcadorState.fuente}" style="${!FUENTES_FIJAS.includes(marcadorState.fuente) ? '' : 'display:none;'}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Tamaño de fuente</label>
+                <input type="number" class="form-control" id="prop-marc-tamano" value="${marcadorState.tamano_fuente}">
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-marc-negrita" ${marcadorState.negrita ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-marc-negrita">Negrita</label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-marc-cursiva" ${marcadorState.cursiva ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-marc-cursiva">Cursiva</label>
+            </div>
+        `;
+
+        document.getElementById('prop-marc-top').addEventListener('blur', (e) => {
+            marcadorState.top = parseFloat(e.target.value) || 0;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-height').addEventListener('blur', (e) => {
+            marcadorState.height = Math.max(10, parseFloat(e.target.value) || 10);
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-left').addEventListener('blur', (e) => {
+            marcadorState.left = parseFloat(e.target.value) || 0;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-width').addEventListener('blur', (e) => {
+            marcadorState.width = Math.max(20, parseFloat(e.target.value) || 20);
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-color').addEventListener('change', (e) => {
+            marcadorState.color = e.target.value;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-bgcolor').addEventListener('change', (e) => {
+            marcadorState.bg_color = e.target.value;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-fuente').addEventListener('change', (e) => {
+            const inputCustom = document.getElementById('prop-marc-fuente-custom');
+            if (e.target.value === '__custom__') {
+                inputCustom.style.display = '';
+                inputCustom.focus();
+            } else {
+                inputCustom.style.display = 'none';
+                marcadorState.fuente = e.target.value;
+                guardarSeccion('marcador', marcadorState);
+                renderizarLienzo();
+            }
+        });
+        document.getElementById('prop-marc-fuente-custom').addEventListener('change', (e) => {
+            marcadorState.fuente = e.target.value;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-tamano').addEventListener('blur', (e) => {
+            marcadorState.tamano_fuente = parseFloat(e.target.value) || 36;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-negrita').addEventListener('change', (e) => {
+            marcadorState.negrita = e.target.checked;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-cursiva').addEventListener('change', (e) => {
+            marcadorState.cursiva = e.target.checked;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        return;
+    }
+
+    panel.innerHTML = '<p class="text-muted">Seleccioná el ticker, el badge Vivo, la Mosca, el cronómetro o el marcador para editar sus propiedades.</p>';
 }
 
 let arrastreTicker = null;
@@ -693,6 +1183,134 @@ function finalizarResizeTicker() {
     document.removeEventListener('mousemove', moverResizeTicker);
     document.removeEventListener('mouseup', finalizarResizeTicker);
     guardarSeccion('ticker', tickerState);
+    renderizarPanelPropiedades();
+}
+
+let arrastreCronometro = null;
+
+function iniciarArrastreCronometro(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    seleccionarElemento('cronometro');
+    arrastreCronometro = {
+        xInicial: e.clientX, yInicial: e.clientY,
+        leftInicial: cronometroState.left, topInicial: cronometroState.top,
+    };
+    document.addEventListener('mousemove', moverArrastreCronometro);
+    document.addEventListener('mouseup', finalizarArrastreCronometro);
+}
+
+function moverArrastreCronometro(e) {
+    if (!arrastreCronometro) return;
+    const deltaX = (e.clientX - arrastreCronometro.xInicial) / ESCALA_LIENZO;
+    const deltaY = (e.clientY - arrastreCronometro.yInicial) / ESCALA_LIENZO;
+    cronometroState.left = Math.max(0, Math.round(arrastreCronometro.leftInicial + deltaX));
+    cronometroState.top = Math.max(0, Math.round(arrastreCronometro.topInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarArrastreCronometro() {
+    if (!arrastreCronometro) return;
+    arrastreCronometro = null;
+    document.removeEventListener('mousemove', moverArrastreCronometro);
+    document.removeEventListener('mouseup', finalizarArrastreCronometro);
+    guardarSeccion('cronometro', cronometroState);
+    renderizarPanelPropiedades();
+}
+
+let resizeCronometro = null;
+
+function iniciarResizeCronometro(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    seleccionarElemento('cronometro');
+    resizeCronometro = {
+        xInicial: e.clientX, yInicial: e.clientY,
+        anchoInicial: cronometroState.width, alturaInicial: cronometroState.height,
+    };
+    document.addEventListener('mousemove', moverResizeCronometro);
+    document.addEventListener('mouseup', finalizarResizeCronometro);
+}
+
+function moverResizeCronometro(e) {
+    if (!resizeCronometro) return;
+    const deltaX = (e.clientX - resizeCronometro.xInicial) / ESCALA_LIENZO;
+    const deltaY = (e.clientY - resizeCronometro.yInicial) / ESCALA_LIENZO;
+    cronometroState.width = Math.max(20, Math.round(resizeCronometro.anchoInicial + deltaX));
+    cronometroState.height = Math.max(10, Math.round(resizeCronometro.alturaInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarResizeCronometro() {
+    if (!resizeCronometro) return;
+    resizeCronometro = null;
+    document.removeEventListener('mousemove', moverResizeCronometro);
+    document.removeEventListener('mouseup', finalizarResizeCronometro);
+    guardarSeccion('cronometro', cronometroState);
+    renderizarPanelPropiedades();
+}
+
+let arrastreMarcador = null;
+
+function iniciarArrastreMarcador(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    seleccionarElemento('marcador');
+    arrastreMarcador = {
+        xInicial: e.clientX, yInicial: e.clientY,
+        leftInicial: marcadorState.left, topInicial: marcadorState.top,
+    };
+    document.addEventListener('mousemove', moverArrastreMarcador);
+    document.addEventListener('mouseup', finalizarArrastreMarcador);
+}
+
+function moverArrastreMarcador(e) {
+    if (!arrastreMarcador) return;
+    const deltaX = (e.clientX - arrastreMarcador.xInicial) / ESCALA_LIENZO;
+    const deltaY = (e.clientY - arrastreMarcador.yInicial) / ESCALA_LIENZO;
+    marcadorState.left = Math.max(0, Math.round(arrastreMarcador.leftInicial + deltaX));
+    marcadorState.top = Math.max(0, Math.round(arrastreMarcador.topInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarArrastreMarcador() {
+    if (!arrastreMarcador) return;
+    arrastreMarcador = null;
+    document.removeEventListener('mousemove', moverArrastreMarcador);
+    document.removeEventListener('mouseup', finalizarArrastreMarcador);
+    guardarSeccion('marcador', marcadorState);
+    renderizarPanelPropiedades();
+}
+
+let resizeMarcador = null;
+
+function iniciarResizeMarcador(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    seleccionarElemento('marcador');
+    resizeMarcador = {
+        xInicial: e.clientX, yInicial: e.clientY,
+        anchoInicial: marcadorState.width, alturaInicial: marcadorState.height,
+    };
+    document.addEventListener('mousemove', moverResizeMarcador);
+    document.addEventListener('mouseup', finalizarResizeMarcador);
+}
+
+function moverResizeMarcador(e) {
+    if (!resizeMarcador) return;
+    const deltaX = (e.clientX - resizeMarcador.xInicial) / ESCALA_LIENZO;
+    const deltaY = (e.clientY - resizeMarcador.yInicial) / ESCALA_LIENZO;
+    marcadorState.width = Math.max(20, Math.round(resizeMarcador.anchoInicial + deltaX));
+    marcadorState.height = Math.max(10, Math.round(resizeMarcador.alturaInicial + deltaY));
+    renderizarLienzo();
+}
+
+function finalizarResizeMarcador() {
+    if (!resizeMarcador) return;
+    resizeMarcador = null;
+    document.removeEventListener('mousemove', moverResizeMarcador);
+    document.removeEventListener('mouseup', finalizarResizeMarcador);
+    guardarSeccion('marcador', marcadorState);
     renderizarPanelPropiedades();
 }
 
