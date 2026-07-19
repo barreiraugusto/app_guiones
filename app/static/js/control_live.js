@@ -1,5 +1,6 @@
 const ANCHO_LIENZO = 1920;
 const ALTO_LIENZO = 1080;
+const FUENTES_FIJAS = ['Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Impact', 'Segoe UI'];
 let ESCALA_LIENZO = 0.5;
 
 let tickerState = {};
@@ -40,6 +41,10 @@ async function cargarConfig() {
         width: parseFloat(config.ticker && config.ticker.width) || ANCHO_LIENZO,
         scroll_direccion: (config.ticker && config.ticker.scroll_direccion) || 'izquierda',
         angulo: Math.max(-45, Math.min(45, parseFloat(config.ticker && config.ticker.angulo) || 0)),
+        fuente: (config.ticker && config.ticker.fuente) || 'Arial',
+        tamano_fuente: parseFloat(config.ticker && config.ticker.tamano_fuente) || 32,
+        negrita: (config.ticker && config.ticker.negrita) !== undefined ? !!config.ticker.negrita : true,
+        cursiva: !!(config.ticker && config.ticker.cursiva),
     };
 
     liveState = {
@@ -47,6 +52,10 @@ async function cargarConfig() {
         text: (config.live && config.live.text) || 'VIVO',
         top: parseFloat(config.live && config.live.top) || 150,
         left: parseFloat(config.live && config.live.left) || 1550,
+        fuente: (config.live && config.live.fuente) || 'Arial',
+        tamano_fuente: parseFloat(config.live && config.live.tamano_fuente) || 18,
+        negrita: (config.live && config.live.negrita) !== undefined ? !!config.live.negrita : true,
+        cursiva: !!(config.live && config.live.cursiva),
     };
 
     renderizarLienzo();
@@ -225,6 +234,10 @@ function crearElementoTicker() {
     el.style.zIndex = 900;
     el.style.opacity = tickerState.show ? '1' : '0.35';
     el.style.transform = `rotate(${tickerState.angulo}deg)`;
+    el.style.fontFamily = tickerState.fuente;
+    el.style.fontSize = `${tickerState.tamano_fuente}px`;
+    el.style.fontWeight = tickerState.negrita ? 'bold' : 'normal';
+    el.style.fontStyle = tickerState.cursiva ? 'italic' : 'normal';
     el.textContent = tickerState.text || '(ticker vacío)';
 
     el.addEventListener('mousedown', iniciarArrastreTicker);
@@ -250,6 +263,10 @@ function crearElementoLive() {
     el.style.backgroundColor = '#666';
     el.style.zIndex = 1000;
     el.style.opacity = liveState.show ? '1' : '0.35';
+    el.style.fontFamily = liveState.fuente;
+    el.style.fontSize = `${liveState.tamano_fuente}px`;
+    el.style.fontWeight = liveState.negrita ? 'bold' : 'normal';
+    el.style.fontStyle = liveState.cursiva ? 'italic' : 'normal';
     el.textContent = liveState.text || 'VIVO';
 
     el.addEventListener('mousedown', iniciarArrastreLive);
@@ -319,6 +336,26 @@ function renderizarPanelPropiedades() {
                 <label>Ángulo</label>
                 <input type="number" class="form-control" id="prop-ticker-angulo" min="-45" max="45" value="${tickerState.angulo}">
             </div>
+            <div class="form-group mb-2">
+                <label>Fuente</label>
+                <select class="form-control" id="prop-ticker-fuente">
+                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(tickerState.fuente) && tickerState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                    <option value="__custom__" ${!FUENTES_FIJAS.includes(tickerState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                </select>
+                <input type="text" class="form-control mt-1" id="prop-ticker-fuente-custom" value="${tickerState.fuente}" style="${!FUENTES_FIJAS.includes(tickerState.fuente) ? '' : 'display:none;'}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Tamaño de fuente</label>
+                <input type="number" class="form-control" id="prop-ticker-tamano" value="${tickerState.tamano_fuente}">
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-ticker-negrita" ${tickerState.negrita ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-ticker-negrita">Negrita</label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-ticker-cursiva" ${tickerState.cursiva ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-ticker-cursiva">Cursiva</label>
+            </div>
         `;
         document.getElementById('prop-ticker-text').value = tickerState.text;
 
@@ -376,6 +413,38 @@ function renderizarPanelPropiedades() {
             guardarSeccion('ticker', tickerState);
             renderizarLienzo();
         });
+        document.getElementById('prop-ticker-fuente').addEventListener('change', (e) => {
+            const inputCustom = document.getElementById('prop-ticker-fuente-custom');
+            if (e.target.value === '__custom__') {
+                inputCustom.style.display = '';
+                inputCustom.focus();
+            } else {
+                inputCustom.style.display = 'none';
+                tickerState.fuente = e.target.value;
+                guardarSeccion('ticker', tickerState);
+                renderizarLienzo();
+            }
+        });
+        document.getElementById('prop-ticker-fuente-custom').addEventListener('change', (e) => {
+            tickerState.fuente = e.target.value;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-tamano').addEventListener('blur', (e) => {
+            tickerState.tamano_fuente = parseFloat(e.target.value) || 32;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-negrita').addEventListener('change', (e) => {
+            tickerState.negrita = e.target.checked;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-ticker-cursiva').addEventListener('change', (e) => {
+            tickerState.cursiva = e.target.checked;
+            guardarSeccion('ticker', tickerState);
+            renderizarLienzo();
+        });
         return;
     }
 
@@ -393,6 +462,26 @@ function renderizarPanelPropiedades() {
             <div class="row">
                 <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-live-top" value="${liveState.top}"></div>
                 <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-live-left" value="${liveState.left}"></div>
+            </div>
+            <div class="form-group mb-2">
+                <label>Fuente</label>
+                <select class="form-control" id="prop-live-fuente">
+                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(liveState.fuente) && liveState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                    <option value="__custom__" ${!FUENTES_FIJAS.includes(liveState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                </select>
+                <input type="text" class="form-control mt-1" id="prop-live-fuente-custom" value="${liveState.fuente}" style="${!FUENTES_FIJAS.includes(liveState.fuente) ? '' : 'display:none;'}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Tamaño de fuente</label>
+                <input type="number" class="form-control" id="prop-live-tamano" value="${liveState.tamano_fuente}">
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-live-negrita" ${liveState.negrita ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-live-negrita">Negrita</label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-live-cursiva" ${liveState.cursiva ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-live-cursiva">Cursiva</label>
             </div>
         `;
         document.getElementById('prop-live-text').value = liveState.text;
@@ -414,6 +503,38 @@ function renderizarPanelPropiedades() {
         });
         document.getElementById('prop-live-left').addEventListener('blur', (e) => {
             liveState.left = parseFloat(e.target.value) || 0;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-live-fuente').addEventListener('change', (e) => {
+            const inputCustom = document.getElementById('prop-live-fuente-custom');
+            if (e.target.value === '__custom__') {
+                inputCustom.style.display = '';
+                inputCustom.focus();
+            } else {
+                inputCustom.style.display = 'none';
+                liveState.fuente = e.target.value;
+                guardarSeccion('live', liveState);
+                renderizarLienzo();
+            }
+        });
+        document.getElementById('prop-live-fuente-custom').addEventListener('change', (e) => {
+            liveState.fuente = e.target.value;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-live-tamano').addEventListener('blur', (e) => {
+            liveState.tamano_fuente = parseFloat(e.target.value) || 18;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-live-negrita').addEventListener('change', (e) => {
+            liveState.negrita = e.target.checked;
+            guardarSeccion('live', liveState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-live-cursiva').addEventListener('change', (e) => {
+            liveState.cursiva = e.target.checked;
             guardarSeccion('live', liveState);
             renderizarLienzo();
         });
