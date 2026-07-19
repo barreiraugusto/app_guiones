@@ -1428,11 +1428,12 @@ async function cargarNotasYGraphs() {
 
         textosFiltrados.forEach(t => {
             const notaDiv = document.createElement('div');
-            notaDiv.className = 'mb-2 border-bottom pb-2' + (t.activo ? ' bg-warning' : '');
+            const colorNota = t.emitido ? ' bg-secondary' : (t.activo ? ' bg-warning' : '');
+            notaDiv.className = 'mb-2 border-bottom pb-2' + colorNota;
 
             const graphsHtml = (t.graphs || []).map(g => `
-                <div class="d-flex justify-content-between align-items-center small ${g.activo ? 'bg-warning' : ''} p-1 rounded">
-                    <span style="cursor:pointer;" onclick="seleccionarGraph(${g.id})">${g.lugar || '(sin lugar)'}${g.tema ? ' — ' + g.tema : ''}</span>
+                <div class="d-flex justify-content-between align-items-center small ${g.activo ? 'bg-danger' : ''} p-1 rounded">
+                    <span style="cursor:pointer;" onclick="seleccionarGraph(${g.id}, ${t.numero_de_nota})">${g.lugar || '(sin lugar)'}${g.tema ? ' — ' + g.tema : ''}</span>
                     <span>
                         <button class="btn btn-sm btn-mini btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
                         <button class="btn btn-sm btn-mini btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
@@ -1458,13 +1459,14 @@ let graphComposicionId = null;
 let composicion = null;
 let plantillaEnEdicion = null;
 
-async function seleccionarGraph(id) {
+async function seleccionarGraph(id, numeroDeNota) {
     const response = await fetch(`/graphs/${id}`);
     if (!response.ok) return;
     const graph = await response.json();
 
     graphComposicionId = id;
     composicion = {
+        numero_de_nota: numeroDeNota,
         lugar: graph.lugar,
         tema: graph.tema,
         bajadas: graph.bajadas_detalle,
@@ -1507,7 +1509,7 @@ function renderizarPanelComposicion() {
     `).join('');
 
     panel.innerHTML = `
-        <h6>Graph: ${composicion.lugar || '(sin lugar)'}</h6>
+        <h6>Nota #${composicion.numero_de_nota} — Graph: ${composicion.lugar || '(sin lugar)'}</h6>
         <div class="form-check mb-2">
             <input type="checkbox" class="form-check-input" id="comp-mostrar-lugar" ${composicion.mostrar_lugar ? 'checked' : ''}>
             <label class="form-check-label" for="comp-mostrar-lugar">Mostrar lugar (${composicion.lugar || '—'})</label>
