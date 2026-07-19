@@ -1436,7 +1436,7 @@ async function cargarNotasYGraphs() {
                     <span style="cursor:pointer;" onclick="seleccionarGraph(${g.id}, ${t.numero_de_nota})">${g.lugar || '(sin lugar)'}${g.tema ? ' — ' + g.tema : ''}</span>
                     <span>
                         <button class="btn btn-sm btn-mini btn-outline-secondary" onclick="editarGraph(${g.id})"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-mini btn-outline-danger" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-sm btn-mini ${g.activo ? 'btn-outline-light' : 'btn-outline-danger'}" onclick="eliminarGraph(${g.id})"><i class="fas fa-trash"></i></button>
                     </span>
                 </div>
             `).join('');
