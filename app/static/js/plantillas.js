@@ -17,23 +17,10 @@ async function cargarListadoPlantillas() {
 
     plantillas.forEach(p => {
         const item = document.createElement('div');
-        item.className = 'list-group-item list-group-item-action plantilla-existente d-flex justify-content-between align-items-center';
+        item.className = 'list-group-item list-group-item-action plantilla-existente';
         item.style.cursor = 'pointer';
         item.dataset.plantillaId = p.id;
-        item.innerHTML = `
-            <span>${p.nombre}</span>
-            <span>
-                <button type="button" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); abrirPlantilla(${p.id})">
-                    <i class="fas fa-edit"></i> Editar
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); duplicarPlantilla(${p.id})">
-                    <i class="fas fa-copy"></i> Duplicar
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); borrarPlantillaDesdeLista(${p.id})">
-                    <i class="fas fa-trash"></i> Borrar
-                </button>
-            </span>
-        `;
+        item.textContent = p.nombre;
         item.addEventListener('click', () => seleccionarPlantillaPreview(p.id));
         contenedor.appendChild(item);
     });
@@ -56,6 +43,7 @@ async function seleccionarPlantillaPreview(id) {
 
     document.getElementById('preview-plantilla-vacio').style.display = 'none';
     document.getElementById('preview-lienzo-wrapper').style.display = 'block';
+    document.getElementById('preview-plantilla-acciones').style.display = 'block';
     const lienzo = document.getElementById('preview-lienzo');
     lienzo.innerHTML = '';
     data.capas
@@ -68,6 +56,7 @@ function limpiarPreviewPlantilla() {
     plantillaPreviewId = null;
     document.getElementById('preview-plantilla-vacio').style.display = 'block';
     document.getElementById('preview-lienzo-wrapper').style.display = 'none';
+    document.getElementById('preview-plantilla-acciones').style.display = 'none';
     document.getElementById('preview-lienzo').innerHTML = '';
 }
 
