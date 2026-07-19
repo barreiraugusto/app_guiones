@@ -110,6 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarLienzo();
             renderizarPanelControlRapido();
         }
+        if (composicion && composicion.bajadas_auto_activo) {
+            composicion.bajada_activa_id = bajadaActivaEfectivaId(composicion);
+            renderizarLienzo();
+        }
     }, 1000);
 });
 
@@ -1475,6 +1479,11 @@ async function seleccionarGraph(id, numeroDeNota) {
         cita_activa_id: graph.cita_activa_id,
         mostrar_lugar: graph.mostrar_lugar,
         mostrar_tema: graph.mostrar_tema,
+        bajadas_auto_activo: graph.bajadas_auto_activo,
+        bajadas_auto_loop: graph.bajadas_auto_loop,
+        bajadas_auto_duracion_segundos: graph.bajadas_auto_duracion_segundos,
+        bajadas_auto_epoch_inicio: graph.bajadas_auto_epoch_inicio,
+        bajadas_auto_indice_inicio: graph.bajadas_auto_indice_inicio,
     };
 
     plantillaEnEdicion = null;
@@ -1486,6 +1495,65 @@ async function seleccionarGraph(id, numeroDeNota) {
     elementoSeleccionado = null;
     renderizarLienzo();
     renderizarPanelPropiedades();
+}
+
+function bajadaActivaEfectivaId(comp) {
+    if (!comp.bajadas_auto_activo || !comp.bajadas.length || !comp.bajadas_auto_epoch_inicio) {
+        return comp.bajada_activa_id;
+    }
+    const bajadasOrdenadas = comp.bajadas.slice().sort((a, b) => a.id - b.id);
+    const duracion = comp.bajadas_auto_duracion_segundos || 5;
+    const transcurrido = (Date.now() / 1000) - comp.bajadas_auto_epoch_inicio;
+    const paso = Math.floor(transcurrido / duracion);
+    let indice = comp.bajadas_auto_indice_inicio + paso;
+    if (comp.bajadas_auto_loop) {
+        indice = ((indice % bajadasOrdenadas.length) + bajadasOrdenadas.length) % bajadasOrdenadas.length;
+    } else {
+        indice = Math.min(indice, bajadasOrdenadas.length - 1);
+    }
+    return bajadasOrdenadas[indice].id;
+}
+
+async function actualizarBajadasAuto(cambios) {
+    if (!graphComposicionId) return;
+    const respAccion = await fetch(`/graphs/${graphComposicionId}/bajadas-auto`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cambios),
+    });
+    if (!respAccion.ok) {
+        const error = await respAccion.json().catch(() => ({}));
+        Swal.fire({ icon: 'error', title: 'No se pudo actualizar la rotación', text: error.error || '' });
+        return;
+    }
+    const response = await fetch(`/graphs/${graphComposicionId}`);
+    const graph = await response.json();
+    composicion.bajada_activa_id = graph.bajada_activa_id;
+    composicion.bajadas_auto_activo = graph.bajadas_auto_activo;
+    composicion.bajadas_auto_loop = graph.bajadas_auto_loop;
+    composicion.bajadas_auto_duracion_segundos = graph.bajadas_auto_duracion_segundos;
+    composicion.bajadas_auto_epoch_inicio = graph.bajadas_auto_epoch_inicio;
+    composicion.bajadas_auto_indice_inicio = graph.bajadas_auto_indice_inicio;
+}
+
+function iniciarRotacionBajadas() {
+    actualizarBajadasAuto({ accion: 'play' }).then(() => {
+        renderizarLienzo();
+        renderizarPanelComposicion();
+    });
+}
+
+function detenerRotacionBajadas() {
+    actualizarBajadasAuto({ accion: 'stop' }).then(() => {
+        renderizarLienzo();
+        renderizarPanelComposicion();
+    });
+}
+
+function toggleLoopBajadas() {
+    actualizarBajadasAuto({ loop: !composicion.bajadas_auto_loop }).then(() => {
+        renderizarPanelComposicion();
+    });
 }
 
 function renderizarPanelComposicion() {
@@ -1527,6 +1595,20 @@ function renderizarPanelComposicion() {
             </div>
             ${bajadasHtml}
         </div>
+        <div class="mb-3 d-flex align-items-center" style="gap: 0.5rem;">
+            <button type="button" class="btn btn-sm btn-outline-success" id="btn-bajadas-play" title="Reproducir">
+                <i class="fas fa-play"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-bajadas-stop" title="Detener">
+                <i class="fas fa-stop"></i>
+            </button>
+            <button type="button" class="btn btn-sm ${composicion.bajadas_auto_loop ? 'btn-primary' : 'btn-outline-secondary'}" id="btn-bajadas-loop" title="Loop">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <input type="number" class="form-control form-control-sm" id="comp-bajadas-duracion" min="1"
+                   style="width: 70px;" value="${composicion.bajadas_auto_duracion_segundos}"
+                   ${composicion.bajadas_auto_activo ? 'disabled' : ''} title="Segundos por bajada">
+        </div>
         <div class="mb-3">
             <label class="d-block"><strong>Cita activa</strong></label>
             <div class="form-check">
@@ -1548,10 +1630,22 @@ function renderizarPanelComposicion() {
         renderizarLienzo();
     });
     document.querySelectorAll('input[name="bajada-activa"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            composicion.bajada_activa_id = e.target.value ? parseInt(e.target.value) : null;
+        radio.addEventListener('change', async (e) => {
+            const valorElegido = e.target.value ? parseInt(e.target.value) : null;
+            if (composicion.bajadas_auto_activo) {
+                await actualizarBajadasAuto({ accion: 'stop' });
+            }
+            composicion.bajada_activa_id = valorElegido;
             renderizarLienzo();
+            renderizarPanelComposicion();
         });
+    });
+    document.getElementById('btn-bajadas-play').addEventListener('click', iniciarRotacionBajadas);
+    document.getElementById('btn-bajadas-stop').addEventListener('click', detenerRotacionBajadas);
+    document.getElementById('btn-bajadas-loop').addEventListener('click', toggleLoopBajadas);
+    document.getElementById('comp-bajadas-duracion').addEventListener('blur', (e) => {
+        const valor = Math.max(1, parseInt(e.target.value) || 5);
+        actualizarBajadasAuto({ duracion_segundos: valor }).then(() => renderizarPanelComposicion());
     });
     document.querySelectorAll('input[name="cita-activa"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
