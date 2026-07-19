@@ -25,8 +25,12 @@ recargas y quede sincronizado entre `control_live` y `/pantalla`.
 - Nuevas secciones en `display_config.json`: `cronometro` y `marcador` (ver
   spec para el esquema completo de cada una).
 - El cronómetro nunca queda en tiempo negativo: al llegar a 0 mientras corre,
-  pasa a `estado: "detenido"` automáticamente. Solo `control_live.js` hace
-  esa auto-transición (escribe al servidor); `pantalla.js` únicamente lee y
+  pasa a `estado: "terminado"` automáticamente (no `"detenido"` — son
+  estados distintos, ver spec; usar `"detenido"` acá hace que el tiempo
+  mostrado salte de vuelta a la duración completa configurada en vez de
+  quedarse fijo en 00:00 — bug real encontrado en la revisión final de este
+  feature, corregido antes de mergear). Solo `control_live.js` hace esa
+  auto-transición (escribe al servidor); `pantalla.js` únicamente lee y
   muestra, nunca escribe configuración.
 - El formato de tiempo redondea hacia arriba (`Math.ceil`) los segundos
   restantes antes de formatear, para que el último segundo visible sea
@@ -289,6 +293,9 @@ function segundosRestantesCronometro(cfg) {
     if (cfg.estado === 'pausado' && cfg.segundos_restantes !== null) {
         return cfg.segundos_restantes;
     }
+    if (cfg.estado === 'terminado') {
+        return 0;
+    }
     return duracionTotal;
 }
 
@@ -311,7 +318,7 @@ function formatearTiempoCronometro(segundos, mostrarHoras) {
 ```javascript
 function iniciarCronometro() {
     const duracionTotal = (cronometroState.duracion_horas || 0) * 3600 + (cronometroState.duracion_minutos || 0) * 60 + (cronometroState.duracion_segundos || 0);
-    if (cronometroState.estado === 'detenido') {
+    if (cronometroState.estado === 'detenido' || cronometroState.estado === 'terminado') {
         cronometroState.epoch_inicio = Date.now() / 1000;
     } else if (cronometroState.estado === 'pausado') {
         cronometroState.epoch_inicio = Date.now() / 1000 - (duracionTotal - cronometroState.segundos_restantes);
@@ -892,7 +899,7 @@ function renderizarPanelControlRapido() {
 
     document.getElementById('cron-mostrar').checked = !!cronometroState.show;
     document.getElementById('cron-mostrar-horas').checked = !!cronometroState.mostrar_horas;
-    const cronEditable = cronometroState.estado === 'detenido';
+    const cronEditable = cronometroState.estado === 'detenido' || cronometroState.estado === 'terminado';
     document.getElementById('cron-horas').disabled = !cronEditable;
     document.getElementById('cron-minutos').disabled = !cronEditable;
     document.getElementById('cron-segundos').disabled = !cronEditable;
@@ -1030,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cronometroState.estado === 'corriendo') {
             if (segundosRestantesCronometro(cronometroState) <= 0 && !cronometroTerminado) {
                 cronometroTerminado = true;
-                cronometroState.estado = 'detenido';
+                cronometroState.estado = 'terminado';
                 cronometroState.epoch_inicio = null;
                 cronometroState.segundos_restantes = null;
                 guardarSeccion('cronometro', cronometroState);
@@ -1152,6 +1159,9 @@ function segundosRestantesCronometro(cfg) {
     }
     if (cfg.estado === 'pausado' && cfg.segundos_restantes !== null) {
         return cfg.segundos_restantes;
+    }
+    if (cfg.estado === 'terminado') {
+        return 0;
     }
     return duracionTotal;
 }

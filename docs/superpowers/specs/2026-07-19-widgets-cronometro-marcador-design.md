@@ -60,7 +60,13 @@ el servidor.
 }
 ```
 
-- `estado`: `"detenido"` | `"corriendo"` | `"pausado"`.
+- `estado`: `"detenido"` | `"corriendo"` | `"pausado"` | `"terminado"`.
+  `"terminado"` es un estado distinto de `"detenido"`, usado solo por la
+  auto-detención al llegar a cero (ver más abajo) — si compartiera el mismo
+  valor que `"detenido"`, el tiempo mostrado saltaría de `00:00` de vuelta a
+  la duración configurada completa apenas termina el conteo, en vez de
+  quedarse fijo en cero (bug real encontrado en la revisión final de este
+  feature, corregido antes de mergear).
 - `epoch_inicio`: `Date.now() / 1000` (segundos, no ms) en el momento en que
   se calcula el arranque — ver más abajo cómo se ajusta al reanudar desde
   pausa. `null` salvo cuando `estado === "corriendo"`.
@@ -76,8 +82,9 @@ mismo criterio ya usado para `FUENTES_FIJAS`, no hay módulos compartidos
 entre estos scripts)
 
 **Botón Inicio** (`iniciarCronometro()`):
-- Si `estado === 'detenido'`: `epoch_inicio = Date.now() / 1000`, `estado =
-  'corriendo'`, `segundos_restantes = null`.
+- Si `estado === 'detenido'` o `estado === 'terminado'`: `epoch_inicio =
+  Date.now() / 1000`, `estado = 'corriendo'`, `segundos_restantes = null`
+  (arranca desde la duración configurada completa en ambos casos).
 - Si `estado === 'pausado'`: `epoch_inicio = Date.now() / 1000 -
   (duracion_total_seg - segundos_restantes)` (retrocede el "inicio" lo
   suficiente para que el tiempo transcurrido ya contabilizado antes de la
@@ -108,6 +115,9 @@ function segundosRestantesCronometro(cfg) {
     if (cfg.estado === 'pausado' && cfg.segundos_restantes !== null) {
         return cfg.segundos_restantes;
     }
+    if (cfg.estado === 'terminado') {
+        return 0;
+    }
     return duracionTotal;
 }
 ```
@@ -127,12 +137,14 @@ function segundosRestantesCronometro(cfg) {
 **Auto-detención al llegar a 0**: solo en `control_live.js` (nunca en
 `pantalla.js`, que no debe escribir configuración), en el `setInterval` que
 refresca el preview cada segundo: si `cronometroState.estado === 'corriendo'`
-y `segundosRestantesCronometro(cronometroState) <= 0`, aplicar la misma
-transición de estado que produce `restablecerCronometro()` (`estado =
-'detenido'`, `epoch_inicio = null`, `segundos_restantes = null`) y llamar
+y `segundosRestantesCronometro(cronometroState) <= 0`, hacer `estado =
+'terminado'` (no `'detenido'` — son estados distintos, ver arriba),
+`epoch_inicio = null`, `segundos_restantes = null`, y llamar
 `guardarSeccion('cronometro', cronometroState)` una sola vez — usar una
 bandera local para no repetir el guardado en cada tick mientras el estado
-siga en `'detenido'` tras la transición.
+siga en `'terminado'` tras la transición. El tiempo mostrado queda fijo en
+`00:00` (o `00:00:00`) hasta que el operador apriete Inicio (reinicia el
+conteo completo) o Restablecer.
 
 ### Panel lateral (propiedades de estilo, cuando el widget está seleccionado
 en el lienzo)
@@ -175,10 +187,11 @@ Nueva card en `control_live.html`, debajo de la card de checkboxes existente
 </div>
 ```
 
-- Los 3 inputs de duración solo tienen efecto mientras `estado === 'detenido'`
-  (si el cronómetro está corriendo o pausado, cambiarlos no debe alterar la
-  cuenta en curso — para eso primero hay que Restablecer). Se deshabilitan
-  (`disabled`) cuando `estado !== 'detenido'`.
+- Los 3 inputs de duración están habilitados cuando `estado === 'detenido'`
+  o `estado === 'terminado'`, y deshabilitados (`disabled`) mientras
+  `estado === 'corriendo'` o `'pausado'` (si el cronómetro está corriendo o
+  pausado, cambiarlos no debe alterar la cuenta en curso — para eso primero
+  hay que pararlo).
 - `#cron-display` muestra en vivo el tiempo restante (actualizado por el
   mismo `setInterval` de refresco del preview), formateado con
   `formatearTiempo`.
