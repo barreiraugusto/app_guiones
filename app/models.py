@@ -102,6 +102,12 @@ class Graph(db.Model):
     mostrar_lugar = db.Column(db.Boolean, default=True, nullable=False)
     mostrar_tema = db.Column(db.Boolean, default=True, nullable=False)
 
+    bajadas_auto_activo = db.Column(db.Boolean, default=False, nullable=False)
+    bajadas_auto_loop = db.Column(db.Boolean, default=False, nullable=False)
+    bajadas_auto_duracion_segundos = db.Column(db.Integer, default=5, nullable=False)
+    bajadas_auto_epoch_inicio = db.Column(db.Float, nullable=True)
+    bajadas_auto_indice_inicio = db.Column(db.Integer, default=0, nullable=False)
+
 
 class Plantilla(db.Model):
     __tablename__ = 'plantilla'

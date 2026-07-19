@@ -210,6 +210,11 @@ def obtener_graph(id):
             "cita_activa_id": graph.cita_activa_id,
             "mostrar_lugar": graph.mostrar_lugar,
             "mostrar_tema": graph.mostrar_tema,
+            "bajadas_auto_activo": graph.bajadas_auto_activo,
+            "bajadas_auto_loop": graph.bajadas_auto_loop,
+            "bajadas_auto_duracion_segundos": graph.bajadas_auto_duracion_segundos,
+            "bajadas_auto_epoch_inicio": graph.bajadas_auto_epoch_inicio,
+            "bajadas_auto_indice_inicio": graph.bajadas_auto_indice_inicio,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -349,6 +354,44 @@ def setGraphsActivo(id):
               'graph', id, graph.lugar)
 
     return jsonify({"mensaje": "Graph activo actualizado"})
+
+
+@graphs_bp.route('/graphs/<int:id>/bajadas-auto', methods=['PUT'])
+def actualizarBajadasAuto(id):
+    graph = Graph.query.get(id)
+    if not graph:
+        return jsonify({"error": "Graph no encontrado"}), 404
+
+    data = request.get_json(silent=True) or {}
+    bajadas_ordenadas = sorted(graph.bajadas, key=lambda b: b.id)
+
+    if 'loop' in data:
+        graph.bajadas_auto_loop = bool(data['loop'])
+
+    if 'duracion_segundos' in data and not graph.bajadas_auto_activo:
+        graph.bajadas_auto_duracion_segundos = max(1, int(data['duracion_segundos']))
+
+    accion = data.get('accion')
+    if accion == 'play':
+        if not bajadas_ordenadas:
+            return jsonify({"error": "El graph no tiene bajadas"}), 400
+        indice_actual = 0
+        if graph.bajada_activa_id:
+            for i, b in enumerate(bajadas_ordenadas):
+                if b.id == graph.bajada_activa_id:
+                    indice_actual = i
+                    break
+        graph.bajadas_auto_indice_inicio = indice_actual
+        graph.bajadas_auto_epoch_inicio = time.time()
+        graph.bajadas_auto_activo = True
+    elif accion == 'stop':
+        bajada_efectiva = _bajada_activa_efectiva(graph)
+        graph.bajada_activa_id = bajada_efectiva.id if bajada_efectiva else None
+        graph.bajadas_auto_activo = False
+        graph.bajadas_auto_epoch_inicio = None
+
+    db.session.commit()
+    return jsonify({"mensaje": "Rotación de bajadas actualizada"})
 
 
 @graphs_bp.route('/obtener_graph_activo')
@@ -611,11 +654,27 @@ def _actualizar_mosca_capa_id(capa_id):
         json.dump(current_config, f, indent=4)
 
 
+def _bajada_activa_efectiva(graph):
+    bajadas_ordenadas = sorted(graph.bajadas, key=lambda b: b.id)
+    if graph.bajadas_auto_activo and bajadas_ordenadas and graph.bajadas_auto_epoch_inicio:
+        duracion = graph.bajadas_auto_duracion_segundos or 5
+        transcurrido = time.time() - graph.bajadas_auto_epoch_inicio
+        paso = int(transcurrido // duracion)
+        indice = graph.bajadas_auto_indice_inicio + paso
+        if graph.bajadas_auto_loop:
+            indice = indice % len(bajadas_ordenadas)
+        else:
+            indice = min(indice, len(bajadas_ordenadas) - 1)
+        return bajadas_ordenadas[indice]
+    return graph.bajada_activa
+
+
 def _resolver_capas_plantilla(graph_activo):
     if not graph_activo or not graph_activo.plantilla:
         return None
 
-    bajada_texto = graph_activo.bajada_activa.texto if graph_activo.bajada_activa else ""
+    bajada_activa_efectiva = _bajada_activa_efectiva(graph_activo)
+    bajada_texto = bajada_activa_efectiva.texto if bajada_activa_efectiva else ""
     cita_activa = graph_activo.cita_activa
     entrevistado_texto = cita_activa.entrevistado.nombre if cita_activa else ""
     cita_texto = (cita_activa.texto if cita_activa else "") or ""
