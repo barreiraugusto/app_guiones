@@ -146,6 +146,9 @@ function segundosRestantesCronometro(cfg) {
     if (cfg.estado === 'pausado' && cfg.segundos_restantes !== null) {
         return cfg.segundos_restantes;
     }
+    if (cfg.estado === 'terminado') {
+        return 0;
+    }
     return duracionTotal;
 }
 

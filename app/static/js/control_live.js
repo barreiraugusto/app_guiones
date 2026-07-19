@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cronometroState.estado === 'corriendo') {
             if (segundosRestantesCronometro(cronometroState) <= 0 && !cronometroTerminado) {
                 cronometroTerminado = true;
-                cronometroState.estado = 'detenido';
+                cronometroState.estado = 'terminado';
                 cronometroState.epoch_inicio = null;
                 cronometroState.segundos_restantes = null;
                 guardarSeccion('cronometro', cronometroState);
@@ -120,7 +120,7 @@ function renderizarPanelControlRapido() {
 
     document.getElementById('cron-mostrar').checked = !!cronometroState.show;
     document.getElementById('cron-mostrar-horas').checked = !!cronometroState.mostrar_horas;
-    const cronEditable = cronometroState.estado === 'detenido';
+    const cronEditable = cronometroState.estado === 'detenido' || cronometroState.estado === 'terminado';
     document.getElementById('cron-horas').disabled = !cronEditable;
     document.getElementById('cron-minutos').disabled = !cronEditable;
     document.getElementById('cron-segundos').disabled = !cronEditable;
@@ -409,6 +409,9 @@ function segundosRestantesCronometro(cfg) {
     if (cfg.estado === 'pausado' && cfg.segundos_restantes !== null) {
         return cfg.segundos_restantes;
     }
+    if (cfg.estado === 'terminado') {
+        return 0;
+    }
     return duracionTotal;
 }
 
@@ -427,7 +430,7 @@ function formatearTiempoCronometro(segundos, mostrarHoras) {
 
 function iniciarCronometro() {
     const duracionTotal = (cronometroState.duracion_horas || 0) * 3600 + (cronometroState.duracion_minutos || 0) * 60 + (cronometroState.duracion_segundos || 0);
-    if (cronometroState.estado === 'detenido') {
+    if (cronometroState.estado === 'detenido' || cronometroState.estado === 'terminado') {
         cronometroState.epoch_inicio = Date.now() / 1000;
     } else if (cronometroState.estado === 'pausado') {
         cronometroState.epoch_inicio = Date.now() / 1000 - (duracionTotal - cronometroState.segundos_restantes);
