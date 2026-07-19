@@ -130,6 +130,47 @@
                     </button>
                 </div>
             </div>
+            <div class="card p-2 mt-2">
+                <strong class="mb-2">Cronómetro</strong>
+                <div class="d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="cron-mostrar">
+                        <label class="form-check-label" for="cron-mostrar">Mostrar</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="cron-mostrar-horas">
+                        <label class="form-check-label" for="cron-mostrar-horas">Mostrar horas</label>
+                    </div>
+                    <div class="input-group input-group-sm" style="width: auto;">
+                        <input type="number" class="form-control" id="cron-horas" min="0" style="width: 60px;" placeholder="HH">
+                        <input type="number" class="form-control" id="cron-minutos" min="0" max="59" style="width: 60px;" placeholder="MM">
+                        <input type="number" class="form-control" id="cron-segundos" min="0" max="59" style="width: 60px;" placeholder="SS">
+                    </div>
+                    <span id="cron-display" class="font-weight-bold" style="min-width: 80px;">00:00</span>
+                    <button class="btn btn-success btn-sm" id="cron-btn-inicio">Inicio</button>
+                    <button class="btn btn-warning btn-sm" id="cron-btn-stop">Stop</button>
+                    <button class="btn btn-outline-secondary btn-sm" id="cron-btn-restablecer">Restablecer</button>
+                </div>
+            </div>
+            <div class="card p-2 mt-2">
+                <strong class="mb-2">Marcador</strong>
+                <div class="d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="marc-mostrar">
+                        <label class="form-check-label" for="marc-mostrar">Mostrar</label>
+                    </div>
+                    <input type="text" class="form-control form-control-sm" id="marc-nombre-1" style="width: 120px;" placeholder="Equipo 1">
+                    <button class="btn btn-outline-secondary btn-sm" id="marc-menos-1">-</button>
+                    <span id="marc-tantos-1" class="font-weight-bold" style="min-width: 24px; text-align: center;">0</span>
+                    <button class="btn btn-outline-secondary btn-sm" id="marc-mas-1">+</button>
+                    <span class="mx-2">-</span>
+                    <button class="btn btn-outline-secondary btn-sm" id="marc-menos-2">-</button>
+                    <span id="marc-tantos-2" class="font-weight-bold" style="min-width: 24px; text-align: center;">0</span>
+                    <button class="btn btn-outline-secondary btn-sm" id="marc-mas-2">+</button>
+                    <input type="text" class="form-control form-control-sm" id="marc-nombre-2" style="width: 120px;" placeholder="Equipo 2">
+                    <button class="btn btn-outline-secondary btn-sm" id="marc-reiniciar">Reiniciar</button>
+                </div>
+            </div>
         </div>
         <div class="col-md-3">
             <div id="panel-propiedades-control" class="card p-3">

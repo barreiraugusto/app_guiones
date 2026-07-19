@@ -489,7 +489,7 @@ def update_display_config():
         if 'live' in data and 'show' in data['live']:
             data['live']['show'] = str(data['live']['show']).lower() == 'true'
 
-        for section in ['live', 'ticker', 'mosca']:
+        for section in ['live', 'ticker', 'mosca', 'cronometro', 'marcador']:
             if section in data:
                 if section not in current_config:
                     current_config[section] = {}
