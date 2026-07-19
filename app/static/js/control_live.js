@@ -193,6 +193,8 @@ async function cargarConfig() {
         cursiva: !!(config.cronometro && config.cronometro.cursiva),
         color: (config.cronometro && config.cronometro.color) || '#ffffff',
         bg_color: (config.cronometro && config.cronometro.bg_color) || '#000000',
+        opacidad_fondo: (config.cronometro && config.cronometro.opacidad_fondo) !== undefined ? Math.max(0, Math.min(100, parseInt(config.cronometro.opacidad_fondo))) : 100,
+        radio_esquina: parseInt(config.cronometro && config.cronometro.radio_esquina) || 0,
     };
 
     marcadorState = {
@@ -428,6 +430,14 @@ function formatearTiempoCronometro(segundos, mostrarHoras) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function colorFondoConOpacidad(hex, opacidadPct) {
+    const valor = (hex || '#000000').replace('#', '');
+    const r = parseInt(valor.substring(0, 2), 16) || 0;
+    const g = parseInt(valor.substring(2, 4), 16) || 0;
+    const b = parseInt(valor.substring(4, 6), 16) || 0;
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(100, opacidadPct)) / 100})`;
+}
+
 function iniciarCronometro() {
     const duracionTotal = (cronometroState.duracion_horas || 0) * 3600 + (cronometroState.duracion_minutos || 0) * 60 + (cronometroState.duracion_segundos || 0);
     if (cronometroState.estado === 'detenido' || cronometroState.estado === 'terminado') {
@@ -497,7 +507,8 @@ function crearElementoCronometro() {
     el.style.top = `${cronometroState.top}px`;
     el.style.width = `${cronometroState.width}px`;
     el.style.height = `${cronometroState.height}px`;
-    el.style.backgroundColor = cronometroState.bg_color;
+    el.style.backgroundColor = colorFondoConOpacidad(cronometroState.bg_color, cronometroState.opacidad_fondo);
+    el.style.borderRadius = `${cronometroState.radio_esquina}px`;
     el.style.color = cronometroState.color;
     el.style.zIndex = 900;
     el.style.opacity = cronometroState.show ? '1' : '0.35';
@@ -930,6 +941,14 @@ function renderizarPanelPropiedades() {
                 <input type="color" class="form-control" id="prop-cron-bgcolor" value="${cronometroState.bg_color}">
             </div>
             <div class="form-group mb-2">
+                <label>Opacidad de fondo</label>
+                <input type="number" class="form-control" id="prop-cron-opacidad-fondo" min="0" max="100" value="${cronometroState.opacidad_fondo}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Radio de esquina</label>
+                <input type="number" class="form-control" id="prop-cron-radio-esquina" min="0" value="${cronometroState.radio_esquina}">
+            </div>
+            <div class="form-group mb-2">
                 <label>Fuente</label>
                 <select class="form-control" id="prop-cron-fuente">
                     ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(cronometroState.fuente) && cronometroState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
@@ -1010,6 +1029,16 @@ function renderizarPanelPropiedades() {
         });
         document.getElementById('prop-cron-cursiva').addEventListener('change', (e) => {
             cronometroState.cursiva = e.target.checked;
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-opacidad-fondo').addEventListener('blur', (e) => {
+            cronometroState.opacidad_fondo = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+            guardarSeccion('cronometro', cronometroState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-cron-radio-esquina').addEventListener('blur', (e) => {
+            cronometroState.radio_esquina = Math.max(0, parseInt(e.target.value) || 0);
             guardarSeccion('cronometro', cronometroState);
             renderizarLienzo();
         });
