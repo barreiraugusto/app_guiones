@@ -294,7 +294,8 @@ function updateMarcador(cfg) {
     band.style.top = conPx(cfg.top, '0px');
     band.style.width = conPx(cfg.width, '400px');
     band.style.height = conPx(cfg.height, '100px');
-    band.style.backgroundColor = cfg.bg_color || '#000000';
+    band.style.backgroundColor = colorFondoConOpacidad(cfg.bg_color, cfg.opacidad_fondo !== undefined ? cfg.opacidad_fondo : 100);
+    band.style.borderRadius = `${parseFloat(cfg.radio_esquina) || 0}px`;
     band.style.color = cfg.color || '#ffffff';
     band.style.fontFamily = cfg.fuente || 'Arial';
     band.style.fontSize = `${parseFloat(cfg.tamano_fuente) || 36}px`;
