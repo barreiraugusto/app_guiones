@@ -138,6 +138,30 @@ function conPx(valor, porDefecto) {
     return typeof valor === 'number' ? `${valor}px` : valor;
 }
 
+function segundosRestantesCronometro(cfg) {
+    const duracionTotal = (cfg.duracion_horas || 0) * 3600 + (cfg.duracion_minutos || 0) * 60 + (cfg.duracion_segundos || 0);
+    if (cfg.estado === 'corriendo' && cfg.epoch_inicio) {
+        return Math.max(0, duracionTotal - (Date.now() / 1000 - cfg.epoch_inicio));
+    }
+    if (cfg.estado === 'pausado' && cfg.segundos_restantes !== null) {
+        return cfg.segundos_restantes;
+    }
+    return duracionTotal;
+}
+
+function formatearTiempoCronometro(segundos, mostrarHoras) {
+    const totalSeg = Math.ceil(segundos);
+    if (mostrarHoras) {
+        const h = Math.floor(totalSeg / 3600);
+        const m = Math.floor((totalSeg % 3600) / 60);
+        const s = totalSeg % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+    const m = Math.floor(totalSeg / 60);
+    const s = totalSeg % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 function updateTicker(ticker) {
     const band = document.getElementById('tickerBand');
     const textEl = document.getElementById('tickerText');
@@ -224,9 +248,62 @@ function updateMosca(mosca) {
     }
 }
 
+let cronometroCfgActual = null;
+
+function updateCronometro(cfg) {
+    const band = document.getElementById('cronometroBand');
+    if (!cfg || !cfg.show) {
+        band.style.display = 'none';
+        cronometroCfgActual = null;
+        return;
+    }
+    band.style.left = conPx(cfg.left, '0px');
+    band.style.top = conPx(cfg.top, '0px');
+    band.style.width = conPx(cfg.width, '300px');
+    band.style.height = conPx(cfg.height, '80px');
+    band.style.backgroundColor = cfg.bg_color || '#000000';
+    band.style.color = cfg.color || '#ffffff';
+    band.style.fontFamily = cfg.fuente || 'Arial';
+    band.style.fontSize = `${parseFloat(cfg.tamano_fuente) || 40}px`;
+    band.style.fontWeight = cfg.negrita !== false ? 'bold' : 'normal';
+    band.style.fontStyle = cfg.cursiva ? 'italic' : 'normal';
+    band.style.display = 'flex';
+    cronometroCfgActual = cfg;
+    band.textContent = formatearTiempoCronometro(segundosRestantesCronometro(cfg), cfg.mostrar_horas);
+}
+
+function updateMarcador(cfg) {
+    const band = document.getElementById('marcadorBand');
+    if (!cfg || !cfg.show) {
+        band.style.display = 'none';
+        return;
+    }
+    band.style.left = conPx(cfg.left, '0px');
+    band.style.top = conPx(cfg.top, '0px');
+    band.style.width = conPx(cfg.width, '400px');
+    band.style.height = conPx(cfg.height, '100px');
+    band.style.backgroundColor = cfg.bg_color || '#000000';
+    band.style.color = cfg.color || '#ffffff';
+    band.style.fontFamily = cfg.fuente || 'Arial';
+    band.style.fontSize = `${parseFloat(cfg.tamano_fuente) || 36}px`;
+    band.style.fontWeight = cfg.negrita !== false ? 'bold' : 'normal';
+    band.style.fontStyle = cfg.cursiva ? 'italic' : 'normal';
+    band.style.display = 'flex';
+    band.textContent = `${cfg.nombre_equipo_1 || 'Equipo 1'} ${cfg.tantos_equipo_1 || 0} - ${cfg.tantos_equipo_2 || 0} ${cfg.nombre_equipo_2 || 'Equipo 2'}`;
+}
+
+setInterval(() => {
+    if (cronometroCfgActual && cronometroCfgActual.show) {
+        const band = document.getElementById('cronometroBand');
+        band.textContent = formatearTiempoCronometro(segundosRestantesCronometro(cronometroCfgActual), cronometroCfgActual.mostrar_horas);
+    }
+}, 1000);
+
 function updateDisplay(data) {
     updateTicker(data.ticker);
     updateMosca(data.mosca);
+    updateCronometro(data.cronometro);
+    updateMarcador(data.marcador);
 
     const liveBadge = document.getElementById('liveBadge');
     if (data.live) {

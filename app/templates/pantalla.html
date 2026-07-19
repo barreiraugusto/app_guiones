@@ -38,6 +38,24 @@
             white-space: nowrap;
         }
 
+        #cronometroBand {
+            position: fixed;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            z-index: 900;
+        }
+
+        #marcadorBand {
+            position: fixed;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            z-index: 900;
+        }
+
         .ticker-dir-izquierda { padding-left: 100%; }
         .ticker-dir-derecha   { padding-left: 100%; }
 
@@ -106,6 +124,8 @@
 <body>
 <div class="live-badge" id="liveBadge"></div>
 <div id="tickerBand"><span id="tickerText"></span></div>
+<div id="cronometroBand"></div>
+<div id="marcadorBand"></div>
 <div id="overlay-root"></div>
 <div id="mosca-root"></div>
 <script src="{{ url_for('static', filename='js/ajuste-texto.js') }}"></script>
