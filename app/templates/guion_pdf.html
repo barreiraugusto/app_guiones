@@ -200,17 +200,21 @@
                                     {% if cita.entrevistado.nombre not in entrevistados %}
                                         {% set _ = entrevistados.update({cita.entrevistado.nombre: []}) %}
                                     {% endif %}
-                                    {% set _ = entrevistados[cita.entrevistado.nombre].append(cita.texto) %}
+                                    {% if cita.texto %}
+                                        {% set _ = entrevistados[cita.entrevistado.nombre].append(cita.texto) %}
+                                    {% endif %}
                                 {% endfor %}
 
                                 {% for nombre, citas in entrevistados.items() %}
                                 <div class="avoid-page-break">
                                     <strong>{{ nombre }}:</strong>
+                                    {% if citas %}
                                     <ul>
                                         {% for cita in citas %}
                                         <li>{{ cita }}</li>
                                         {% endfor %}
                                     </ul>
+                                    {% endif %}
                                 </div>
                                 {% endfor %}
                             </div>

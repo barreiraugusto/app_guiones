@@ -143,7 +143,7 @@ function renderGraphs(container, graphs) {
 
                 if (e.citas && e.citas.length > 0) {
                     e.citas.forEach(c => {
-                        if (!c || c === 'Sin cita') return;
+                        if (!c) return;
                         const cita = document.createElement('div');
                         cita.className = 'pn-cita';
                         cita.textContent = `"${c}"`;
