@@ -691,6 +691,8 @@ def stream_display_config():
                         "live":   saved_config.get("live",   {}),
                         "ticker": saved_config.get("ticker", {}),
                         "mosca":  _resolver_mosca(saved_config.get("mosca", {})),
+                        "cronometro": saved_config.get("cronometro", {}),
+                        "marcador": saved_config.get("marcador", {}),
                         "plantilla": _resolver_capas_plantilla(graph_activo),
                         "content": {
                             "primera_bajada": "",
