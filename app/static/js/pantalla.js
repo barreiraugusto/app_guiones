@@ -160,6 +160,10 @@ function updateTicker(ticker) {
     band.style.setProperty('--angulo', `${parseFloat(cfg.angulo) || 0}deg`);
     band.style.backgroundColor = cfg.bg_color || '#000000';
     textEl.style.color = cfg.color || '#ffffff';
+    textEl.style.fontFamily = cfg.fuente || 'Arial';
+    textEl.style.fontSize = `${parseFloat(cfg.tamano_fuente) || 32}px`;
+    textEl.style.fontWeight = cfg.negrita !== false ? 'bold' : 'normal';
+    textEl.style.fontStyle = cfg.cursiva ? 'italic' : 'normal';
     band.style.display = 'flex';
 
     if (!tickerVisible) {
@@ -194,6 +198,10 @@ function updateDisplay(data) {
         liveBadge.style.display = data.live.show ? 'block' : 'none';
         liveBadge.style.top = conPx(data.live.top, '20px');
         liveBadge.style.left = conPx(data.live.left, '20px');
+        liveBadge.style.fontFamily = data.live.fuente || 'Arial';
+        liveBadge.style.fontSize = `${parseFloat(data.live.tamano_fuente) || 18}px`;
+        liveBadge.style.fontWeight = data.live.negrita !== false ? 'bold' : 'normal';
+        liveBadge.style.fontStyle = data.live.cursiva ? 'italic' : 'normal';
     }
 
     const root = document.getElementById('overlay-root');
