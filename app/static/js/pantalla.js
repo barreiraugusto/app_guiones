@@ -165,6 +165,14 @@ function formatearTiempoCronometro(segundos, mostrarHoras) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function colorFondoConOpacidad(hex, opacidadPct) {
+    const valor = (hex || '#000000').replace('#', '');
+    const r = parseInt(valor.substring(0, 2), 16) || 0;
+    const g = parseInt(valor.substring(2, 4), 16) || 0;
+    const b = parseInt(valor.substring(4, 6), 16) || 0;
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(100, opacidadPct)) / 100})`;
+}
+
 function updateTicker(ticker) {
     const band = document.getElementById('tickerBand');
     const textEl = document.getElementById('tickerText');
@@ -264,7 +272,8 @@ function updateCronometro(cfg) {
     band.style.top = conPx(cfg.top, '0px');
     band.style.width = conPx(cfg.width, '300px');
     band.style.height = conPx(cfg.height, '80px');
-    band.style.backgroundColor = cfg.bg_color || '#000000';
+    band.style.backgroundColor = colorFondoConOpacidad(cfg.bg_color, cfg.opacidad_fondo !== undefined ? cfg.opacidad_fondo : 100);
+    band.style.borderRadius = `${parseFloat(cfg.radio_esquina) || 0}px`;
     band.style.color = cfg.color || '#ffffff';
     band.style.fontFamily = cfg.fuente || 'Arial';
     band.style.fontSize = `${parseFloat(cfg.tamano_fuente) || 40}px`;
