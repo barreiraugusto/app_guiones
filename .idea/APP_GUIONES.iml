@@ -6,6 +6,11 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.worktrees/plantillas-graficas/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.worktrees/control-graphs/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.worktrees/control-live-refinamientos/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.worktrees/plantillas-formas/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.worktrees/ticker/.venv" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10 (app_guiones)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

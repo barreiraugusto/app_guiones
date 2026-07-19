@@ -1,4 +1,6 @@
 class Config:
+    SECRET_KEY = 'sigpro-secret-2026-xk9'
+
     # Configuración para PostgreSQL
     SQLALCHEMY_DATABASE_URI = 'postgresql://abarreira:panasonic@localhost/guiones'
     SQLALCHEMY_TRACK_MODIFICATIONS = False

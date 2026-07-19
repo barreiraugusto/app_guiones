@@ -56,6 +56,17 @@
             height: 1080px;
         }
 
+        /* Independiente de overlay-root: no se borra cuando no hay graph activo */
+        #mosca-root {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 1920px;
+            height: 1080px;
+            z-index: 950;
+            pointer-events: none;
+        }
+
         .capa {
             position: absolute;
             box-sizing: border-box;
@@ -80,10 +91,10 @@
         .anim-slide-enter { animation: slideIn var(--dur, 400ms) ease forwards; }
         .anim-slide-exit  { animation: slideOut var(--dur, 400ms) ease forwards; }
 
-        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-        @keyframes slideIn  { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-40px); } }
+        @keyframes fadeIn  { from { opacity: 0; } to { opacity: var(--opacidad-final, 1); } }
+        @keyframes fadeOut { from { opacity: var(--opacidad-final, 1); } to { opacity: 0; } }
+        @keyframes slideIn  { from { opacity: 0; transform: translateX(var(--dir, -40px)); } to { opacity: var(--opacidad-final, 1); transform: translateX(0); } }
+        @keyframes slideOut { from { opacity: var(--opacidad-final, 1); transform: translateX(0); } to { opacity: 0; transform: translateX(var(--dir, -40px)); } }
 
         .anim-ticker-enter { animation: tickerSlideIn 400ms ease forwards; }
         .anim-ticker-exit  { animation: tickerSlideOut 400ms ease forwards; }
@@ -96,6 +107,7 @@
 <div class="live-badge" id="liveBadge"></div>
 <div id="tickerBand"><span id="tickerText"></span></div>
 <div id="overlay-root"></div>
+<div id="mosca-root"></div>
 <script src="{{ url_for('static', filename='js/ajuste-texto.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
 </body>

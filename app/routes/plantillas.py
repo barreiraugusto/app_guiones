@@ -42,7 +42,10 @@ def _serializar_plantilla(plantilla):
                 "cursiva": capa.cursiva,
                 "animacion_entrada": capa.animacion_entrada,
                 "animacion_salida": capa.animacion_salida,
-                "duracion_transicion_ms": capa.duracion_transicion_ms,
+                "duracion_entrada_ms": capa.duracion_entrada_ms,
+                "duracion_salida_ms": capa.duracion_salida_ms,
+                "direccion_entrada": capa.direccion_entrada,
+                "direccion_salida": capa.direccion_salida,
                 "radio_esquina": capa.radio_esquina,
                 "color_fondo": capa.color_fondo,
                 "opacidad": capa.opacidad,
@@ -52,6 +55,8 @@ def _serializar_plantilla(plantilla):
                 "gradiente_color_inicio": capa.gradiente_color_inicio,
                 "gradiente_color_fin": capa.gradiente_color_fin,
                 "gradiente_angulo": capa.gradiente_angulo,
+                "controlada_por_id": capa.controlada_por_id,
+                "es_mosca": capa.es_mosca,
             }
             for capa in sorted(plantilla.capas, key=lambda c: c.orden)
         ]
@@ -68,8 +73,18 @@ def _validar_capas(capas_data):
 
 
 def _crear_capas(plantilla, capas_data):
+    """Crea las capas de la plantilla a partir del payload del cliente.
+
+    El campo `id` que manda el cliente (real o temporal, ver contadorIdTemporal
+    en plantillas.js) sirve solo para resolver `controlada_por_id` dentro de
+    este mismo payload -- no se usa como id real, que lo asigna la base al
+    hacer flush. Se resuelve en una segunda pasada porque el capa referenciada
+    en `controlada_por_id` puede aparecer más adelante en la lista.
+    """
+    nuevas_por_id_cliente = {}
+    nuevas_capas = []
     for i, capa_data in enumerate(capas_data):
-        plantilla.capas.append(PlantillaCapa(
+        nueva = PlantillaCapa(
             orden=capa_data.get('orden', i),
             tipo=capa_data['tipo'],
             x=capa_data.get('x', 0),
@@ -88,7 +103,10 @@ def _crear_capas(plantilla, capas_data):
             cursiva=capa_data.get('cursiva', False),
             animacion_entrada=capa_data.get('animacion_entrada', 'fade'),
             animacion_salida=capa_data.get('animacion_salida', 'fade'),
-            duracion_transicion_ms=capa_data.get('duracion_transicion_ms', 400),
+            duracion_entrada_ms=capa_data.get('duracion_entrada_ms', 400),
+            duracion_salida_ms=capa_data.get('duracion_salida_ms', 400),
+            direccion_entrada=capa_data.get('direccion_entrada', 'izquierda'),
+            direccion_salida=capa_data.get('direccion_salida', 'izquierda'),
             radio_esquina=capa_data.get('radio_esquina', 0),
             color_fondo=capa_data.get('color_fondo'),
             opacidad=capa_data.get('opacidad', 100),
@@ -98,7 +116,21 @@ def _crear_capas(plantilla, capas_data):
             gradiente_color_inicio=capa_data.get('gradiente_color_inicio'),
             gradiente_color_fin=capa_data.get('gradiente_color_fin'),
             gradiente_angulo=capa_data.get('gradiente_angulo', 90),
-        ))
+            es_mosca=capa_data.get('es_mosca', False),
+        )
+        plantilla.capas.append(nueva)
+        nuevas_capas.append(nueva)
+        if capa_data.get('id') is not None:
+            nuevas_por_id_cliente[capa_data['id']] = nueva
+
+    db.session.flush()
+
+    for capa_data, nueva in zip(capas_data, nuevas_capas):
+        id_controladora = capa_data.get('controlada_por_id')
+        if id_controladora is not None:
+            capa_controladora = nuevas_por_id_cliente.get(id_controladora)
+            if capa_controladora:
+                nueva.controlada_por_id = capa_controladora.id
 
 
 @plantillas_bp.route('/plantillas/upload', methods=['POST'])
@@ -165,8 +197,8 @@ def crear_plantilla():
             ancho=data.get('ancho', 1920),
             alto=data.get('alto', 1080),
         )
-        _crear_capas(plantilla, data.get('capas', []))
         db.session.add(plantilla)
+        _crear_capas(plantilla, data.get('capas', []))
         db.session.commit()
 
         registrar('INFO', f'Creó plantilla: {plantilla.nombre}', 'plantilla', plantilla.id, plantilla.nombre)
@@ -250,8 +282,10 @@ def duplicar_plantilla(id):
         db.session.add(nueva)
         db.session.flush()
 
-        for capa in sorted(original.capas, key=lambda c: c.orden):
-            nueva.capas.append(PlantillaCapa(
+        capas_originales = sorted(original.capas, key=lambda c: c.orden)
+        nuevas_por_id_original = {}
+        for capa in capas_originales:
+            nueva_capa = PlantillaCapa(
                 orden=capa.orden,
                 tipo=capa.tipo,
                 x=capa.x,
@@ -270,7 +304,10 @@ def duplicar_plantilla(id):
                 cursiva=capa.cursiva,
                 animacion_entrada=capa.animacion_entrada,
                 animacion_salida=capa.animacion_salida,
-                duracion_transicion_ms=capa.duracion_transicion_ms,
+                duracion_entrada_ms=capa.duracion_entrada_ms,
+                duracion_salida_ms=capa.duracion_salida_ms,
+                direccion_entrada=capa.direccion_entrada,
+                direccion_salida=capa.direccion_salida,
                 radio_esquina=capa.radio_esquina,
                 color_fondo=capa.color_fondo,
                 opacidad=capa.opacidad,
@@ -280,7 +317,18 @@ def duplicar_plantilla(id):
                 gradiente_color_inicio=capa.gradiente_color_inicio,
                 gradiente_color_fin=capa.gradiente_color_fin,
                 gradiente_angulo=capa.gradiente_angulo,
-            ))
+                es_mosca=capa.es_mosca,
+            )
+            nueva.capas.append(nueva_capa)
+            nuevas_por_id_original[capa.id] = nueva_capa
+
+        db.session.flush()
+
+        for capa in capas_originales:
+            if capa.controlada_por_id is not None:
+                capa_controladora = nuevas_por_id_original.get(capa.controlada_por_id)
+                if capa_controladora:
+                    nuevas_por_id_original[capa.id].controlada_por_id = capa_controladora.id
 
         db.session.commit()
 

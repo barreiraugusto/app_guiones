@@ -24,6 +24,17 @@ async function cargarPlantillasSelect() {
     }
 }
 
+// Recarga la lista de notas/graphs con la función que exista en la página actual
+// (control_live.js define cargarNotasYGraphs; principal usa seleccionarGuion)
+async function recargarListaGraphs() {
+    if (typeof cargarNotasYGraphs === 'function') {
+        await cargarNotasYGraphs();
+    } else {
+        const guionId = document.getElementById('guion_id')?.value;
+        if (guionId) await seleccionarGuion(guionId);
+    }
+}
+
 // Función para guardar un Graph sin cerrar
 async function guardarGraph(event) {
     event.preventDefault();
@@ -91,7 +102,7 @@ async function guardarGraph(event) {
                 tema: tema ? tema.toUpperCase() : null,
                 bajadas: bajadas,
                 entrevistados: entrevistados,
-                plantilla_id: document.getElementById('plantilla_id').value || null
+                plantilla_id: document.getElementById('plantilla_id')?.value || null
             }),
         });
 
@@ -112,7 +123,7 @@ async function guardarGraph(event) {
         });
 
         // Recargar la lista de graphs
-        await cargarNotasYGraphs();
+        await recargarListaGraphs();
 
         // Restaurar la selección del texto
         document.getElementById('texto_id').value = textoSeleccionado;
@@ -199,7 +210,7 @@ async function agregarNoCerrar(event) {
                 tema: tema ? tema.toUpperCase() : null,
                 bajadas: bajadas,
                 entrevistados: entrevistados,
-                plantilla_id: document.getElementById('plantilla_id').value || null
+                plantilla_id: document.getElementById('plantilla_id')?.value || null
             }),
         });
 
@@ -218,7 +229,7 @@ async function agregarNoCerrar(event) {
         });
 
         // Recargar la lista de graphs
-        await cargarNotasYGraphs();
+        await recargarListaGraphs();
 
         // Restaurar la selección del texto
         document.getElementById('texto_id').value = textoSeleccionado;
@@ -393,7 +404,7 @@ async function eliminarGraph(id) {
             });
 
             // Recargar la lista de graphs
-            await cargarNotasYGraphs();
+            await recargarListaGraphs();
         } catch (error) {
             Swal.fire({
                 icon: 'error',

@@ -9,7 +9,7 @@ from flask import current_app
 
 from sqlalchemy.orm import joinedload, selectinload
 from .. import db
-from ..models import Graph, Texto, Entrevistado, Bajada, Cita, Plantilla
+from ..models import Graph, Texto, Entrevistado, Bajada, Cita, Plantilla, PlantillaCapa
 from ..config_manager import display_config, save_config
 from ..audit import registrar
 
@@ -61,7 +61,7 @@ def crear_graph():
                                 ))
                     else:
                         db.session.add(Cita(
-                            texto="Sin cita",
+                            texto=None,
                             entrevistado=entrevistado,
                             graph=nuevo_graph
                         ))
@@ -121,7 +121,7 @@ def actualizar_graph(id):
                                 ))
                     else:
                         db.session.add(Cita(
-                            texto="Sin cita",
+                            texto=None,
                             entrevistado=entrevistado,
                             graph=graph
                         ))
@@ -186,7 +186,7 @@ def obtener_graph(id):
             nombre = cita.entrevistado.nombre
             if nombre not in entrevistados_dict:
                 entrevistados_dict[nombre] = []
-            if cita.texto not in entrevistados_dict[nombre]:
+            if cita.texto and cita.texto not in entrevistados_dict[nombre]:
                 entrevistados_dict[nombre].append(cita.texto)
 
         return jsonify({
@@ -301,6 +301,20 @@ def stream_graphs():
     return Response(stream_with_context(event_stream()), content_type='text/event-stream')
 
 
+@graphs_bp.route('/graphs/activo', methods=['DELETE'])
+def quitarGraphActivo():
+    graph_activo = Graph.query.filter_by(activo=True).first()
+    Graph.query.update({Graph.activo: False})
+    db.session.commit()
+
+    if graph_activo:
+        registrar('WARNING',
+                  f'Sacó del aire: {graph_activo.lugar}',
+                  'graph', graph_activo.id, graph_activo.lugar)
+
+    return jsonify({"mensaje": "Graph sacado del aire"})
+
+
 @graphs_bp.route('/graphs/activo/<int:id>', methods=['PUT'])
 def setGraphsActivo(id):
     Graph.query.update({Graph.activo: False})
@@ -324,6 +338,11 @@ def setGraphsActivo(id):
         graph.mostrar_tema = bool(data['mostrar_tema'])
 
     db.session.commit()
+
+    if graph.plantilla:
+        capa_mosca = next((c for c in graph.plantilla.capas if c.es_mosca), None)
+        if capa_mosca:
+            _actualizar_mosca_capa_id(capa_mosca.id)
 
     registrar('INFO',
               f'Activó graph: {graph.lugar}',
@@ -470,7 +489,7 @@ def update_display_config():
         if 'live' in data and 'show' in data['live']:
             data['live']['show'] = str(data['live']['show']).lower() == 'true'
 
-        for section in ['live', 'ticker']:
+        for section in ['live', 'ticker', 'mosca']:
             if section in data:
                 if section not in current_config:
                     current_config[section] = {}
@@ -508,6 +527,7 @@ def get_display_config():
         if os.path.exists(config_file):
             with open(config_file, 'r') as f:
                 config = json.load(f)
+                config['mosca'] = _resolver_mosca(config.get('mosca', {}))
                 _CONFIG_CACHE = config
                 _LAST_LOAD_TIME = datetime.now()
                 return jsonify(config)
@@ -520,6 +540,77 @@ def get_display_config():
         return jsonify({}), 500
 
 
+def _serializar_capa_resuelta(capa, valor=None):
+    capa_resuelta = {
+        "id": capa.id,
+        "orden": capa.orden,
+        "tipo": capa.tipo,
+        "x": capa.x,
+        "y": capa.y,
+        "ancho": capa.ancho,
+        "alto": capa.alto,
+        "archivo": capa.archivo,
+        "loop": capa.loop,
+        "fuente": capa.fuente,
+        "tamano_fuente": capa.tamano_fuente,
+        "color": capa.color,
+        "alineacion": capa.alineacion,
+        "negrita": capa.negrita,
+        "cursiva": capa.cursiva,
+        "animacion_entrada": capa.animacion_entrada,
+        "animacion_salida": capa.animacion_salida,
+        "duracion_entrada_ms": capa.duracion_entrada_ms,
+        "duracion_salida_ms": capa.duracion_salida_ms,
+        "direccion_entrada": capa.direccion_entrada,
+        "direccion_salida": capa.direccion_salida,
+        "radio_esquina": capa.radio_esquina,
+        "color_fondo": capa.color_fondo,
+        "opacidad": capa.opacidad,
+        "color_borde": capa.color_borde,
+        "ancho_borde": capa.ancho_borde,
+        "usar_gradiente": capa.usar_gradiente,
+        "gradiente_color_inicio": capa.gradiente_color_inicio,
+        "gradiente_color_fin": capa.gradiente_color_fin,
+        "gradiente_angulo": capa.gradiente_angulo,
+    }
+    if capa.tipo == 'texto':
+        capa_resuelta["valor"] = valor if valor is not None else (capa.texto_fijo or "")
+    return capa_resuelta
+
+
+def _resolver_mosca(mosca_config):
+    """Resuelve la capa marcada como Mosca a partir del estado persistido en
+    display_config.json (independiente de si hay un graph activo)."""
+    show = bool(mosca_config.get('show', True))
+    capa_id = mosca_config.get('capa_id')
+    if not show or not capa_id:
+        return {"show": show, "capa": None}
+
+    capa = PlantillaCapa.query.get(capa_id)
+    if not capa:
+        return {"show": show, "capa": None}
+
+    return {"show": show, "capa": _serializar_capa_resuelta(capa)}
+
+
+def _actualizar_mosca_capa_id(capa_id):
+    """Registra qué capa es la Mosca activa, sin pisar el estado show actual."""
+    config_file = 'display_config.json'
+    try:
+        with open(config_file, 'r') as f:
+            current_config = json.load(f)
+    except Exception:
+        current_config = {}
+
+    mosca_config = current_config.get('mosca', {})
+    mosca_config['capa_id'] = capa_id
+    mosca_config.setdefault('show', True)
+    current_config['mosca'] = mosca_config
+
+    with open(config_file, 'w') as f:
+        json.dump(current_config, f, indent=4)
+
+
 def _resolver_capas_plantilla(graph_activo):
     if not graph_activo or not graph_activo.plantilla:
         return None
@@ -527,58 +618,48 @@ def _resolver_capas_plantilla(graph_activo):
     bajada_texto = graph_activo.bajada_activa.texto if graph_activo.bajada_activa else ""
     cita_activa = graph_activo.cita_activa
     entrevistado_texto = cita_activa.entrevistado.nombre if cita_activa else ""
-    cita_texto = cita_activa.texto if cita_activa else ""
+    cita_texto = (cita_activa.texto if cita_activa else "") or ""
 
     valores_por_campo = {
         'lugar': (graph_activo.lugar or "") if graph_activo.mostrar_lugar else "",
         'tema': (graph_activo.tema or "") if graph_activo.mostrar_tema else "",
         'entrevistado': entrevistado_texto,
         'cita': cita_texto,
-        'bajada_1': cita_texto if cita_activa else bajada_texto,
+        # Si la cita activa no tiene texto (entrevistado sin cita), la bajada
+        # activa se sigue mostrando en vez de quedar vacía.
+        'bajada_1': cita_texto if cita_texto else bajada_texto,
         'bajada_2': "",
     }
 
     plantilla = graph_activo.plantilla
+    capas_ordenadas = sorted(plantilla.capas, key=lambda c: c.orden)
+
+    # Valor resuelto de cada capa de texto (incluso vacío), para poder decidir
+    # si una capa "controlada por" ella debe ocultarse también.
+    valor_texto_por_capa_id = {
+        capa.id: valores_por_campo.get(capa.campo_dato, capa.texto_fijo or "")
+        for capa in capas_ordenadas if capa.tipo == 'texto'
+    }
+
     capas = []
-    for capa in sorted(plantilla.capas, key=lambda c: c.orden):
+    for capa in capas_ordenadas:
+        # La Mosca se maneja aparte (independiente del graph activo), no como
+        # parte del zócalo normal.
+        if capa.es_mosca:
+            continue
+
         valor = None
         if capa.tipo == 'texto':
-            valor = valores_por_campo.get(capa.campo_dato, capa.texto_fijo or "")
+            valor = valor_texto_por_capa_id[capa.id]
             if not valor:
                 continue
 
-        capa_resuelta = {
-            "id": capa.id,
-            "orden": capa.orden,
-            "tipo": capa.tipo,
-            "x": capa.x,
-            "y": capa.y,
-            "ancho": capa.ancho,
-            "alto": capa.alto,
-            "archivo": capa.archivo,
-            "loop": capa.loop,
-            "fuente": capa.fuente,
-            "tamano_fuente": capa.tamano_fuente,
-            "color": capa.color,
-            "alineacion": capa.alineacion,
-            "negrita": capa.negrita,
-            "cursiva": capa.cursiva,
-            "animacion_entrada": capa.animacion_entrada,
-            "animacion_salida": capa.animacion_salida,
-            "duracion_transicion_ms": capa.duracion_transicion_ms,
-            "radio_esquina": capa.radio_esquina,
-            "color_fondo": capa.color_fondo,
-            "opacidad": capa.opacidad,
-            "color_borde": capa.color_borde,
-            "ancho_borde": capa.ancho_borde,
-            "usar_gradiente": capa.usar_gradiente,
-            "gradiente_color_inicio": capa.gradiente_color_inicio,
-            "gradiente_color_fin": capa.gradiente_color_fin,
-            "gradiente_angulo": capa.gradiente_angulo,
-        }
-        if capa.tipo == 'texto':
-            capa_resuelta["valor"] = valor
-        capas.append(capa_resuelta)
+        if capa.controlada_por_id is not None:
+            valor_control = valor_texto_por_capa_id.get(capa.controlada_por_id)
+            if valor_control is not None and not valor_control:
+                continue
+
+        capas.append(_serializar_capa_resuelta(capa, valor))
 
     return {"id": plantilla.id, "ancho": plantilla.ancho, "alto": plantilla.alto, "capas": capas}
 
@@ -609,6 +690,7 @@ def stream_display_config():
                     config = {
                         "live":   saved_config.get("live",   {}),
                         "ticker": saved_config.get("ticker", {}),
+                        "mosca":  _resolver_mosca(saved_config.get("mosca", {})),
                         "plantilla": _resolver_capas_plantilla(graph_activo),
                         "content": {
                             "primera_bajada": "",

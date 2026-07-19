@@ -1,7 +1,6 @@
 const ANCHO_LIENZO = 1920;
 const ALTO_LIENZO = 1080;
 const ESCALA_LIENZO = 0.5;
-const FUENTES_FIJAS = ['Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Impact', 'Segoe UI'];
 
 let plantillaEditandoId = null;
 let capas = [];
@@ -77,6 +76,47 @@ function renderizarLienzo() {
         .slice()
         .sort((a, b) => a.orden - b.orden)
         .forEach(capa => lienzo.appendChild(crearElementoEditable(capa)));
+    renderizarListaCapas();
+}
+
+const ETIQUETA_TIPO_CAPA = { imagen: 'Imagen', video: 'Video', texto: 'Texto', forma: 'Forma' };
+const ICONO_TIPO_CAPA = { imagen: 'fa-image', video: 'fa-video', texto: 'fa-font', forma: 'fa-square' };
+const FUENTES_FIJAS = ['Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Impact', 'Segoe UI'];
+
+function detalleCapa(capa) {
+    if (capa.tipo === 'imagen' || capa.tipo === 'video') {
+        return capa.archivo ? capa.archivo.split('/').pop() : '(sin archivo)';
+    }
+    if (capa.tipo === 'texto') {
+        return capa.texto_fijo || (capa.campo_dato ? `{{${capa.campo_dato}}}` : 'texto libre');
+    }
+    if (capa.tipo === 'forma') {
+        return `${capa.ancho}×${capa.alto}`;
+    }
+    return '';
+}
+
+function renderizarListaCapas() {
+    const lista = document.getElementById('lista-capas');
+    if (!lista) return;
+    if (capas.length === 0) {
+        lista.innerHTML = '<p class="text-muted mb-0 small">Sin capas todavía.</p>';
+        return;
+    }
+    lista.innerHTML = capas
+        .slice()
+        .sort((a, b) => b.orden - a.orden)
+        .map(capa => {
+            const activa = capa.id === capaSeleccionadaId ? ' active' : '';
+            return `
+                <button type="button" class="list-group-item list-group-item-action py-1 px-2 small${activa}"
+                        onclick="seleccionarCapa(${capa.id})">
+                    <i class="fas ${ICONO_TIPO_CAPA[capa.tipo] || 'fa-layer-group'} mr-1"></i>
+                    ${ETIQUETA_TIPO_CAPA[capa.tipo] || capa.tipo} — ${detalleCapa(capa)}${capa.es_mosca ? ' <span class="badge badge-info">Mosca</span>' : ''}
+                </button>
+            `;
+        })
+        .join('');
 }
 
 function crearElementoEditable(capa) {
@@ -215,7 +255,10 @@ function agregarCapa(tipo) {
         cursiva: false,
         animacion_entrada: 'fade',
         animacion_salida: 'fade',
-        duracion_transicion_ms: 400,
+        duracion_entrada_ms: 400,
+        duracion_salida_ms: 400,
+        direccion_entrada: 'izquierda',
+        direccion_salida: 'izquierda',
         radio_esquina: 0,
         color_fondo: '#ffffff',
         opacidad: 100,
@@ -225,6 +268,8 @@ function agregarCapa(tipo) {
         gradiente_color_inicio: '#ffffff',
         gradiente_color_fin: '#000000',
         gradiente_angulo: 90,
+        controlada_por_id: null,
+        es_mosca: false,
     };
     capas.push(nuevaCapa);
     seleccionarCapa(nuevaCapa.id);
@@ -233,6 +278,20 @@ function agregarCapa(tipo) {
 function eliminarCapaSeleccionada() {
     capas = capas.filter(c => c.id !== capaSeleccionadaId);
     capaSeleccionadaId = null;
+    renderizarLienzo();
+    renderizarPanelPropiedades();
+}
+
+function moverCapaSeleccionada(destino) {
+    const idx = capas.findIndex(c => c.id === capaSeleccionadaId);
+    if (idx === -1) return;
+    const [capa] = capas.splice(idx, 1);
+    if (destino === 'frente') {
+        capas.push(capa);
+    } else {
+        capas.unshift(capa);
+    }
+    capas.forEach((c, i) => { c.orden = i; });
     renderizarLienzo();
     renderizarPanelPropiedades();
 }
@@ -360,7 +419,26 @@ function renderizarPanelPropiedades() {
             <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-ancho" value="${capa.ancho}"></div>
             <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-alto" value="${capa.alto}"></div>
         </div>
+        <div class="row mb-2">
+            <div class="col-6"><button type="button" class="btn btn-outline-secondary btn-block btn-sm" onclick="moverCapaSeleccionada('frente')"><i class="fas fa-arrow-up"></i> Traer al frente</button></div>
+            <div class="col-6"><button type="button" class="btn btn-outline-secondary btn-block btn-sm" onclick="moverCapaSeleccionada('fondo')"><i class="fas fa-arrow-down"></i> Llevar al fondo</button></div>
+        </div>
         ${camposEspecificos}
+        <div class="form-group mb-2">
+            <label>Ocultar junto con (capa de texto):</label>
+            <select class="form-control" id="prop-controlada-por">
+                <option value="">Ninguna</option>
+                ${capas.filter(c => c.tipo === 'texto' && c.id !== capa.id).map(c => `
+                    <option value="${c.id}">${detalleCapa(c)}</option>
+                `).join('')}
+            </select>
+            <small class="text-muted">Si esa capa de texto queda vacía, esta capa también desaparece.</small>
+        </div>
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="prop-es-mosca" ${capa.es_mosca ? 'checked' : ''}>
+            <label class="form-check-label" for="prop-es-mosca">Mosca</label>
+            <small class="text-muted d-block">Se controla aparte desde control_live (Mostrar/Ocultar), independiente del graph al aire.</small>
+        </div>
         <div class="form-group mb-2">
             <label>Animación entrada:</label>
             <select class="form-control" id="prop-anim-entrada">
@@ -368,6 +446,19 @@ function renderizarPanelPropiedades() {
                 <option value="fade">Fundido</option>
                 <option value="slide">Deslizar</option>
             </select>
+        </div>
+        <div class="row">
+            <div class="col-6 form-group mb-2">
+                <label>Dirección entrada</label>
+                <select class="form-control" id="prop-direccion-entrada">
+                    <option value="izquierda">Desde la izquierda</option>
+                    <option value="derecha">Desde la derecha</option>
+                </select>
+            </div>
+            <div class="col-6 form-group mb-2">
+                <label>Duración entrada (ms)</label>
+                <input type="number" class="form-control" id="prop-duracion-entrada" value="${capa.duracion_entrada_ms}">
+            </div>
         </div>
         <div class="form-group mb-2">
             <label>Animación salida:</label>
@@ -377,9 +468,18 @@ function renderizarPanelPropiedades() {
                 <option value="slide">Deslizar</option>
             </select>
         </div>
-        <div class="form-group mb-3">
-            <label>Duración transición (ms):</label>
-            <input type="number" class="form-control" id="prop-duracion" value="${capa.duracion_transicion_ms}">
+        <div class="row">
+            <div class="col-6 form-group mb-3">
+                <label>Dirección salida</label>
+                <select class="form-control" id="prop-direccion-salida">
+                    <option value="izquierda">Hacia la izquierda</option>
+                    <option value="derecha">Hacia la derecha</option>
+                </select>
+            </div>
+            <div class="col-6 form-group mb-3">
+                <label>Duración salida (ms)</label>
+                <input type="number" class="form-control" id="prop-duracion-salida" value="${capa.duracion_salida_ms}">
+            </div>
         </div>
         <button class="btn btn-outline-danger btn-block" onclick="eliminarCapaSeleccionada()">Eliminar capa</button>
     `;
@@ -393,7 +493,22 @@ function renderizarPanelPropiedades() {
     document.getElementById('prop-anim-salida').value = capa.animacion_salida;
     document.getElementById('prop-anim-entrada').addEventListener('change', (e) => actualizarCapaSeleccionada({ animacion_entrada: e.target.value }));
     document.getElementById('prop-anim-salida').addEventListener('change', (e) => actualizarCapaSeleccionada({ animacion_salida: e.target.value }));
-    document.getElementById('prop-duracion').addEventListener('change', (e) => actualizarCapaSeleccionada({ duracion_transicion_ms: parseInt(e.target.value) || 400 }));
+
+    document.getElementById('prop-direccion-entrada').value = capa.direccion_entrada;
+    document.getElementById('prop-direccion-salida').value = capa.direccion_salida;
+    document.getElementById('prop-direccion-entrada').addEventListener('change', (e) => actualizarCapaSeleccionada({ direccion_entrada: e.target.value }));
+    document.getElementById('prop-direccion-salida').addEventListener('change', (e) => actualizarCapaSeleccionada({ direccion_salida: e.target.value }));
+    document.getElementById('prop-duracion-entrada').addEventListener('change', (e) => actualizarCapaSeleccionada({ duracion_entrada_ms: parseInt(e.target.value) || 400 }));
+    document.getElementById('prop-duracion-salida').addEventListener('change', (e) => actualizarCapaSeleccionada({ duracion_salida_ms: parseInt(e.target.value) || 400 }));
+
+    document.getElementById('prop-controlada-por').value = capa.controlada_por_id || '';
+    document.getElementById('prop-controlada-por').addEventListener('change', (e) => {
+        actualizarCapaSeleccionada({ controlada_por_id: e.target.value ? parseInt(e.target.value) : null });
+    });
+
+    document.getElementById('prop-es-mosca').addEventListener('change', (e) => {
+        actualizarCapaSeleccionada({ es_mosca: e.target.checked });
+    });
 
     if (capa.tipo === 'texto') {
         document.getElementById('prop-campo-dato').value = capa.campo_dato || '';
@@ -464,10 +579,9 @@ async function guardarPlantilla() {
         nombre,
         ancho: ANCHO_LIENZO,
         alto: ALTO_LIENZO,
-        capas: capas.map((c, i) => {
-            const { id, ...resto } = c;
-            return { ...resto, orden: i };
-        }),
+        // Se manda el id de cada capa (real o temporal) para que el backend
+        // pueda resolver controlada_por_id dentro de este mismo payload.
+        capas: capas.map((c, i) => ({ ...c, orden: i })),
     };
 
     try {
@@ -484,8 +598,10 @@ async function guardarPlantilla() {
             throw new Error(error.mensaje || 'Error al guardar la plantilla');
         }
 
+        const data = await response.json();
+        if (!plantillaEditandoId) plantillaEditandoId = data.id;
+
         Swal.fire({ icon: 'success', title: 'Plantilla guardada', showConfirmButton: false, timer: 1000 });
-        cerrarEditor();
     } catch (error) {
         Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }

@@ -45,7 +45,6 @@ class Entrevistado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(255), nullable=False)
 
-
 class Cita(db.Model):
     __tablename__ = 'cita'
     id = db.Column(db.Integer, primary_key=True)
@@ -146,7 +145,11 @@ class PlantillaCapa(db.Model):
 
     animacion_entrada = db.Column(db.String(10), nullable=False, default='fade')
     animacion_salida = db.Column(db.String(10), nullable=False, default='fade')
-    duracion_transicion_ms = db.Column(db.Integer, nullable=False, default=400)
+    duracion_entrada_ms = db.Column(db.Integer, nullable=False, default=400)
+    duracion_salida_ms = db.Column(db.Integer, nullable=False, default=400)
+    # 'izquierda' | 'derecha' -- de donde viene/hacia donde va el efecto Deslizar
+    direccion_entrada = db.Column(db.String(10), nullable=False, default='izquierda')
+    direccion_salida = db.Column(db.String(10), nullable=False, default='izquierda')
 
     radio_esquina = db.Column(db.Integer, nullable=False, default=0)
     color_fondo = db.Column(db.String(20), nullable=True)
@@ -157,6 +160,15 @@ class PlantillaCapa(db.Model):
     gradiente_color_inicio = db.Column(db.String(20), nullable=True)
     gradiente_color_fin = db.Column(db.String(20), nullable=True)
     gradiente_angulo = db.Column(db.Integer, nullable=False, default=90)
+
+    # Si se define, esta capa solo se muestra cuando la capa de texto referenciada
+    # tiene un valor resuelto no vacío (misma plantilla).
+    controlada_por_id = db.Column(db.Integer, db.ForeignKey('plantilla_capa.id', ondelete="SET NULL"), nullable=True)
+    controlada_por = db.relationship('PlantillaCapa', remote_side=[id])
+
+    # Marca esta capa como la "Mosca" (logo del programa): se controla aparte
+    # (independiente del graph activo) desde control_live.
+    es_mosca = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class AuditLog(db.Model):

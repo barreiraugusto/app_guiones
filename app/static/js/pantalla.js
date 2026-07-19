@@ -69,6 +69,10 @@ function renderizarPlantilla(plantillaData) {
         });
 }
 
+function direccionAPx(direccion, ancho) {
+    return direccion === 'derecha' ? `${ancho}px` : `-${ancho}px`;
+}
+
 function actualizarTextos(plantillaData) {
     const root = document.getElementById('overlay-root');
     const idsNuevos = new Set(plantillaData.capas.map(c => c.id));
@@ -78,10 +82,12 @@ function actualizarTextos(plantillaData) {
         if (idsNuevos.has(capaId)) return;
 
         const capaVieja = capasActuales.find(c => c.id === capaId);
-        const duracion = capaVieja ? (capaVieja.duracion_transicion_ms || 400) : 400;
+        const duracion = capaVieja ? (capaVieja.duracion_salida_ms || 400) : 400;
         const animacion = capaVieja ? capaVieja.animacion_salida : 'none';
         if (animacion && animacion !== 'none') {
             el.style.setProperty('--dur', `${duracion}ms`);
+            el.style.setProperty('--dir', direccionAPx(capaVieja.direccion_salida, capaVieja.ancho));
+            el.style.setProperty('--opacidad-final', capaVieja.opacidad != null ? capaVieja.opacidad / 100 : 1);
             el.classList.add(`anim-${animacion}-exit`);
             setTimeout(() => el.remove(), duracion);
         } else {
@@ -102,7 +108,9 @@ function actualizarTextos(plantillaData) {
         root.appendChild(elNuevo);
         if (capa.tipo === 'texto') ajustarTamanoTexto(elNuevo, capa.tamano_fuente);
         if (capa.animacion_entrada && capa.animacion_entrada !== 'none') {
-            elNuevo.style.setProperty('--dur', `${capa.duracion_transicion_ms}ms`);
+            elNuevo.style.setProperty('--dur', `${capa.duracion_entrada_ms}ms`);
+            elNuevo.style.setProperty('--dir', direccionAPx(capa.direccion_entrada, capa.ancho));
+            elNuevo.style.setProperty('--opacidad-final', capa.opacidad != null ? capa.opacidad / 100 : 1);
             elNuevo.classList.add(`anim-${capa.animacion_entrada}-enter`);
         }
     });
@@ -116,7 +124,11 @@ function aplicarAnimacion(tipo) {
         if (!capa) return;
         const animacion = tipo === 'entrada' ? capa.animacion_entrada : capa.animacion_salida;
         if (!animacion || animacion === 'none') return;
-        el.style.setProperty('--dur', `${capa.duracion_transicion_ms}ms`);
+        const duracion = tipo === 'entrada' ? capa.duracion_entrada_ms : capa.duracion_salida_ms;
+        const direccion = tipo === 'entrada' ? capa.direccion_entrada : capa.direccion_salida;
+        el.style.setProperty('--dur', `${duracion}ms`);
+        el.style.setProperty('--dir', direccionAPx(direccion, capa.ancho));
+        el.style.setProperty('--opacidad-final', capa.opacidad != null ? capa.opacidad / 100 : 1);
         el.classList.add(`anim-${animacion}-${tipo === 'entrada' ? 'enter' : 'exit'}`);
     });
 }
@@ -189,8 +201,32 @@ function updateTicker(ticker) {
     }
 }
 
+let moscaCapaIdActual = null;
+
+function updateMosca(mosca) {
+    const root = document.getElementById('mosca-root');
+    const mostrar = !!(mosca && mosca.show && mosca.capa);
+
+    if (!mostrar) {
+        if (moscaCapaIdActual !== null) {
+            root.innerHTML = '';
+            moscaCapaIdActual = null;
+        }
+        return;
+    }
+
+    if (mosca.capa.id !== moscaCapaIdActual) {
+        root.innerHTML = '';
+        const el = crearElementoCapa(mosca.capa);
+        root.appendChild(el);
+        if (mosca.capa.tipo === 'texto') ajustarTamanoTexto(el, mosca.capa.tamano_fuente);
+        moscaCapaIdActual = mosca.capa.id;
+    }
+}
+
 function updateDisplay(data) {
     updateTicker(data.ticker);
+    updateMosca(data.mosca);
 
     const liveBadge = document.getElementById('liveBadge');
     if (data.live) {
@@ -227,7 +263,7 @@ function updateDisplay(data) {
             plantillaVisible = true;
         }
     } else if (!hayGraphActivo && plantillaVisible) {
-        const duraciones = capasActuales.map(c => c.duracion_transicion_ms || 400);
+        const duraciones = capasActuales.map(c => c.duracion_salida_ms || 400);
         const maxDuracion = duraciones.length ? Math.max(...duraciones) : 400;
         aplicarAnimacion('salida');
         plantillaVisible = false;

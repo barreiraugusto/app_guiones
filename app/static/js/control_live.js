@@ -5,8 +5,9 @@ let ESCALA_LIENZO = 0.5;
 
 let tickerState = {};
 let liveState = {};
+let moscaState = {};
 let plantillaActual = null;
-let elementoSeleccionado = null; // 'ticker' | 'live' | null
+let elementoSeleccionado = null; // 'ticker' | 'live' | 'mosca' | null
 
 function aplicarEscalaLienzo() {
     const wrapper = document.getElementById('lienzo-wrapper');
@@ -23,7 +24,29 @@ document.addEventListener('DOMContentLoaded', () => {
         seleccionarElemento(null);
     });
     window.addEventListener('resize', aplicarEscalaLienzo);
+
+    document.getElementById('panel-mostrar-ticker').addEventListener('change', (e) => {
+        tickerState.show = e.target.checked;
+        guardarSeccion('ticker', tickerState);
+        renderizarLienzo();
+    });
+    document.getElementById('panel-mostrar-vivo').addEventListener('change', (e) => {
+        liveState.show = e.target.checked;
+        guardarSeccion('live', liveState);
+        renderizarLienzo();
+    });
+    document.getElementById('panel-mostrar-mosca').addEventListener('change', (e) => {
+        moscaState.show = e.target.checked;
+        guardarSeccion('mosca', { show: moscaState.show });
+        renderizarLienzo();
+    });
 });
+
+function renderizarPanelControlRapido() {
+    document.getElementById('panel-mostrar-ticker').checked = !!tickerState.show;
+    document.getElementById('panel-mostrar-vivo').checked = !!liveState.show;
+    document.getElementById('panel-mostrar-mosca').checked = !!moscaState.show;
+}
 
 async function cargarConfig() {
     const response = await fetch('/get_display_config');
@@ -58,6 +81,11 @@ async function cargarConfig() {
         cursiva: !!(config.live && config.live.cursiva),
     };
 
+    moscaState = {
+        show: !!(config.mosca && config.mosca.show),
+        capa: (config.mosca && config.mosca.capa) || null,
+    };
+
     renderizarLienzo();
     renderizarPanelPropiedades();
 }
@@ -82,17 +110,34 @@ function renderizarLienzo() {
     lienzo.innerHTML = '';
 
     if (graphComposicionId && plantillaEnEdicion) {
-        plantillaEnEdicion.capas
-            .slice()
-            .sort((a, b) => a.orden - b.orden)
-            .forEach(capa => {
-                const valor = resolverValorCapa(capa, composicion);
-                if (capa.tipo === 'texto' && !valor) return;
-                const el = crearElementoPreviewCapa(capa, valor);
-                lienzo.appendChild(el);
-                if (capa.tipo === 'texto') ajustarTamanoTexto(el, capa.tamano_fuente);
-                agregarResizeHandle(el, capa.id);
-            });
+        const capasOrdenadas = plantillaEnEdicion.capas.slice().sort((a, b) => a.orden - b.orden);
+
+        // Valor resuelto de cada capa de texto (incluso vacío), para poder
+        // decidir si una capa "controlada por" ella debe ocultarse también.
+        const valorTextoPorCapaId = {};
+        capasOrdenadas.forEach(capa => {
+            if (capa.tipo === 'texto') {
+                valorTextoPorCapaId[capa.id] = resolverValorCapa(capa, composicion);
+            }
+        });
+
+        capasOrdenadas.forEach(capa => {
+            let valor = null;
+            if (capa.tipo === 'texto') {
+                valor = valorTextoPorCapaId[capa.id];
+                if (!valor) return;
+            }
+
+            if (capa.controlada_por_id) {
+                const valorControl = valorTextoPorCapaId[capa.controlada_por_id];
+                if (valorControl !== undefined && !valorControl) return;
+            }
+
+            const el = crearElementoPreviewCapa(capa, valor);
+            lienzo.appendChild(el);
+            if (capa.tipo === 'texto') ajustarTamanoTexto(el, capa.tamano_fuente);
+            agregarResizeHandle(el, capa.id);
+        });
     } else if (plantillaActual) {
         plantillaActual.capas
             .slice()
@@ -102,6 +147,10 @@ function renderizarLienzo() {
 
     lienzo.appendChild(crearElementoTicker());
     lienzo.appendChild(crearElementoLive());
+    const elMosca = crearElementoMosca();
+    if (elMosca) lienzo.appendChild(elMosca);
+
+    renderizarPanelControlRapido();
 }
 
 function crearElementoZocalo(capa) {
@@ -158,8 +207,10 @@ function resolverValorCapa(capa, comp) {
         lugar: comp.mostrar_lugar ? (comp.lugar || '') : '',
         tema: comp.mostrar_tema ? (comp.tema || '') : '',
         entrevistado: cita ? cita.entrevistado : '',
-        cita: cita ? cita.texto : '',
-        bajada_1: cita ? cita.texto : (bajada ? bajada.texto : ''),
+        cita: (cita && cita.texto) || '',
+        // Si la cita activa no tiene texto (entrevistado sin cita), la bajada
+        // activa se sigue mostrando en vez de quedar vacía.
+        bajada_1: (cita && cita.texto) ? cita.texto : (bajada ? bajada.texto : ''),
         bajada_2: '',
     };
     return valoresPorCampo[capa.campo_dato] ?? (capa.texto_fijo || '');
@@ -273,6 +324,25 @@ function crearElementoLive() {
     el.addEventListener('click', (e) => {
         e.stopPropagation();
         seleccionarElemento('live');
+    });
+
+    return el;
+}
+
+function crearElementoMosca() {
+    if (!moscaState.capa) return null;
+
+    // Posición y tamaño vienen de la capa de la plantilla (sin arrastre/resize
+    // propios acá) -- solo se controla Mostrar/Ocultar desde control_live.
+    const el = crearElementoZocalo(moscaState.capa);
+    el.id = 'mosca-editor';
+    el.classList.add('elemento-editable');
+    if (elementoSeleccionado === 'mosca') el.classList.add('seleccionada');
+    if (!moscaState.show) el.style.opacity = '0.35';
+
+    el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        seleccionarElemento('mosca');
     });
 
     return el;
@@ -541,7 +611,25 @@ function renderizarPanelPropiedades() {
         return;
     }
 
-    panel.innerHTML = '<p class="text-muted">Seleccioná el ticker o el badge Vivo para editar sus propiedades.</p>';
+    if (elementoSeleccionado === 'mosca') {
+        panel.innerHTML = `
+            <h6>Mosca</h6>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="prop-mosca-show" ${moscaState.show ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-mosca-show">Mostrar</label>
+            </div>
+            <small class="text-muted">La posición y el tamaño se definen en el editor de Plantillas, en la capa marcada como Mosca.</small>
+        `;
+
+        document.getElementById('prop-mosca-show').addEventListener('change', (e) => {
+            moscaState.show = e.target.checked;
+            guardarSeccion('mosca', { show: moscaState.show });
+            renderizarLienzo();
+        });
+        return;
+    }
+
+    panel.innerHTML = '<p class="text-muted">Seleccioná el ticker, el badge Vivo o la Mosca para editar sus propiedades.</p>';
 }
 
 let arrastreTicker = null;
@@ -657,9 +745,11 @@ async function cargarNotasYGraphs() {
 
         const selTexto = document.getElementById('texto_id');
         if (selTexto) {
+            const valorPrevio = selTexto.value;
             selTexto.innerHTML = textosFiltrados
                 .map(t => `<option value="${t.id}">Nota: ${t.numero_de_nota} - ${t.titulo}</option>`)
                 .join('');
+            if (valorPrevio) selTexto.value = valorPrevio;
         }
 
         const contenedor = document.getElementById('lista-notas');
@@ -741,7 +831,7 @@ function renderizarPanelComposicion() {
         <div class="form-check">
             <input type="radio" class="form-check-input" name="cita-activa" id="cita-${c.id}"
                    value="${c.id}" ${composicion.cita_activa_id === c.id ? 'checked' : ''}>
-            <label class="form-check-label" for="cita-${c.id}">${c.entrevistado}: "${c.texto}"</label>
+            <label class="form-check-label" for="cita-${c.id}">${c.texto ? `${c.entrevistado}: "${c.texto}"` : `${c.entrevistado} (sin cita)`}</label>
         </div>
     `).join('');
 
@@ -812,8 +902,19 @@ async function enviarAlAire() {
                 mostrar_tema: composicion.mostrar_tema,
             })
         });
+        // La Mosca puede haber cambiado (auto-sigue al graph recién activado).
+        await cargarConfig();
     } catch (error) {
         console.error('Error al enviar al aire:', error);
+    }
+}
+
+async function sacarGraphDelAire() {
+    try {
+        await fetch('/graphs/activo', { method: 'DELETE' });
+        await cargarNotasYGraphs();
+    } catch (error) {
+        console.error('Error al sacar el graph del aire:', error);
     }
 }
 

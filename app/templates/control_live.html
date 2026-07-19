@@ -73,6 +73,25 @@
 {% endblock extra_style %}
 
 {% block body %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
+                <a href="/principal" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Control de Guiones</a>
+                <a href="/siguiente" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Próxima Nota</a>
+                <a href="/listado_guiones" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Guiones</a>
+                <a href="/plantillas" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Plantillas de Gráfica</a>
+                <button onclick="window.location.href='/'" class="btn btn-success mb-2 mb-lg-0">Menu</button>
+            </div>
+        </div>
+    </div>
+</nav>
 <div class="container-fluid mt-4">
     <h2>Control en vivo</h2>
     <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
@@ -92,10 +111,29 @@
             <div id="lienzo-wrapper">
                 <div id="lienzo-control"></div>
             </div>
+            <div class="card p-2 mt-2">
+                <div class="d-flex flex-wrap align-items-center" style="gap: 1.25rem;">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="panel-mostrar-ticker">
+                        <label class="form-check-label" for="panel-mostrar-ticker">Ticker</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="panel-mostrar-vivo">
+                        <label class="form-check-label" for="panel-mostrar-vivo">Vivo</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="panel-mostrar-mosca">
+                        <label class="form-check-label" for="panel-mostrar-mosca">Mosca</label>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm ml-auto" onclick="sacarGraphDelAire()">
+                        <i class="fas fa-power-off"></i> Sacar del aire (graph)
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="col-md-3">
             <div id="panel-propiedades-control" class="card p-3">
-                <p class="text-muted">Seleccioná el ticker, el badge Vivo o un graph para editar sus propiedades.</p>
+                <p class="text-muted">Seleccioná el ticker, el badge Vivo, la Mosca o un graph para editar sus propiedades.</p>
             </div>
         </div>
     </div>

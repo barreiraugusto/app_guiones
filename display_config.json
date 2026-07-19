@@ -1,6 +1,6 @@
 {
     "layout": {
-        "main_vertical": "700px",
+        "main_vertical": "800px",
         "main_horizontal": "50px"
     },
     "badges": {
@@ -12,8 +12,34 @@
     "live": {
         "show": true,
         "text": "VIVO",
-        "top": "150px",
-        "right": "150px"
+        "top": 134,
+        "right": "30px",
+        "left": 1670,
+        "fuente": "Arial",
+        "tamano_fuente": 20,
+        "negrita": true,
+        "cursiva": false
     },
-    "last_updated": "2025-08-15T01:50:35.506101"
+    "last_updated": "2026-07-19T00:44:29.275809",
+    "ticker": {
+        "show": true,
+        "text": "Arrastrame para probar el tickerdddddd ALGO MAS LARGO PARA QUE SE VEA MEJOR EN LA PANTALLA  Y CLARO ACA SE VE QUE LE FALTNA CARACTERES PARA OCUPAR TODA LA PANTALLA Y TODAVIA LE FALTA ALGO MAS",
+        "speed_seconds": 30,
+        "color": "#ffffff",
+        "bg_color": "#232939",
+        "top": 1002,
+        "height": 51,
+        "left": 276,
+        "width": 1643,
+        "scroll_direccion": "izquierda",
+        "angulo": 0,
+        "fuente": "Arial",
+        "tamano_fuente": 32,
+        "negrita": false,
+        "cursiva": false
+    },
+    "mosca": {
+        "capa_id": 814,
+        "show": true
+    }
 }
