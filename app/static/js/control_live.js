@@ -213,6 +213,8 @@ async function cargarConfig() {
         cursiva: !!(config.marcador && config.marcador.cursiva),
         color: (config.marcador && config.marcador.color) || '#ffffff',
         bg_color: (config.marcador && config.marcador.bg_color) || '#000000',
+        opacidad_fondo: (config.marcador && config.marcador.opacidad_fondo) !== undefined ? Math.max(0, Math.min(100, parseInt(config.marcador.opacidad_fondo))) : 100,
+        radio_esquina: parseInt(config.marcador && config.marcador.radio_esquina) || 0,
     };
 
     renderizarLienzo();
@@ -540,7 +542,8 @@ function crearElementoMarcador() {
     el.style.top = `${marcadorState.top}px`;
     el.style.width = `${marcadorState.width}px`;
     el.style.height = `${marcadorState.height}px`;
-    el.style.backgroundColor = marcadorState.bg_color;
+    el.style.backgroundColor = colorFondoConOpacidad(marcadorState.bg_color, marcadorState.opacidad_fondo);
+    el.style.borderRadius = `${marcadorState.radio_esquina}px`;
     el.style.color = marcadorState.color;
     el.style.zIndex = 900;
     el.style.opacity = marcadorState.show ? '1' : '0.35';
@@ -1065,6 +1068,14 @@ function renderizarPanelPropiedades() {
                 <input type="color" class="form-control" id="prop-marc-bgcolor" value="${marcadorState.bg_color}">
             </div>
             <div class="form-group mb-2">
+                <label>Opacidad de fondo</label>
+                <input type="number" class="form-control" id="prop-marc-opacidad-fondo" min="0" max="100" value="${marcadorState.opacidad_fondo}">
+            </div>
+            <div class="form-group mb-2">
+                <label>Radio de esquina</label>
+                <input type="number" class="form-control" id="prop-marc-radio-esquina" min="0" value="${marcadorState.radio_esquina}">
+            </div>
+            <div class="form-group mb-2">
                 <label>Fuente</label>
                 <select class="form-control" id="prop-marc-fuente">
                     ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(marcadorState.fuente) && marcadorState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
@@ -1145,6 +1156,16 @@ function renderizarPanelPropiedades() {
         });
         document.getElementById('prop-marc-cursiva').addEventListener('change', (e) => {
             marcadorState.cursiva = e.target.checked;
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-opacidad-fondo').addEventListener('blur', (e) => {
+            marcadorState.opacidad_fondo = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+            guardarSeccion('marcador', marcadorState);
+            renderizarLienzo();
+        });
+        document.getElementById('prop-marc-radio-esquina').addEventListener('blur', (e) => {
+            marcadorState.radio_esquina = Math.max(0, parseInt(e.target.value) || 0);
             guardarSeccion('marcador', marcadorState);
             renderizarLienzo();
         });
