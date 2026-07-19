@@ -583,7 +583,7 @@ def _resolver_mosca(mosca_config):
     display_config.json (independiente de si hay un graph activo)."""
     show = bool(mosca_config.get('show', True))
     capa_id = mosca_config.get('capa_id')
-    if not show or not capa_id:
+    if not capa_id:
         return {"show": show, "capa": None}
 
     capa = PlantillaCapa.query.get(capa_id)
