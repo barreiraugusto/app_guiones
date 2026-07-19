@@ -4,8 +4,47 @@
 {% block extra_style %}
 <style>
     body { padding-top: 70px; }
-    #lista-plantillas .plantilla-card { cursor: pointer; }
     #editor-plantilla { display: none; }
+
+    #preview-lienzo-wrapper {
+        background: repeating-conic-gradient(#ccc 0% 25%, #eee 0% 50%) 50% / 20px 20px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #999;
+        width: 100%;
+        max-width: 960px;
+        aspect-ratio: 16 / 9;
+    }
+
+    #preview-lienzo {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        transform: scale(0.5);
+        transform-origin: top left;
+    }
+
+    .capa-preview {
+        position: absolute;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .capa-preview img, .capa-preview video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+    }
+
+    .capa-preview .capa-texto-preview {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        pointer-events: none;
+        white-space: nowrap;
+    }
 
     #lienzo-wrapper {
         background: repeating-conic-gradient(#ccc 0% 25%, #eee 0% 50%) 50% / 20px 20px;
@@ -86,14 +125,19 @@
 <div class="container-fluid mt-4">
     <h2>Plantillas de Gráfica</h2>
 
-    <div id="lista-plantillas" class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card plantilla-card h-100 border-primary" onclick="nuevaPlantilla()">
-                <div class="card-body text-center d-flex align-items-center justify-content-center">
-                    <div>
-                        <i class="fas fa-plus fa-2x"></i>
-                        <p class="mt-2 mb-0">Nueva plantilla</p>
-                    </div>
+    <div id="vista-listado" class="row mb-4">
+        <div class="col-md-3">
+            <div class="list-group" id="lista-plantillas">
+                <button type="button" class="list-group-item list-group-item-action list-group-item-primary" onclick="nuevaPlantilla()">
+                    <i class="fas fa-plus"></i> Nueva plantilla
+                </button>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div id="preview-plantilla" class="card p-3">
+                <p class="text-muted" id="preview-plantilla-vacio">Seleccioná una plantilla para ver su preview.</p>
+                <div id="preview-lienzo-wrapper" style="display:none;">
+                    <div id="preview-lienzo"></div>
                 </div>
             </div>
         </div>
