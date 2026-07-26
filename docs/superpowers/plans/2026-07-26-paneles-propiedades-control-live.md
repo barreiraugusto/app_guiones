@@ -45,6 +45,11 @@ Bootstrap 4.1.3 (mismas clases `nav nav-tabs nav-fill` que en
   marcador).
 - No hay suite de tests automatizados en este proyecto. Verificación:
   `node --check` para sintaxis + navegador real para comportamiento.
+- El `node` de este entorno es v12.22.9, que no soporta `??`/`?.`
+  (usados ya hoy en otras partes de `control_live.js`, sin relación con
+  este cambio). Por eso cada paso de verificación de sintaxis pasa el
+  archivo por un `sed` que reemplaza esos operadores antes de chequear
+  — no es algo a "corregir" en el archivo real, es solo el chequeo.
 
 ---
 
@@ -110,7 +115,8 @@ function seleccionarElemento(nombre) {
 
 ```bash
 cd /home/augusto/Documentos/CODIGOS/APP_GUIONES/app_guiones
-node --check app/static/js/control_live.js && echo "sintaxis OK"
+sed 's/^export //; s/??/||/g; s/?\.\([a-zA-Z_]\)/\.\1/g' app/static/js/control_live.js > /tmp/cl_panel_checkable.js
+node --check /tmp/cl_panel_checkable.js && echo "sintaxis OK"
 ```
 
 Expected: `sintaxis OK`.
@@ -331,7 +337,8 @@ final del bloque, agregar:
 
 ```bash
 cd /home/augusto/Documentos/CODIGOS/APP_GUIONES/app_guiones
-node --check app/static/js/control_live.js && echo "sintaxis OK"
+sed 's/^export //; s/??/||/g; s/?\.\([a-zA-Z_]\)/\.\1/g' app/static/js/control_live.js > /tmp/cl_panel_checkable.js
+node --check /tmp/cl_panel_checkable.js && echo "sintaxis OK"
 ```
 
 Expected: `sintaxis OK`.
@@ -508,7 +515,8 @@ hasta su `return;` (líneas 820-911 del archivo original: el
 
 ```bash
 cd /home/augusto/Documentos/CODIGOS/APP_GUIONES/app_guiones
-node --check app/static/js/control_live.js && echo "sintaxis OK"
+sed 's/^export //; s/??/||/g; s/?\.\([a-zA-Z_]\)/\.\1/g' app/static/js/control_live.js > /tmp/cl_panel_checkable.js
+node --check /tmp/cl_panel_checkable.js && echo "sintaxis OK"
 ```
 
 - [ ] **Step 3: Verificación manual en navegador**
@@ -686,7 +694,8 @@ hasta su `return;` (líneas 931-1053 del archivo original), por:
 
 ```bash
 cd /home/augusto/Documentos/CODIGOS/APP_GUIONES/app_guiones
-node --check app/static/js/control_live.js && echo "sintaxis OK"
+sed 's/^export //; s/??/||/g; s/?\.\([a-zA-Z_]\)/\.\1/g' app/static/js/control_live.js > /tmp/cl_panel_checkable.js
+node --check /tmp/cl_panel_checkable.js && echo "sintaxis OK"
 ```
 
 - [ ] **Step 3: Verificación manual en navegador**
@@ -865,7 +874,8 @@ hasta su `return;` (líneas 1055-1177 del archivo original), por:
 
 ```bash
 cd /home/augusto/Documentos/CODIGOS/APP_GUIONES/app_guiones
-node --check app/static/js/control_live.js && echo "sintaxis OK"
+sed 's/^export //; s/??/||/g; s/?\.\([a-zA-Z_]\)/\.\1/g' app/static/js/control_live.js > /tmp/cl_panel_checkable.js
+node --check /tmp/cl_panel_checkable.js && echo "sintaxis OK"
 ```
 
 - [ ] **Step 3: Verificación manual en navegador**
