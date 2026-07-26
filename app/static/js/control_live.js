@@ -983,49 +983,61 @@ function renderizarPanelPropiedades() {
     if (elementoSeleccionado === 'cronometro') {
         panel.innerHTML = `
             <h6>Cronómetro</h6>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-cron-top" value="${cronometroState.top}"></div>
-                <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-cron-height" value="${cronometroState.height}"></div>
+            <ul class="nav nav-tabs nav-fill mb-3" style="font-size: 0.85rem;">
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'posicion' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('posicion')">Posición</button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'estilo' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('estilo')">Estilo</button>
+                </li>
+            </ul>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'posicion' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-cron-top" value="${cronometroState.top}"></div>
+                    <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-cron-height" value="${cronometroState.height}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-cron-left" value="${cronometroState.left}"></div>
+                    <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-cron-width" value="${cronometroState.width}"></div>
+                </div>
             </div>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-cron-left" value="${cronometroState.left}"></div>
-                <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-cron-width" value="${cronometroState.width}"></div>
-            </div>
-            <div class="form-group mb-2">
-                <label>Color texto</label>
-                <input type="color" class="form-control" id="prop-cron-color" value="${cronometroState.color}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Color fondo</label>
-                <input type="color" class="form-control" id="prop-cron-bgcolor" value="${cronometroState.bg_color}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Opacidad de fondo</label>
-                <input type="number" class="form-control" id="prop-cron-opacidad-fondo" min="0" max="100" value="${cronometroState.opacidad_fondo}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Radio de esquina</label>
-                <input type="number" class="form-control" id="prop-cron-radio-esquina" min="0" value="${cronometroState.radio_esquina}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Fuente</label>
-                <select class="form-control" id="prop-cron-fuente">
-                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(cronometroState.fuente) && cronometroState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
-                    <option value="__custom__" ${!FUENTES_FIJAS.includes(cronometroState.fuente) ? 'selected' : ''}>Personalizada...</option>
-                </select>
-                <input type="text" class="form-control mt-1" id="prop-cron-fuente-custom" value="${cronometroState.fuente}" style="${!FUENTES_FIJAS.includes(cronometroState.fuente) ? '' : 'display:none;'}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Tamaño de fuente</label>
-                <input type="number" class="form-control" id="prop-cron-tamano" value="${cronometroState.tamano_fuente}">
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-cron-negrita" ${cronometroState.negrita ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-cron-negrita">Negrita</label>
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-cron-cursiva" ${cronometroState.cursiva ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-cron-cursiva">Cursiva</label>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'estilo' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Color texto</label><input type="color" class="form-control" id="prop-cron-color" value="${cronometroState.color}"></div>
+                    <div class="col-6 form-group mb-2"><label>Color fondo</label><input type="color" class="form-control" id="prop-cron-bgcolor" value="${cronometroState.bg_color}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Opacidad de fondo</label><input type="number" class="form-control" id="prop-cron-opacidad-fondo" min="0" max="100" value="${cronometroState.opacidad_fondo}"></div>
+                    <div class="col-6 form-group mb-2"><label>Radio de esquina</label><input type="number" class="form-control" id="prop-cron-radio-esquina" min="0" value="${cronometroState.radio_esquina}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2">
+                        <label>Fuente</label>
+                        <select class="form-control" id="prop-cron-fuente">
+                            ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(cronometroState.fuente) && cronometroState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            <option value="__custom__" ${!FUENTES_FIJAS.includes(cronometroState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                        </select>
+                        <input type="text" class="form-control mt-1" id="prop-cron-fuente-custom" value="${cronometroState.fuente}" style="${!FUENTES_FIJAS.includes(cronometroState.fuente) ? '' : 'display:none;'}">
+                    </div>
+                    <div class="col-6 form-group mb-2">
+                        <label>Tamaño de fuente</label>
+                        <input type="number" class="form-control" id="prop-cron-tamano" value="${cronometroState.tamano_fuente}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-cron-negrita" ${cronometroState.negrita ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-cron-negrita">Negrita</label>
+                    </div>
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-cron-cursiva" ${cronometroState.cursiva ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-cron-cursiva">Cursiva</label>
+                    </div>
+                </div>
             </div>
         `;
 
