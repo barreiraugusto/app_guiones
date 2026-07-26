@@ -652,8 +652,6 @@ function seleccionarElemento(nombre) {
     if (nombre !== elementoSeleccionado) {
         pestanaPropiedadesLiveActiva = 'posicion';
     }
-    graphComposicionId = null;
-    plantillaEnEdicion = null;
     elementoSeleccionado = nombre;
     renderizarLienzo();
     renderizarPanelPropiedades();
@@ -667,7 +665,7 @@ function cambiarPestanaPropiedadesLive(nombre) {
 function renderizarPanelPropiedades() {
     const panel = document.getElementById('panel-propiedades-control');
 
-    if (graphComposicionId) {
+    if (graphComposicionId && !elementoSeleccionado) {
         renderizarPanelComposicion();
         return;
     }
@@ -747,13 +745,13 @@ function renderizarPanelPropiedades() {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-ticker-negrita" ${tickerState.negrita ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-ticker-negrita">Negrita</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-ticker-negrita" class="mr-2" ${tickerState.negrita ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-ticker-negrita">Negrita</label>
                     </div>
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-ticker-cursiva" ${tickerState.cursiva ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-ticker-cursiva">Cursiva</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-ticker-cursiva" class="mr-2" ${tickerState.cursiva ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-ticker-cursiva">Cursiva</label>
                     </div>
                 </div>
             </div>
@@ -894,13 +892,13 @@ function renderizarPanelPropiedades() {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-live-negrita" ${liveState.negrita ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-live-negrita">Negrita</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-live-negrita" class="mr-2" ${liveState.negrita ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-live-negrita">Negrita</label>
                     </div>
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-live-cursiva" ${liveState.cursiva ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-live-cursiva">Cursiva</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-live-cursiva" class="mr-2" ${liveState.cursiva ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-live-cursiva">Cursiva</label>
                     </div>
                 </div>
             </div>
@@ -1029,13 +1027,13 @@ function renderizarPanelPropiedades() {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-cron-negrita" ${cronometroState.negrita ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-cron-negrita">Negrita</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-cron-negrita" class="mr-2" ${cronometroState.negrita ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-cron-negrita">Negrita</label>
                     </div>
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-cron-cursiva" ${cronometroState.cursiva ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-cron-cursiva">Cursiva</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-cron-cursiva" class="mr-2" ${cronometroState.cursiva ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-cron-cursiva">Cursiva</label>
                     </div>
                 </div>
             </div>
@@ -1165,13 +1163,13 @@ function renderizarPanelPropiedades() {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-marc-negrita" ${marcadorState.negrita ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-marc-negrita">Negrita</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-marc-negrita" class="mr-2" ${marcadorState.negrita ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-marc-negrita">Negrita</label>
                     </div>
-                    <div class="col-6 form-check mb-2">
-                        <input type="checkbox" class="form-check-input" id="prop-marc-cursiva" ${marcadorState.cursiva ? 'checked' : ''}>
-                        <label class="form-check-label" for="prop-marc-cursiva">Cursiva</label>
+                    <div class="col-6 mb-2 d-flex align-items-center">
+                        <input type="checkbox" id="prop-marc-cursiva" class="mr-2" ${marcadorState.cursiva ? 'checked' : ''}>
+                        <label class="mb-0" for="prop-marc-cursiva">Cursiva</label>
                     </div>
                 </div>
             </div>
