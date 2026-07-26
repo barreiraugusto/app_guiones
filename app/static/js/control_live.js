@@ -1119,49 +1119,61 @@ function renderizarPanelPropiedades() {
     if (elementoSeleccionado === 'marcador') {
         panel.innerHTML = `
             <h6>Marcador</h6>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-marc-top" value="${marcadorState.top}"></div>
-                <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-marc-height" value="${marcadorState.height}"></div>
+            <ul class="nav nav-tabs nav-fill mb-3" style="font-size: 0.85rem;">
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'posicion' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('posicion')">Posición</button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'estilo' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('estilo')">Estilo</button>
+                </li>
+            </ul>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'posicion' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-marc-top" value="${marcadorState.top}"></div>
+                    <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-marc-height" value="${marcadorState.height}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-marc-left" value="${marcadorState.left}"></div>
+                    <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-marc-width" value="${marcadorState.width}"></div>
+                </div>
             </div>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-marc-left" value="${marcadorState.left}"></div>
-                <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-marc-width" value="${marcadorState.width}"></div>
-            </div>
-            <div class="form-group mb-2">
-                <label>Color texto</label>
-                <input type="color" class="form-control" id="prop-marc-color" value="${marcadorState.color}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Color fondo</label>
-                <input type="color" class="form-control" id="prop-marc-bgcolor" value="${marcadorState.bg_color}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Opacidad de fondo</label>
-                <input type="number" class="form-control" id="prop-marc-opacidad-fondo" min="0" max="100" value="${marcadorState.opacidad_fondo}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Radio de esquina</label>
-                <input type="number" class="form-control" id="prop-marc-radio-esquina" min="0" value="${marcadorState.radio_esquina}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Fuente</label>
-                <select class="form-control" id="prop-marc-fuente">
-                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(marcadorState.fuente) && marcadorState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
-                    <option value="__custom__" ${!FUENTES_FIJAS.includes(marcadorState.fuente) ? 'selected' : ''}>Personalizada...</option>
-                </select>
-                <input type="text" class="form-control mt-1" id="prop-marc-fuente-custom" value="${marcadorState.fuente}" style="${!FUENTES_FIJAS.includes(marcadorState.fuente) ? '' : 'display:none;'}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Tamaño de fuente</label>
-                <input type="number" class="form-control" id="prop-marc-tamano" value="${marcadorState.tamano_fuente}">
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-marc-negrita" ${marcadorState.negrita ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-marc-negrita">Negrita</label>
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-marc-cursiva" ${marcadorState.cursiva ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-marc-cursiva">Cursiva</label>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'estilo' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Color texto</label><input type="color" class="form-control" id="prop-marc-color" value="${marcadorState.color}"></div>
+                    <div class="col-6 form-group mb-2"><label>Color fondo</label><input type="color" class="form-control" id="prop-marc-bgcolor" value="${marcadorState.bg_color}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Opacidad de fondo</label><input type="number" class="form-control" id="prop-marc-opacidad-fondo" min="0" max="100" value="${marcadorState.opacidad_fondo}"></div>
+                    <div class="col-6 form-group mb-2"><label>Radio de esquina</label><input type="number" class="form-control" id="prop-marc-radio-esquina" min="0" value="${marcadorState.radio_esquina}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2">
+                        <label>Fuente</label>
+                        <select class="form-control" id="prop-marc-fuente">
+                            ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(marcadorState.fuente) && marcadorState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            <option value="__custom__" ${!FUENTES_FIJAS.includes(marcadorState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                        </select>
+                        <input type="text" class="form-control mt-1" id="prop-marc-fuente-custom" value="${marcadorState.fuente}" style="${!FUENTES_FIJAS.includes(marcadorState.fuente) ? '' : 'display:none;'}">
+                    </div>
+                    <div class="col-6 form-group mb-2">
+                        <label>Tamaño de fuente</label>
+                        <input type="number" class="form-control" id="prop-marc-tamano" value="${marcadorState.tamano_fuente}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-marc-negrita" ${marcadorState.negrita ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-marc-negrita">Negrita</label>
+                    </div>
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-marc-cursiva" ${marcadorState.cursiva ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-marc-cursiva">Cursiva</label>
+                    </div>
+                </div>
             </div>
         `;
 
