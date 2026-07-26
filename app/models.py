@@ -131,6 +131,8 @@ class PlantillaCapa(db.Model):
     plantilla_id = db.Column(db.Integer, db.ForeignKey('plantilla.id', ondelete="CASCADE"), nullable=False)
     orden = db.Column(db.Integer, nullable=False, default=0)
     tipo = db.Column(db.String(10), nullable=False)  # 'imagen' | 'video' | 'texto'
+    # Nombre opcional para identificar la capa en el listado del editor (no afecta el render).
+    nombre = db.Column(db.String(100), nullable=True)
 
     x = db.Column(db.Integer, nullable=False, default=0)
     y = db.Column(db.Integer, nullable=False, default=0)

@@ -185,7 +185,7 @@ function detalleCapa(capa) {
         return capa.texto_fijo || (capa.campo_dato ? `{{${capa.campo_dato}}}` : 'texto libre');
     }
     if (capa.tipo === 'forma') {
-        return `${capa.ancho}×${capa.alto}`;
+        return capa.nombre || `${capa.ancho}×${capa.alto}`;
     }
     return '';
 }
@@ -336,6 +336,7 @@ function agregarCapa(tipo) {
         id: contadorIdTemporal--,
         orden: capas.length,
         tipo,
+        nombre: null,
         x: 100,
         y: 100,
         ancho: tipo === 'texto' ? 400 : 200,
@@ -439,30 +440,34 @@ function renderizarPanelPropiedades() {
                 <label>Texto fijo:</label>
                 <input type="text" class="form-control" id="prop-texto-fijo" value="${capa.texto_fijo || ''}">
             </div>
-            <div class="form-group mb-2">
-                <label>Fuente:</label>
-                <select class="form-control" id="prop-fuente">
-                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${!esFuentePersonalizada && capa.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
-                    <option value="__custom__" ${esFuentePersonalizada ? 'selected' : ''}>Personalizada...</option>
-                </select>
-                <input type="text" class="form-control mt-1" id="prop-fuente-custom" value="${capa.fuente}" style="${esFuentePersonalizada ? '' : 'display:none;'}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Tamaño:</label>
-                <input type="number" class="form-control" id="prop-tamano" value="${capa.tamano_fuente}">
+            <div class="row">
+                <div class="col-6 form-group mb-2">
+                    <label>Fuente:</label>
+                    <select class="form-control" id="prop-fuente">
+                        ${FUENTES_FIJAS.map(f => `<option value="${f}" ${!esFuentePersonalizada && capa.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                        <option value="__custom__" ${esFuentePersonalizada ? 'selected' : ''}>Personalizada...</option>
+                    </select>
+                    <input type="text" class="form-control mt-1" id="prop-fuente-custom" value="${capa.fuente}" style="${esFuentePersonalizada ? '' : 'display:none;'}">
+                </div>
+                <div class="col-6 form-group mb-2">
+                    <label>Tamaño:</label>
+                    <input type="number" class="form-control" id="prop-tamano" value="${capa.tamano_fuente}">
+                </div>
             </div>
             <div class="small text-muted mb-1">Estilo</div>
-            <div class="form-group mb-2">
-                <label>Color:</label>
-                <input type="color" class="form-control" id="prop-color" value="${capa.color}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Alineación:</label>
-                <select class="form-control" id="prop-alineacion">
-                    <option value="left">Izquierda</option>
-                    <option value="center">Centro</option>
-                    <option value="right">Derecha</option>
-                </select>
+            <div class="row">
+                <div class="col-6 form-group mb-2">
+                    <label>Color:</label>
+                    <input type="color" class="form-control" id="prop-color" value="${capa.color}">
+                </div>
+                <div class="col-6 form-group mb-2">
+                    <label>Alineación:</label>
+                    <select class="form-control" id="prop-alineacion">
+                        <option value="left">Izquierda</option>
+                        <option value="center">Centro</option>
+                        <option value="right">Derecha</option>
+                    </select>
+                </div>
             </div>
             <div class="form-check mb-2">
                 <input type="checkbox" class="form-check-input" id="prop-negrita" ${capa.negrita ? 'checked' : ''}>
@@ -476,12 +481,13 @@ function renderizarPanelPropiedades() {
     } else if (capa.tipo === 'forma') {
         camposEspecificos = `
             <div class="form-group mb-2">
-                <label>Radio de esquina:</label>
-                <input type="number" class="form-control" id="prop-radio-esquina" value="${capa.radio_esquina}">
+                <label>Nombre (para identificarla en la lista):</label>
+                <input type="text" class="form-control" id="prop-nombre" value="${capa.nombre || ''}">
             </div>
-            <div class="form-group mb-2">
-                <label>Color de fondo:</label>
-                <input type="color" class="form-control" id="prop-color-fondo" value="${capa.color_fondo || '#ffffff'}">
+            <div class="row">
+                <div class="col-4 form-group mb-2"><label>Radio de esquina:</label><input type="number" class="form-control" id="prop-radio-esquina" value="${capa.radio_esquina}"></div>
+                <div class="col-4 form-group mb-2"><label>Color de fondo:</label><input type="color" class="form-control" id="prop-color-fondo" value="${capa.color_fondo || '#ffffff'}"></div>
+                <div class="col-4 form-group mb-2"><label>Opacidad (%):</label><input type="number" class="form-control" id="prop-opacidad" min="0" max="100" value="${capa.opacidad}"></div>
             </div>
             <div class="form-check mb-2">
                 <input type="checkbox" class="form-check-input" id="prop-usar-gradiente" ${capa.usar_gradiente ? 'checked' : ''}>
@@ -489,21 +495,14 @@ function renderizarPanelPropiedades() {
             </div>
             <div id="grupo-gradiente" style="${capa.usar_gradiente ? '' : 'display:none;'}">
                 <div class="row">
-                    <div class="col-6 form-group mb-2"><label>Color inicio</label><input type="color" class="form-control" id="prop-gradiente-inicio" value="${capa.gradiente_color_inicio || '#ffffff'}"></div>
-                    <div class="col-6 form-group mb-2"><label>Color fin</label><input type="color" class="form-control" id="prop-gradiente-fin" value="${capa.gradiente_color_fin || '#000000'}"></div>
-                </div>
-                <div class="form-group mb-2">
-                    <label>Ángulo del gradiente (grados):</label>
-                    <input type="number" class="form-control" id="prop-gradiente-angulo" value="${capa.gradiente_angulo}">
+                    <div class="col-4 form-group mb-2"><label>Color inicio</label><input type="color" class="form-control" id="prop-gradiente-inicio" value="${capa.gradiente_color_inicio || '#ffffff'}"></div>
+                    <div class="col-4 form-group mb-2"><label>Color fin</label><input type="color" class="form-control" id="prop-gradiente-fin" value="${capa.gradiente_color_fin || '#000000'}"></div>
+                    <div class="col-4 form-group mb-2"><label>Ángulo (°)</label><input type="number" class="form-control" id="prop-gradiente-angulo" value="${capa.gradiente_angulo}"></div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-6 form-group mb-2"><label>Color de borde</label><input type="color" class="form-control" id="prop-color-borde" value="${capa.color_borde || '#000000'}"></div>
                 <div class="col-6 form-group mb-2"><label>Ancho de borde</label><input type="number" class="form-control" id="prop-ancho-borde" value="${capa.ancho_borde}"></div>
-            </div>
-            <div class="form-group mb-2">
-                <label>Opacidad (%):</label>
-                <input type="number" class="form-control" id="prop-opacidad" min="0" max="100" value="${capa.opacidad}">
             </div>
         `;
     } else {
@@ -693,6 +692,7 @@ function renderizarPanelPropiedades() {
         document.getElementById('prop-negrita').addEventListener('change', (e) => actualizarCapaSeleccionada({ negrita: e.target.checked }));
         document.getElementById('prop-cursiva').addEventListener('change', (e) => actualizarCapaSeleccionada({ cursiva: e.target.checked }));
     } else if (capa.tipo === 'forma') {
+        document.getElementById('prop-nombre').addEventListener('change', (e) => actualizarCapaSeleccionada({ nombre: e.target.value.trim() || null }));
         document.getElementById('prop-radio-esquina').addEventListener('change', (e) => actualizarCapaSeleccionada({ radio_esquina: parseInt(e.target.value) || 0 }));
         document.getElementById('prop-color-fondo').addEventListener('change', (e) => actualizarCapaSeleccionada({ color_fondo: e.target.value }));
         document.getElementById('prop-usar-gradiente').addEventListener('change', (e) => {

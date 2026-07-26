@@ -26,6 +26,7 @@ def _serializar_plantilla(plantilla):
                 "id": capa.id,
                 "orden": capa.orden,
                 "tipo": capa.tipo,
+                "nombre": capa.nombre,
                 "x": capa.x,
                 "y": capa.y,
                 "ancho": capa.ancho,
@@ -87,6 +88,7 @@ def _crear_capas(plantilla, capas_data):
         nueva = PlantillaCapa(
             orden=capa_data.get('orden', i),
             tipo=capa_data['tipo'],
+            nombre=capa_data.get('nombre'),
             x=capa_data.get('x', 0),
             y=capa_data.get('y', 0),
             ancho=capa_data.get('ancho', 200),
@@ -288,6 +290,7 @@ def duplicar_plantilla(id):
             nueva_capa = PlantillaCapa(
                 orden=capa.orden,
                 tipo=capa.tipo,
+                nombre=capa.nombre,
                 x=capa.x,
                 y=capa.y,
                 ancho=capa.ancho,
