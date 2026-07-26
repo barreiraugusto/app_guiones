@@ -38,9 +38,14 @@ let subPestanaAnimacion = 'entrada'; // 'entrada' | 'salida'
 ```
 
 `pestanaPropiedadesActiva` se resetea a `'posicion'` dentro de
-`seleccionarCapa()` (línea 265-269), antes de renderizar, así cada capa que
-se selecciona arranca mostrando Posición. `subPestanaAnimacion` no se
-resetea (es una preferencia de sesión, no de la capa).
+`seleccionarCapa()` (línea 265-269), pero solo cuando la selección
+realmente cambia (`id !== capaSeleccionadaId`), antes de renderizar, así
+cada capa nueva que se selecciona arranca mostrando Posición. Esto importa
+porque `iniciarArrastre`/`iniciarRedimension` llaman a `seleccionarCapa()`
+en cada `mousedown`, incluso al re-seleccionar la capa ya seleccionada
+(para iniciar un arrastre o redimensión); en ese caso la pestaña no debe
+resetearse. `subPestanaAnimacion` no se resetea (es una preferencia de
+sesión, no de la capa).
 
 Dos funciones nuevas, mismo patrón que las demás acciones del archivo
 (mutan estado y vuelven a renderizar el panel):
@@ -118,7 +123,13 @@ string (mismo mecanismo que ya usa `camposEspecificos`), envuelto en
 No se usa el plugin de tabs de Bootstrap: como el panel entero se
 regenera con `innerHTML` en cada acción, es más simple que la pestaña
 activa sea un `if` en JS (mismo patrón que ya se usa para
-`camposEspecificos` según `capa.tipo`) que depender del plugin.
+`camposEspecificos` según `capa.tipo`) que depender del plugin. Los tres
+bloques (Posición/Contenido/Comportamiento) se renderizan siempre los
+tres, cada uno envuelto en su propio `display:none` cuando no está
+activo; no se omite ningún bloque del DOM. Esto es necesario porque los
+~30 `addEventListener` existentes en el archivo apuntan a ids dentro de
+cada bloque de forma incondicional, y fallarían si algún bloque no
+existiera en el DOM.
 
 ### Pestaña "Posición"
 
@@ -178,13 +189,14 @@ Reemplaza el tramo final (línea 519-575), agrupado en dos secciones:
 ```
 
 Los campos de "Entrada" y "Salida" son exactamente los que ya existen
-(línea 535-575); solo se muestra un bloque a la vez según
-`subPestanaAnimacion`, en vez de los dos apilados. Los `id` (`prop-anim-entrada`,
-etc.) y sus listeners (línea 584-594) no cambian — siguen existiendo en el
-DOM aunque su bloque esté oculto por el `if`, porque solo se renderiza el
-bloque activo (igual que `camposEspecificos` ya hace por tipo). Como los 6
-IDs de animación no se solapan entre sí, no hace falta ningún cambio en los
-`addEventListener`.
+(línea 535-575); ambos bloques se renderizan siempre, solo se alterna
+cuál queda visible según `subPestanaAnimacion` (el otro queda con
+`display:none`), en vez de los dos apilados y siempre visibles. Los `id`
+(`prop-anim-entrada`, etc.) y sus listeners (línea 584-594) no cambian —
+siguen existiendo en el DOM aunque su bloque esté oculto, porque ambos
+bloques se renderizan siempre (igual que `camposEspecificos` ya hace por
+tipo). Como los 6 IDs de animación no se solapan entre sí, no hace falta
+ningún cambio en los `addEventListener`.
 
 ## Tema oscuro de `#editor-plantilla`
 

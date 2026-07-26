@@ -23,9 +23,11 @@ con jQuery + Popper en `base.html`).
 ## Global Constraints
 
 - No se toca el modelo de datos de la capa ni ningún endpoint del backend.
-- `pestanaPropiedadesActiva` se resetea a `'posicion'` en cada
-  `seleccionarCapa()` (cambio de capa seleccionada); `subPestanaAnimacion`
-  no se resetea entre capas.
+- `pestanaPropiedadesActiva` se resetea a `'posicion'` en `seleccionarCapa()`
+  solo cuando la selección realmente cambia (`id !== capaSeleccionadaId`),
+  no en cada llamada (`iniciarArrastre`/`iniciarRedimension` llaman a
+  `seleccionarCapa()` en cada mousedown, incluso re-seleccionando la capa ya
+  activa); `subPestanaAnimacion` no se resetea entre capas.
 - Los `id` de los campos (`prop-x`, `prop-anim-entrada`, etc.) y sus
   `addEventListener` existentes no cambian de nombre.
 - Tema oscuro fijo (sin toggle claro/oscuro), aplicado solo dentro de
@@ -89,8 +91,10 @@ por:
 
 ```js
 function seleccionarCapa(id) {
+    if (id !== capaSeleccionadaId) {
+        pestanaPropiedadesActiva = 'posicion';
+    }
     capaSeleccionadaId = id;
-    pestanaPropiedadesActiva = 'posicion';
     renderizarLienzo();
     renderizarPanelPropiedades();
 }
