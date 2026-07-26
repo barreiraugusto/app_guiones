@@ -10,6 +10,7 @@ let cronometroState = {};
 let marcadorState = {};
 let plantillaActual = null;
 let elementoSeleccionado = null; // 'ticker' | 'live' | 'mosca' | 'cronometro' | 'marcador' | null
+let pestanaPropiedadesLiveActiva = 'posicion'; // 'posicion' | 'contenido' | 'estilo'
 let cronometroTerminado = false; // evita repetir el guardado de auto-detención en cada tick
 
 function aplicarEscalaLienzo() {
@@ -648,10 +649,18 @@ function crearElementoMosca() {
 }
 
 function seleccionarElemento(nombre) {
+    if (nombre !== elementoSeleccionado) {
+        pestanaPropiedadesLiveActiva = 'posicion';
+    }
     graphComposicionId = null;
     plantillaEnEdicion = null;
     elementoSeleccionado = nombre;
     renderizarLienzo();
+    renderizarPanelPropiedades();
+}
+
+function cambiarPestanaPropiedadesLive(nombre) {
+    pestanaPropiedadesLiveActiva = nombre;
     renderizarPanelPropiedades();
 }
 
@@ -670,60 +679,83 @@ function renderizarPanelPropiedades() {
                 <input type="checkbox" class="form-check-input" id="prop-ticker-show" ${tickerState.show ? 'checked' : ''}>
                 <label class="form-check-label" for="prop-ticker-show">Mostrar</label>
             </div>
-            <div class="form-group mb-2">
-                <label>Texto</label>
-                <input type="text" class="form-control" id="prop-ticker-text">
+            <ul class="nav nav-tabs nav-fill mb-3" style="font-size: 0.85rem;">
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'posicion' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('posicion')">Posición</button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'contenido' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('contenido')">Contenido</button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'estilo' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('estilo')">Estilo</button>
+                </li>
+            </ul>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'posicion' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-ticker-top" value="${tickerState.top}"></div>
+                    <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-ticker-height" value="${tickerState.height}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-ticker-left" value="${tickerState.left}"></div>
+                    <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-ticker-width" value="${tickerState.width}"></div>
+                </div>
+                <div class="form-group mb-2">
+                    <label>Ángulo</label>
+                    <input type="number" class="form-control" id="prop-ticker-angulo" min="-45" max="45" value="${tickerState.angulo}">
+                </div>
             </div>
-            <div class="form-group mb-2">
-                <label>Velocidad (seg/vuelta)</label>
-                <input type="number" class="form-control" id="prop-ticker-speed" min="1" value="${tickerState.speed_seconds}">
+
+            <div style="${pestanaPropiedadesLiveActiva === 'contenido' ? '' : 'display:none;'}">
+                <div class="form-group mb-2">
+                    <label>Texto</label>
+                    <input type="text" class="form-control" id="prop-ticker-text">
+                </div>
+                <div class="form-group mb-2">
+                    <label>Velocidad (seg/vuelta)</label>
+                    <input type="number" class="form-control" id="prop-ticker-speed" min="1" value="${tickerState.speed_seconds}">
+                </div>
+                <div class="form-group mb-2">
+                    <label>Dirección del texto</label>
+                    <select class="form-control" id="prop-ticker-scroll-direccion">
+                        <option value="izquierda">Derecha → Izquierda</option>
+                        <option value="derecha">Izquierda → Derecha</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group mb-2">
-                <label>Color texto</label>
-                <input type="color" class="form-control" id="prop-ticker-color" value="${tickerState.color}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Color fondo</label>
-                <input type="color" class="form-control" id="prop-ticker-bgcolor" value="${tickerState.bg_color}">
-            </div>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-ticker-top" value="${tickerState.top}"></div>
-                <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-ticker-height" value="${tickerState.height}"></div>
-            </div>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-ticker-left" value="${tickerState.left}"></div>
-                <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-ticker-width" value="${tickerState.width}"></div>
-            </div>
-            <div class="form-group mb-2">
-                <label>Dirección del texto</label>
-                <select class="form-control" id="prop-ticker-scroll-direccion">
-                    <option value="izquierda">Derecha → Izquierda</option>
-                    <option value="derecha">Izquierda → Derecha</option>
-                </select>
-            </div>
-            <div class="form-group mb-2">
-                <label>Ángulo</label>
-                <input type="number" class="form-control" id="prop-ticker-angulo" min="-45" max="45" value="${tickerState.angulo}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Fuente</label>
-                <select class="form-control" id="prop-ticker-fuente">
-                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(tickerState.fuente) && tickerState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
-                    <option value="__custom__" ${!FUENTES_FIJAS.includes(tickerState.fuente) ? 'selected' : ''}>Personalizada...</option>
-                </select>
-                <input type="text" class="form-control mt-1" id="prop-ticker-fuente-custom" value="${tickerState.fuente}" style="${!FUENTES_FIJAS.includes(tickerState.fuente) ? '' : 'display:none;'}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Tamaño de fuente</label>
-                <input type="number" class="form-control" id="prop-ticker-tamano" value="${tickerState.tamano_fuente}">
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-ticker-negrita" ${tickerState.negrita ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-ticker-negrita">Negrita</label>
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-ticker-cursiva" ${tickerState.cursiva ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-ticker-cursiva">Cursiva</label>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'estilo' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Color texto</label><input type="color" class="form-control" id="prop-ticker-color" value="${tickerState.color}"></div>
+                    <div class="col-6 form-group mb-2"><label>Color fondo</label><input type="color" class="form-control" id="prop-ticker-bgcolor" value="${tickerState.bg_color}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2">
+                        <label>Fuente</label>
+                        <select class="form-control" id="prop-ticker-fuente">
+                            ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(tickerState.fuente) && tickerState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            <option value="__custom__" ${!FUENTES_FIJAS.includes(tickerState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                        </select>
+                        <input type="text" class="form-control mt-1" id="prop-ticker-fuente-custom" value="${tickerState.fuente}" style="${!FUENTES_FIJAS.includes(tickerState.fuente) ? '' : 'display:none;'}">
+                    </div>
+                    <div class="col-6 form-group mb-2">
+                        <label>Tamaño de fuente</label>
+                        <input type="number" class="form-control" id="prop-ticker-tamano" value="${tickerState.tamano_fuente}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-ticker-negrita" ${tickerState.negrita ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-ticker-negrita">Negrita</label>
+                    </div>
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-ticker-cursiva" ${tickerState.cursiva ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-ticker-cursiva">Cursiva</label>
+                    </div>
+                </div>
             </div>
         `;
         document.getElementById('prop-ticker-text').value = tickerState.text;
