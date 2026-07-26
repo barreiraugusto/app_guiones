@@ -265,8 +265,10 @@ function crearElementoEditable(capa) {
 }
 
 function seleccionarCapa(id) {
+    if (id !== capaSeleccionadaId) {
+        pestanaPropiedadesActiva = 'posicion';
+    }
     capaSeleccionadaId = id;
-    pestanaPropiedadesActiva = 'posicion';
     renderizarLienzo();
     renderizarPanelPropiedades();
 }
