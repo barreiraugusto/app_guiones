@@ -860,29 +860,49 @@ function renderizarPanelPropiedades() {
                 <label>Texto</label>
                 <input type="text" class="form-control" id="prop-live-text">
             </div>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-live-top" value="${liveState.top}"></div>
-                <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-live-left" value="${liveState.left}"></div>
+            <ul class="nav nav-tabs nav-fill mb-3" style="font-size: 0.85rem;">
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'posicion' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('posicion')">Posición</button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link ${pestanaPropiedadesLiveActiva === 'estilo' ? 'active' : ''}"
+                            onclick="cambiarPestanaPropiedadesLive('estilo')">Estilo</button>
+                </li>
+            </ul>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'posicion' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Top</label><input type="number" class="form-control" id="prop-live-top" value="${liveState.top}"></div>
+                    <div class="col-6 form-group mb-2"><label>Left</label><input type="number" class="form-control" id="prop-live-left" value="${liveState.left}"></div>
+                </div>
             </div>
-            <div class="form-group mb-2">
-                <label>Fuente</label>
-                <select class="form-control" id="prop-live-fuente">
-                    ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(liveState.fuente) && liveState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
-                    <option value="__custom__" ${!FUENTES_FIJAS.includes(liveState.fuente) ? 'selected' : ''}>Personalizada...</option>
-                </select>
-                <input type="text" class="form-control mt-1" id="prop-live-fuente-custom" value="${liveState.fuente}" style="${!FUENTES_FIJAS.includes(liveState.fuente) ? '' : 'display:none;'}">
-            </div>
-            <div class="form-group mb-2">
-                <label>Tamaño de fuente</label>
-                <input type="number" class="form-control" id="prop-live-tamano" value="${liveState.tamano_fuente}">
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-live-negrita" ${liveState.negrita ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-live-negrita">Negrita</label>
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="prop-live-cursiva" ${liveState.cursiva ? 'checked' : ''}>
-                <label class="form-check-label" for="prop-live-cursiva">Cursiva</label>
+
+            <div style="${pestanaPropiedadesLiveActiva === 'estilo' ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2">
+                        <label>Fuente</label>
+                        <select class="form-control" id="prop-live-fuente">
+                            ${FUENTES_FIJAS.map(f => `<option value="${f}" ${FUENTES_FIJAS.includes(liveState.fuente) && liveState.fuente === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            <option value="__custom__" ${!FUENTES_FIJAS.includes(liveState.fuente) ? 'selected' : ''}>Personalizada...</option>
+                        </select>
+                        <input type="text" class="form-control mt-1" id="prop-live-fuente-custom" value="${liveState.fuente}" style="${!FUENTES_FIJAS.includes(liveState.fuente) ? '' : 'display:none;'}">
+                    </div>
+                    <div class="col-6 form-group mb-2">
+                        <label>Tamaño de fuente</label>
+                        <input type="number" class="form-control" id="prop-live-tamano" value="${liveState.tamano_fuente}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-live-negrita" ${liveState.negrita ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-live-negrita">Negrita</label>
+                    </div>
+                    <div class="col-6 form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="prop-live-cursiva" ${liveState.cursiva ? 'checked' : ''}>
+                        <label class="form-check-label" for="prop-live-cursiva">Cursiva</label>
+                    </div>
+                </div>
             </div>
         `;
         document.getElementById('prop-live-text').value = liveState.text;
