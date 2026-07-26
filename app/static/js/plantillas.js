@@ -6,6 +6,8 @@ let plantillaEditandoId = null;
 let capas = [];
 let capaSeleccionadaId = null;
 let contadorIdTemporal = -1;
+let pestanaPropiedadesActiva = 'posicion'; // 'posicion' | 'contenido' | 'comportamiento'
+let subPestanaAnimacion = 'entrada'; // 'entrada' | 'salida'
 
 document.addEventListener('DOMContentLoaded', cargarListadoPlantillas);
 
@@ -264,6 +266,7 @@ function crearElementoEditable(capa) {
 
 function seleccionarCapa(id) {
     capaSeleccionadaId = id;
+    pestanaPropiedadesActiva = 'posicion';
     renderizarLienzo();
     renderizarPanelPropiedades();
 }
@@ -395,6 +398,16 @@ function actualizarCapaSeleccionada(cambios) {
     renderizarLienzo();
 }
 
+function cambiarPestanaPropiedades(nombre) {
+    pestanaPropiedadesActiva = nombre;
+    renderizarPanelPropiedades();
+}
+
+function cambiarSubPestanaAnimacion(nombre) {
+    subPestanaAnimacion = nombre;
+    renderizarPanelPropiedades();
+}
+
 function renderizarPanelPropiedades() {
     const panel = document.getElementById('panel-propiedades');
     const capa = capas.find(c => c.id === capaSeleccionadaId);
@@ -436,6 +449,7 @@ function renderizarPanelPropiedades() {
                 <label>Tamaño:</label>
                 <input type="number" class="form-control" id="prop-tamano" value="${capa.tamano_fuente}">
             </div>
+            <div class="small text-muted mb-1">Estilo</div>
             <div class="form-group mb-2">
                 <label>Color:</label>
                 <input type="color" class="form-control" id="prop-color" value="${capa.color}">
@@ -471,13 +485,15 @@ function renderizarPanelPropiedades() {
                 <input type="checkbox" class="form-check-input" id="prop-usar-gradiente" ${capa.usar_gradiente ? 'checked' : ''}>
                 <label class="form-check-label">Usar gradiente</label>
             </div>
-            <div class="row">
-                <div class="col-6 form-group mb-2"><label>Color inicio</label><input type="color" class="form-control" id="prop-gradiente-inicio" value="${capa.gradiente_color_inicio || '#ffffff'}"></div>
-                <div class="col-6 form-group mb-2"><label>Color fin</label><input type="color" class="form-control" id="prop-gradiente-fin" value="${capa.gradiente_color_fin || '#000000'}"></div>
-            </div>
-            <div class="form-group mb-2">
-                <label>Ángulo del gradiente (grados):</label>
-                <input type="number" class="form-control" id="prop-gradiente-angulo" value="${capa.gradiente_angulo}">
+            <div id="grupo-gradiente" style="${capa.usar_gradiente ? '' : 'display:none;'}">
+                <div class="row">
+                    <div class="col-6 form-group mb-2"><label>Color inicio</label><input type="color" class="form-control" id="prop-gradiente-inicio" value="${capa.gradiente_color_inicio || '#ffffff'}"></div>
+                    <div class="col-6 form-group mb-2"><label>Color fin</label><input type="color" class="form-control" id="prop-gradiente-fin" value="${capa.gradiente_color_fin || '#000000'}"></div>
+                </div>
+                <div class="form-group mb-2">
+                    <label>Ángulo del gradiente (grados):</label>
+                    <input type="number" class="form-control" id="prop-gradiente-angulo" value="${capa.gradiente_angulo}">
+                </div>
             </div>
             <div class="row">
                 <div class="col-6 form-group mb-2"><label>Color de borde</label><input type="color" class="form-control" id="prop-color-borde" value="${capa.color_borde || '#000000'}"></div>
@@ -504,76 +520,127 @@ function renderizarPanelPropiedades() {
     }
 
     panel.innerHTML = `
-        <h6>Capa: ${capa.tipo}</h6>
-        <div class="row">
-            <div class="col-6 form-group mb-2"><label>X</label><input type="number" class="form-control" id="prop-x" value="${capa.x}"></div>
-            <div class="col-6 form-group mb-2"><label>Y</label><input type="number" class="form-control" id="prop-y" value="${capa.y}"></div>
-            <div class="col-6 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-ancho" value="${capa.ancho}"></div>
-            <div class="col-6 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-alto" value="${capa.alto}"></div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Capa: ${ETIQUETA_TIPO_CAPA[capa.tipo] || capa.tipo}</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-link text-muted p-1" type="button"
+                        id="menu-acciones-capa" data-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="menu-acciones-capa">
+                    <button class="dropdown-item" type="button" onclick="moverCapaSeleccionada('frente')">
+                        <i class="fas fa-arrow-up mr-2"></i>Traer al frente
+                    </button>
+                    <button class="dropdown-item" type="button" onclick="moverCapaSeleccionada('fondo')">
+                        <i class="fas fa-arrow-down mr-2"></i>Llevar al fondo
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item text-danger" type="button" onclick="eliminarCapaSeleccionada()">
+                        <i class="fas fa-trash mr-2"></i>Eliminar capa
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="row mb-2">
-            <div class="col-6"><button type="button" class="btn btn-outline-secondary btn-block btn-sm" onclick="moverCapaSeleccionada('frente')"><i class="fas fa-arrow-up"></i> Traer al frente</button></div>
-            <div class="col-6"><button type="button" class="btn btn-outline-secondary btn-block btn-sm" onclick="moverCapaSeleccionada('fondo')"><i class="fas fa-arrow-down"></i> Llevar al fondo</button></div>
+        <ul class="nav nav-tabs nav-fill mb-3" style="font-size: 0.85rem;">
+            <li class="nav-item">
+                <button type="button" class="nav-link ${pestanaPropiedadesActiva === 'posicion' ? 'active' : ''}"
+                        onclick="cambiarPestanaPropiedades('posicion')">Posición</button>
+            </li>
+            <li class="nav-item">
+                <button type="button" class="nav-link ${pestanaPropiedadesActiva === 'contenido' ? 'active' : ''}"
+                        onclick="cambiarPestanaPropiedades('contenido')">Contenido</button>
+            </li>
+            <li class="nav-item">
+                <button type="button" class="nav-link ${pestanaPropiedadesActiva === 'comportamiento' ? 'active' : ''}"
+                        onclick="cambiarPestanaPropiedades('comportamiento')">Comportamiento</button>
+            </li>
+        </ul>
+
+        <div style="${pestanaPropiedadesActiva === 'posicion' ? '' : 'display:none;'}">
+            <div class="row">
+                <div class="col-3 form-group mb-2"><label>X</label><input type="number" class="form-control" id="prop-x" value="${capa.x}"></div>
+                <div class="col-3 form-group mb-2"><label>Y</label><input type="number" class="form-control" id="prop-y" value="${capa.y}"></div>
+                <div class="col-3 form-group mb-2"><label>Ancho</label><input type="number" class="form-control" id="prop-ancho" value="${capa.ancho}"></div>
+                <div class="col-3 form-group mb-2"><label>Alto</label><input type="number" class="form-control" id="prop-alto" value="${capa.alto}"></div>
+            </div>
         </div>
-        ${camposEspecificos}
-        <div class="form-group mb-2">
-            <label>Ocultar junto con (capa de texto):</label>
-            <select class="form-control" id="prop-controlada-por">
-                <option value="">Ninguna</option>
-                ${capas.filter(c => c.tipo === 'texto' && c.id !== capa.id).map(c => `
-                    <option value="${c.id}">${detalleCapa(c)}</option>
-                `).join('')}
-            </select>
-            <small class="text-muted">Si esa capa de texto queda vacía, esta capa también desaparece.</small>
+
+        <div style="${pestanaPropiedadesActiva === 'contenido' ? '' : 'display:none;'}">
+            ${camposEspecificos}
         </div>
-        <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="prop-es-mosca" ${capa.es_mosca ? 'checked' : ''}>
-            <label class="form-check-label" for="prop-es-mosca">Mosca</label>
-            <small class="text-muted d-block">Se controla aparte desde control_live (Mostrar/Ocultar), independiente del graph al aire.</small>
-        </div>
-        <div class="form-group mb-2">
-            <label>Animación entrada:</label>
-            <select class="form-control" id="prop-anim-entrada">
-                <option value="none">Ninguna</option>
-                <option value="fade">Fundido</option>
-                <option value="slide">Deslizar</option>
-            </select>
-        </div>
-        <div class="row">
-            <div class="col-6 form-group mb-2">
-                <label>Dirección entrada</label>
-                <select class="form-control" id="prop-direccion-entrada">
-                    <option value="izquierda">Desde la izquierda</option>
-                    <option value="derecha">Desde la derecha</option>
+
+        <div style="${pestanaPropiedadesActiva === 'comportamiento' ? '' : 'display:none;'}">
+            <div class="small text-muted mb-1">Visibilidad</div>
+            <div class="form-group mb-2">
+                <label>Ocultar junto con (capa de texto):</label>
+                <select class="form-control" id="prop-controlada-por">
+                    <option value="">Ninguna</option>
+                    ${capas.filter(c => c.tipo === 'texto' && c.id !== capa.id).map(c => `
+                        <option value="${c.id}">${detalleCapa(c)}</option>
+                    `).join('')}
                 </select>
+                <small class="text-muted">Si esa capa de texto queda vacía, esta capa también desaparece.</small>
             </div>
-            <div class="col-6 form-group mb-2">
-                <label>Duración entrada (ms)</label>
-                <input type="number" class="form-control" id="prop-duracion-entrada" value="${capa.duracion_entrada_ms}">
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="prop-es-mosca" ${capa.es_mosca ? 'checked' : ''}>
+                <label class="form-check-label" for="prop-es-mosca">Mosca</label>
+                <small class="text-muted d-block">Se controla aparte desde control_live (Mostrar/Ocultar), independiente del graph al aire.</small>
+            </div>
+
+            <div class="small text-muted mt-2 mb-1">Animación</div>
+            <div class="btn-group btn-group-sm btn-block mb-2" role="group">
+                <button type="button" class="btn ${subPestanaAnimacion === 'entrada' ? 'btn-secondary' : 'btn-outline-secondary'}"
+                        onclick="cambiarSubPestanaAnimacion('entrada')">Entrada</button>
+                <button type="button" class="btn ${subPestanaAnimacion === 'salida' ? 'btn-secondary' : 'btn-outline-secondary'}"
+                        onclick="cambiarSubPestanaAnimacion('salida')">Salida</button>
+            </div>
+            <div style="${subPestanaAnimacion === 'entrada' ? '' : 'display:none;'}">
+                <div class="form-group mb-2">
+                    <label>Animación entrada:</label>
+                    <select class="form-control" id="prop-anim-entrada">
+                        <option value="none">Ninguna</option>
+                        <option value="fade">Fundido</option>
+                        <option value="slide">Deslizar</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2">
+                        <label>Dirección entrada</label>
+                        <select class="form-control" id="prop-direccion-entrada">
+                            <option value="izquierda">Desde la izquierda</option>
+                            <option value="derecha">Desde la derecha</option>
+                        </select>
+                    </div>
+                    <div class="col-6 form-group mb-2">
+                        <label>Duración entrada (ms)</label>
+                        <input type="number" class="form-control" id="prop-duracion-entrada" value="${capa.duracion_entrada_ms}">
+                    </div>
+                </div>
+            </div>
+            <div style="${subPestanaAnimacion === 'salida' ? '' : 'display:none;'}">
+                <div class="form-group mb-2">
+                    <label>Animación salida:</label>
+                    <select class="form-control" id="prop-anim-salida">
+                        <option value="none">Ninguna</option>
+                        <option value="fade">Fundido</option>
+                        <option value="slide">Deslizar</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group mb-2">
+                        <label>Dirección salida</label>
+                        <select class="form-control" id="prop-direccion-salida">
+                            <option value="izquierda">Hacia la izquierda</option>
+                            <option value="derecha">Hacia la derecha</option>
+                        </select>
+                    </div>
+                    <div class="col-6 form-group mb-2">
+                        <label>Duración salida (ms)</label>
+                        <input type="number" class="form-control" id="prop-duracion-salida" value="${capa.duracion_salida_ms}">
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="form-group mb-2">
-            <label>Animación salida:</label>
-            <select class="form-control" id="prop-anim-salida">
-                <option value="none">Ninguna</option>
-                <option value="fade">Fundido</option>
-                <option value="slide">Deslizar</option>
-            </select>
-        </div>
-        <div class="row">
-            <div class="col-6 form-group mb-3">
-                <label>Dirección salida</label>
-                <select class="form-control" id="prop-direccion-salida">
-                    <option value="izquierda">Hacia la izquierda</option>
-                    <option value="derecha">Hacia la derecha</option>
-                </select>
-            </div>
-            <div class="col-6 form-group mb-3">
-                <label>Duración salida (ms)</label>
-                <input type="number" class="form-control" id="prop-duracion-salida" value="${capa.duracion_salida_ms}">
-            </div>
-        </div>
-        <button class="btn btn-outline-danger btn-block" onclick="eliminarCapaSeleccionada()">Eliminar capa</button>
     `;
 
     document.getElementById('prop-x').addEventListener('change', (e) => actualizarCapaSeleccionada({ x: parseInt(e.target.value) || 0 }));
@@ -626,7 +693,10 @@ function renderizarPanelPropiedades() {
     } else if (capa.tipo === 'forma') {
         document.getElementById('prop-radio-esquina').addEventListener('change', (e) => actualizarCapaSeleccionada({ radio_esquina: parseInt(e.target.value) || 0 }));
         document.getElementById('prop-color-fondo').addEventListener('change', (e) => actualizarCapaSeleccionada({ color_fondo: e.target.value }));
-        document.getElementById('prop-usar-gradiente').addEventListener('change', (e) => actualizarCapaSeleccionada({ usar_gradiente: e.target.checked }));
+        document.getElementById('prop-usar-gradiente').addEventListener('change', (e) => {
+            actualizarCapaSeleccionada({ usar_gradiente: e.target.checked });
+            document.getElementById('grupo-gradiente').style.display = e.target.checked ? '' : 'none';
+        });
         document.getElementById('prop-gradiente-inicio').addEventListener('change', (e) => actualizarCapaSeleccionada({ gradiente_color_inicio: e.target.value }));
         document.getElementById('prop-gradiente-fin').addEventListener('change', (e) => actualizarCapaSeleccionada({ gradiente_color_fin: e.target.value }));
         document.getElementById('prop-gradiente-angulo').addEventListener('change', (e) => actualizarCapaSeleccionada({ gradiente_angulo: parseInt(e.target.value) || 0 }));
