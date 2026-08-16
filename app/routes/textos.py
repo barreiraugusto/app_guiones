@@ -9,7 +9,6 @@ from sqlalchemy.orm import joinedload, selectinload
 from .. import db
 from ..models import Texto, Guion, Graph, Cita, Bajada
 import requests
-from flask import request, jsonify
 
 textos_bp = Blueprint('textos', __name__)
 
@@ -610,128 +609,11 @@ def obtener_guiones():
         return jsonify({"error": str(e)}), 500
 
 
-# Agrega esto a textos.py
-@textos_bp.route('/textos/para-grabar/<int:guion_id>', methods=['GET'])
-def textos_para_grabar(guion_id):
-    """Obtiene textos para grabar con sus graphs asociados"""
-    try:
-        # Filtrar textos que tienen grabar=True y pertenecen al guion
-        textos = Texto.query.filter_by(
-            guion_id=guion_id,
-            grabar=True
-        ).options(
-            joinedload(Texto.graphs)  # Cargar graphs asociados
-        ).all()
-
-        result = []
-        for texto in textos:
-            # Obtener el tema del primer graph (si existe)
-            tema_grabacion = ""
-            if texto.graphs:
-                # Ordenar por ID y tomar el primer graph
-                primer_graph = sorted(texto.graphs, key=lambda g: g.id)[0]
-                tema_grabacion = primer_graph.tema or ""
-
-            result.append({
-                "id": texto.id,
-                "numero_de_nota": texto.numero_de_nota,
-                "titulo": texto.titulo,
-                "material": texto.material or "",
-                "tema_grabacion": tema_grabacion,  # Nuevo campo
-                "tiene_graphs": len(texto.graphs) > 0
-            })
-
-        return jsonify(result)
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-# @textos_bp.route('/proxy/iniciar_grabacion', methods=['POST'])
-# def proxy_iniciar_grabacion():
-#     try:
-#         data = request.json
-#         texto_id = data.get('texto_id')
-#         titulo = data.get('titulo')
-#         guion_nombre = data.get('guion_nombre')
-#
-#         print(f"Proxy iniciar - Parámetros recibidos: texto_id={texto_id}, titulo={titulo}, guion={guion_nombre}")
-#
-#         if not all([texto_id, titulo, guion_nombre]):
-#             return jsonify({
-#                 "success": False,
-#                 "message": "Faltan parámetros"
-#             }), 400
-#
-#         # Obtener el tema del primer graph
-#         nombre_para_grabacion = titulo
-#
-#         try:
-#             texto = Texto.query.get(texto_id)
-#             if texto and texto.graphs:
-#                 graphs_ordenados = sorted(texto.graphs, key=lambda g: g.id)
-#                 primer_graph = graphs_ordenados[0] if graphs_ordenados else None
-#
-#                 if primer_graph and primer_graph.tema and primer_graph.tema.strip():
-#                     nombre_para_grabacion = primer_graph.tema.strip()
-#                     print(f"Usando tema del graph: {nombre_para_grabacion}")
-#         except Exception as e:
-#             print(f"Error obteniendo tema: {e}")
-#             # Continuar con el título
-#
-#         # URL del PHP - USAR LA NUEVA VERSIÓN SIMPLE
-#         php_url = "http://192.168.2.62/grabar_nota_con_nombre_simple.php"
-#
-#         # Parámetros
-#         params = {
-#             'texto_id': texto_id,
-#             'titulo': nombre_para_grabacion,
-#             'guion_nombre': guion_nombre
-#         }
-#
-#         print(f"Enviando a PHP: {php_url} con params: {params}")
-#
-#         # Timeout más largo
-#         response = requests.get(php_url, params=params, timeout=15)
-#
-#         print(f"Respuesta PHP: status={response.status_code}, text={response.text[:100]}")
-#
-#         if response.status_code == 200:
-#             return jsonify({
-#                 "success": True,
-#                 "message": response.text
-#             }), 200
-#         else:
-#             return jsonify({
-#                 "success": False,
-#                 "message": f"Error PHP: {response.status_code} - {response.text[:100]}"
-#             }), response.status_code
-#
-#     except requests.exceptions.Timeout:
-#         print("Timeout al conectar con PHP")
-#         return jsonify({
-#             "success": False,
-#             "message": "Timeout: El servidor de grabación no responde"
-#         }), 504
-#     except requests.exceptions.ConnectionError:
-#         print("Connection error al conectar con PHP")
-#         return jsonify({
-#             "success": False,
-#             "message": "No se pudo conectar con el servidor de grabación"
-#         }), 502
-#     except Exception as e:
-#         print(f"Error interno en proxy: {str(e)}")
-#         return jsonify({
-#             "success": False,
-#             "message": f"Error interno: {str(e)}"
-#         }), 500
-
-
 @textos_bp.route('/proxy/detener_grabacion', methods=['POST'])
 def proxy_detener_grabacion():
     try:
         # USAR LA NUEVA VERSIÓN SIMPLE
-        php_url = "http://192.168.2.62/detener_grabacion_simple.php"
+        php_url = f"{current_app.config['RECORDING_SERVER_URL']}/detener_grabacion_simple.php"
 
         print("Enviando solicitud de detención a PHP")
         response = requests.get(php_url, timeout=10)
@@ -799,7 +681,7 @@ def proxy_iniciar_grabacion_control():
             # Continuar con el título
 
         # 2. URL del NUEVO PHP con control
-        php_url = "http://192.168.2.62/grabar_nota_con_nombre_control.php"
+        php_url = f"{current_app.config['RECORDING_SERVER_URL']}/grabar_nota_con_nombre_control.php"
 
         # 3. Parámetros
         params = {
@@ -861,7 +743,7 @@ def proxy_detener_grabacion_limpia():
     """
     try:
         # URL del NUEVO PHP de detención limpia
-        php_url = "http://192.168.2.62/detener_grabacion_limpio.php"
+        php_url = f"{current_app.config['RECORDING_SERVER_URL']}/detener_grabacion_limpio.php"
 
         print("Enviando solicitud de detención limpia a PHP")
         response = requests.get(php_url, timeout=15)
@@ -907,7 +789,7 @@ def proxy_estado_grabacion():
     Proxy para obtener estado actual de la grabación
     """
     try:
-        php_url = "http://192.168.2.62/estado_grabacion.php"
+        php_url = f"{current_app.config['RECORDING_SERVER_URL']}/estado_grabacion.php"
 
         response = requests.get(php_url, timeout=5)
 
@@ -917,24 +799,4 @@ def proxy_estado_grabacion():
         return jsonify({
             "success": False,
             "message": f"Error obteniendo estado: {str(e)}"
-        }), 500
-
-
-# Mantén el proxy antiguo para compatibilidad
-@textos_bp.route('/proxy/iniciar_grabacion', methods=['POST'])
-def proxy_iniciar_grabacion():
-    """Proxy antiguo (para compatibilidad)"""
-    try:
-        data = request.json
-        texto_id = data.get('texto_id')
-        titulo = data.get('titulo')
-        guion_nombre = data.get('guion_nombre')
-
-        # Redirigir al nuevo endpoint
-        return proxy_iniciar_grabacion_control()
-
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"Error: {str(e)}"
         }), 500

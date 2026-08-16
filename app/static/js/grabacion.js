@@ -4,6 +4,12 @@
 window.estadosGrabacion = {};
 window.guionSeleccionadoId = null;
 
+// Escapa comillas simples y backslashes para poder interpolar un valor
+// dentro de un atributo onclick="...('valor')" sin romper el HTML.
+function escaparParaJs(str) {
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 // ===== FUNCIONES DE INICIALIZACIÓN =====
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -233,7 +239,7 @@ async function cargarNotasParaGrabar(guionId) {
                     <span class="status-indicator status-espera"></span>En espera
                 </td>
                 <td class="align-middle acciones-grabacion">
-                    <button class="btn btn-rec" onclick="iniciarGrabacion('${texto.id}', '${texto.titulo}', '${guionNombre}')">
+                    <button class="btn btn-rec" onclick="iniciarGrabacionControl('${texto.id}', '${escaparParaJs(texto.titulo)}', '${escaparParaJs(guionNombre)}')">
                         <i class="fas fa-circle"></i> REC
                     </button>
                 </td>
@@ -258,201 +264,6 @@ async function cargarNotasParaGrabar(guionId) {
                 </tr>
             `;
         }
-    }
-}
-
-// Función para iniciar grabación
-async function iniciarGrabacion(textoId, titulo, guionNombre) {
-    console.log('Iniciando grabación:', {textoId, titulo, guionNombre});
-
-    if (!window.guionSeleccionadoId) {
-        mostrarError('Primero selecciona un guion');
-        return;
-    }
-
-    // Actualizar estado inmediatamente
-    window.estadosGrabacion[textoId] = 'grabando';
-    actualizarInterfazGrabacion(textoId, 'grabando');
-
-    try {
-        const response = await fetch('/proxy/iniciar_grabacion', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                texto_id: textoId,
-                titulo: titulo,
-                guion_nombre: guionNombre
-            })
-        });
-
-        const data = await response.json();
-        console.log('Respuesta del proxy:', data);
-
-        if (data.success) {
-            mostrarMensajeExito(data.message || 'Grabación iniciada');
-        } else {
-            throw new Error(data.message || 'Error desconocido');
-        }
-    } catch (error) {
-        console.error('Error iniciando grabación:', error);
-        mostrarError('Error al iniciar la grabación: ' + error.message);
-        window.estadosGrabacion[textoId] = 'espera';
-        actualizarInterfazGrabacion(textoId, 'espera');
-    }
-}
-
-// Función para detener grabación
-async function detenerGrabacion(textoId, titulo) {
-    console.log('Deteniendo grabación:', {textoId, titulo});
-
-    if (!window.estadosGrabacion[textoId] || window.estadosGrabacion[textoId] !== 'grabando') {
-        mostrarError('No hay grabación activa para detener');
-        return;
-    }
-
-    if (!confirm(`¿Detener grabación: "${titulo}"?`)) return;
-
-    // Estado deteniendo
-    window.estadosGrabacion[textoId] = 'deteniendo';
-    actualizarInterfazGrabacion(textoId, 'deteniendo');
-
-    try {
-        const response = await fetch('/proxy/detener_grabacion', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                texto_id: textoId,
-                titulo: titulo
-            })
-        });
-
-        const data = await response.json();
-        console.log('Respuesta detención:', data);
-
-        if (data.success) {
-            window.estadosGrabacion[textoId] = 'detenido';
-            actualizarInterfazGrabacion(textoId, 'detenido');
-            mostrarMensajeExito(data.message || 'Grabación detenida');
-
-            // Después de 2 segundos, marcar como grabado
-            setTimeout(() => {
-                if (window.estadosGrabacion[textoId] === 'detenido') {
-                    window.estadosGrabacion[textoId] = 'grabado';
-                    actualizarInterfazGrabacion(textoId, 'grabado');
-                }
-            }, 2000);
-
-        } else {
-            // Si no había grabación activa, marcar como grabado
-            if (data.message.includes('No se encontraron') || data.message.includes('no hay')) {
-                window.estadosGrabacion[textoId] = 'grabado';
-                actualizarInterfazGrabacion(textoId, 'grabado');
-                mostrarMensajeExito('No había grabación activa');
-            } else {
-                throw new Error(data.message);
-            }
-        }
-    } catch (error) {
-        console.error('Error deteniendo grabación:', error);
-        mostrarError('Error al detener: ' + error.message);
-
-        // Aún así intentar marcar como detenido
-        window.estadosGrabacion[textoId] = 'detenido';
-        actualizarInterfazGrabacion(textoId, 'detenido');
-    }
-}
-
-// En tu grabacion.js o grabacion.html, modifica la función detenerGrabacion:
-
-async function detenerGrabacionLimpia(textoId, titulo) {
-    if (!window.estadosGrabacion[textoId] || window.estadosGrabacion[textoId] !== 'grabando') {
-        mostrarError('No hay grabación activa para detener');
-        return;
-    }
-
-    if (!confirm(`¿Detener grabación "${titulo}" limpiamente?\n\nEsto permitirá que ffmpeg cierre el archivo correctamente.`)) {
-        return;
-    }
-
-    // Estado deteniendo
-    window.estadosGrabacion[textoId] = 'deteniendo';
-    actualizarInterfazGrabacion(textoId, 'deteniendo');
-
-    try {
-        // Usar el nuevo endpoint de detención limpia
-        const response = await fetch('/proxy/detener_grabacion_limpia', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                texto_id: textoId,
-                titulo: titulo
-            })
-        });
-
-        const data = await response.json();
-        console.log('Respuesta detención limpia:', data);
-
-        if (data.success) {
-            window.estadosGrabacion[textoId] = 'detenido';
-            actualizarInterfazGrabacion(textoId, 'detenido');
-
-            let mensaje = data.message;
-            if (data.tamano) {
-                mensaje += ` (${data.tamano})`;
-            }
-            if (data.duracion) {
-                mensaje += ` [${data.duracion}]`;
-            }
-
-            mostrarMensajeExito(mensaje);
-
-            // Después de 3 segundos, marcar como grabado
-            setTimeout(() => {
-                if (window.estadosGrabacion[textoId] === 'detenido') {
-                    window.estadosGrabacion[textoId] = 'grabado';
-                    actualizarInterfazGrabacion(textoId, 'grabado');
-                }
-            }, 3000);
-
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.error('Error deteniendo limpiamente:', error);
-        mostrarError('Error al detener: ' + error.message);
-
-        // Intentar con el método antiguo como fallback
-        setTimeout(() => {
-            detenerGrabacionForzada(textoId, titulo);
-        }, 1000);
-    }
-}
-
-// Función de fallback forzada
-async function detenerGrabacionForzada(textoId, titulo) {
-    console.log('Usando detención forzada como fallback');
-
-    try {
-        const response = await fetch('http://192.168.2.62/detener_grabacion.php', {
-            method: 'GET',
-            mode: 'no-cors'
-        });
-
-        // Con no-cors no podemos leer respuesta, pero asumimos enviada
-        window.estadosGrabacion[textoId] = 'detenido';
-        actualizarInterfazGrabacion(textoId, 'detenido');
-        mostrarMensajeExito('Solicitud de detención forzada enviada');
-
-    } catch (error) {
-        console.warn('Error en detención forzada:', error);
-        window.estadosGrabacion[textoId] = 'detenido';
-        actualizarInterfazGrabacion(textoId, 'detenido');
     }
 }
 
@@ -665,8 +476,8 @@ function actualizarInterfazGrabacion(textoId, estado) {
     const estadoCell = fila.querySelector('.estado-grabacion');
     const botonCell = fila.querySelector('.acciones-grabacion');
 
-    const titulo = fila.dataset.titulo;
-    const guionNombre = fila.dataset.guionNombre;
+    const titulo = escaparParaJs(fila.dataset.titulo);
+    const guionNombre = escaparParaJs(fila.dataset.guionNombre);
 
     switch (estado) {
         case 'espera':
@@ -725,65 +536,28 @@ function actualizarInterfazGrabacion(textoId, estado) {
 
 function mostrarMensajeExito(mensaje) {
     console.log('Éxito:', mensaje);
-
-    // Intentar usar toast de Bootstrap
-    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        const toastHtml = `
-            <div class="toast align-items-center text-white bg-success border-0" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="fas fa-check-circle mr-2"></i> ${mensaje}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-        const container = document.createElement('div');
-        container.innerHTML = toastHtml;
-        const toastEl = container.firstElementChild;
-        document.body.appendChild(toastEl);
-
-        const toast = new bootstrap.Toast(toastEl, {delay: 3000});
-        toast.show();
-
-        // Remover después de animación
-        toastEl.addEventListener('hidden.bs.toast', function () {
-            toastEl.remove();
-        });
-    } else {
-        // Fallback a alert
-        alert('✓ ' + mensaje);
-    }
+    Swal.fire({
+        icon: 'success',
+        title: mensaje,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
 }
 
 function mostrarError(mensaje) {
     console.error('Error:', mensaje);
-
-    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        const toastHtml = `
-            <div class="toast align-items-center text-white bg-danger border-0" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="fas fa-exclamation-circle mr-2"></i> ${mensaje}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-        const container = document.createElement('div');
-        container.innerHTML = toastHtml;
-        const toastEl = container.firstElementChild;
-        document.body.appendChild(toastEl);
-
-        const toast = new bootstrap.Toast(toastEl, {delay: 5000});
-        toast.show();
-
-        toastEl.addEventListener('hidden.bs.toast', function () {
-            toastEl.remove();
-        });
-    } else {
-        alert('✗ ' + mensaje);
-    }
+    Swal.fire({
+        icon: 'error',
+        title: mensaje,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 5000,
+        timerProgressBar: true
+    });
 }
 
 // ===== EXPORTAR FUNCIONES PARA USO GLOBAL =====
@@ -792,8 +566,6 @@ window.iniciarGrabacionControl = iniciarGrabacionControl;
 window.detenerGrabacionControl = detenerGrabacionControl;
 window.detenerGrabacionForzada = detenerGrabacionForzada;
 window.verificarEstadoGrabacion = verificarEstadoGrabacion;
-window.iniciarGrabacion = iniciarGrabacion;
-window.detenerGrabacionLimpia = detenerGrabacionLimpia;
 window.seleccionarGuionParaGrabacion = seleccionarGuionParaGrabacion;
 window.cargarGuionesParaGrabacion = cargarGuionesParaGrabacion;
 window.filtrarGuionesGrabacion = filtrarGuionesGrabacion;
