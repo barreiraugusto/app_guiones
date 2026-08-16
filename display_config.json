@@ -20,16 +20,16 @@
         "negrita": true,
         "cursiva": false
     },
-    "last_updated": "2026-07-19T00:44:29.275809",
+    "last_updated": "2026-08-16T20:59:18.757274",
     "ticker": {
-        "show": true,
+        "show": false,
         "text": "Arrastrame para probar el tickerdddddd ALGO MAS LARGO PARA QUE SE VEA MEJOR EN LA PANTALLA  Y CLARO ACA SE VE QUE LE FALTNA CARACTERES PARA OCUPAR TODA LA PANTALLA Y TODAVIA LE FALTA ALGO MAS",
         "speed_seconds": 30,
         "color": "#ffffff",
         "bg_color": "#232939",
-        "top": 1002,
+        "top": 1005,
         "height": 51,
-        "left": 276,
+        "left": 203,
         "width": 1643,
         "scroll_direccion": "izquierda",
         "angulo": 0,
@@ -39,7 +39,48 @@
         "cursiva": false
     },
     "mosca": {
-        "capa_id": 814,
-        "show": true
+        "capa_id": 1115,
+        "show": false
+    },
+    "marcador": {
+        "show": false,
+        "left": 10,
+        "top": 21,
+        "width": 400,
+        "height": 100,
+        "nombre_equipo_1": "Equipo 1",
+        "nombre_equipo_2": "Equipo 2",
+        "tantos_equipo_1": 0,
+        "tantos_equipo_2": 0,
+        "fuente": "Arial",
+        "tamano_fuente": 36,
+        "negrita": true,
+        "cursiva": false,
+        "color": "#ffffff",
+        "bg_color": "#000000",
+        "opacidad_fondo": 100,
+        "radio_esquina": 0
+    },
+    "cronometro": {
+        "show": true,
+        "left": 0,
+        "top": 0,
+        "width": 304,
+        "height": 162,
+        "mostrar_horas": false,
+        "duracion_horas": 0,
+        "duracion_minutos": 10,
+        "duracion_segundos": 0,
+        "estado": "pausado",
+        "epoch_inicio": null,
+        "segundos_restantes": 432.63699984550476,
+        "fuente": "Helvetica",
+        "tamano_fuente": 100,
+        "negrita": true,
+        "cursiva": false,
+        "color": "#ffffff",
+        "bg_color": "#000000",
+        "opacidad_fondo": 0,
+        "radio_esquina": 0
     }
 }

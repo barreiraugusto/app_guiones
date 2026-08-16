@@ -3,7 +3,7 @@
 {% block extra_style %}
     <style>
         body {
-            padding-top: 70px;
+            padding-top: calc(var(--sp-nav-h) + 10px);
         }
 
         /* Cards */
@@ -61,14 +61,14 @@
         }
 
         .btn-outline-primary {
-            color: #0d6efd;
-            border-color: #0d6efd;
+            color: var(--sp-primary);
+            border-color: var(--sp-primary);
         }
 
         .btn-outline-primary:hover {
             color: #fff;
-            background-color: #0d6efd;
-            border-color: #0d6efd;
+            background-color: var(--sp-primary);
+            border-color: var(--sp-primary);
         }
 
         /* Drag and drop */
@@ -98,18 +98,18 @@
 
         .graph-asociado details {
             transition: all 0.3s ease;
-            background-color: #f8f9fa;
+            background-color: var(--sp-surface);
             border-left: 4px solid transparent;
         }
 
         .texto-principal.activo + .graph-asociado details {
-            background-color: #fff3cd;
-            border-left-color: #ffc107;
+            background-color: var(--sp-activo-bg);
+            border-left-color: var(--sp-activo-bdr);
         }
 
         .texto-principal.emitido + .graph-asociado details {
-            background-color: #e2e3e5;
-            border-left-color: #6c757d;
+            background-color: var(--sp-emitido-bg);
+            border-left-color: var(--sp-emitido-bdr);
         }
 
         /* Sortable styles */
@@ -146,7 +146,7 @@
         }
 
         .texto-principal.sortable-drag {
-            border: 1px dashed #0d6efd;
+            border: 1px dashed var(--sp-primary);
         }
 
         /* Table layout */
@@ -197,7 +197,7 @@
         }
 
         .list-group-item:hover {
-            background-color: #f8f9fa;
+            background-color: var(--sp-surface);
         }
 
         /* Ajustes responsivos */
@@ -220,8 +220,8 @@
         }
 
         .navbar .dropdown-item:hover {
-            background-color: #f8f9fa;
-            color: #0056b3;
+            background-color: var(--sp-surface);
+            color: var(--sp-primary-d);
         }
 
         /* Ajustar espaciado en dispositivos móviles */
@@ -243,12 +243,12 @@
         /* Estilos para la clonación de notas */
         #listaNotasClonar .form-check {
             padding: 8px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--sp-canvas);
             transition: background-color 0.2s;
         }
 
         #listaNotasClonar .form-check:hover {
-            background-color: #f8f9fa;
+            background-color: var(--sp-surface);
         }
 
         #listaNotasClonar .form-check:last-child {
@@ -257,7 +257,7 @@
 
         .nota-checkbox:checked + label {
             font-weight: bold;
-            color: #007bff;
+            color: var(--sp-primary);
         }
 
         #resumenClonacion {
@@ -278,12 +278,12 @@
         }
 
         #listaNotasClonar .form-check:hover {
-            background-color: #f8f9fa;
+            background-color: var(--sp-surface);
         }
 
         #listaNotasClonar .form-check-input:checked + label {
             font-weight: bold;
-            color: #007bff;
+            color: var(--sp-primary);
         }
 
         #errorModal {
@@ -512,7 +512,7 @@
         <div class="col-lg-6 col-12 mt-lg-2 mt-4 d-flex flex-column gap-3">
             <div class="row p-1 rounded">
                 <!-- Guion -->
-                <div class="card shadow rounded">
+                <div class="card shadow rounded w-100">
                     <div class="card-body">
                         <h3 id="encabezado"></h3>
                         <table class="table table-responsive" id="tablaTextos">

@@ -237,6 +237,7 @@ async function seleccionarGuion(id) {
         }
 
         guionSelect.value = guionId;
+        document.getElementById('tablaTextos').style.display = '';
 
         // 3. Mostrar spinner
         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></td></tr>';
@@ -294,19 +295,19 @@ async function seleccionarGuion(id) {
                 <td class="${esTanda ? 'bg-info text-white' : ''}" style="width: 5%">${t.duracion}</td>
                 <td class="${esTanda ? 'bg-info' : ''}" style="width: 20%">
                     <div class="btn-group">
-                        <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})">
+                        <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})" title="Activar nota">
                             <i class="fas fa-arrow-right"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})">
+                        <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})" title="Marcar como emitido">
                             <i class="fas fa-check"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})">
+                        <button type="button" class="btn btn-outline-info" onclick="editarTexto(event, ${t.id})" title="Editar nota">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-primary" onclick="abrirModalGraph(${t.id})">
+                        <button type="button" class="btn btn-outline-primary" onclick="abrirModalGraph(${t.id})" title="Agregar gráfico">
                         <i class="fas fa-plus"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})">
+                        <button type="button" class="btn btn-outline-danger" onclick="borrarTexto(${t.id})" title="Borrar nota">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>

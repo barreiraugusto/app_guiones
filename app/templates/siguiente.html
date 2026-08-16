@@ -238,12 +238,16 @@ body {
 }
 
 .pn-material-value {
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    font-size: clamp(1.44rem, 3vw, 1.9rem);
     font-weight: 600;
     color: #e8eaf6;
-    white-space: nowrap;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .pn-musica {
@@ -252,7 +256,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 0.6rem 0.8rem;
-    font-size: clamp(1rem, 2.8vw, 1.4rem);
+    font-size: clamp(2rem, 5.6vw, 2.8rem);
     font-weight: 900;
     color: #fff;
     text-align: center;
@@ -287,6 +291,9 @@ body {
 {% endblock extra_script %}
 
 {% block body %}
+<div id="spConnBanner" class="sp-conn-banner">
+    <i class="fas fa-plug"></i> Conexión perdida — reconectando… los datos en pantalla pueden estar desactualizados
+</div>
 <div class="pn-page">
 
     <!-- Cabecera: Nº nota + Título -->

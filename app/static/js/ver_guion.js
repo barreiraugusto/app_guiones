@@ -90,10 +90,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td rowspan="${rowspan}" class="text-center">
                     <h3>${t.numero_de_nota}</h3>
                     <div class="btn-group">
-                        <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})">
+                        <button type="button" class="btn btn-outline-primary" onclick="setTextoActivo(${t.id})" title="Activar nota">
                             <i class="fas fa-arrow-right"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})">
+                        <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})" title="Marcar como emitido">
                             <i class="fas fa-check"></i>
                         </button>
                     </div>
@@ -248,8 +248,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    eventSource.onopen = function () {
+        document.getElementById('spConnBanner')?.classList.remove('visible');
+    };
+
     eventSource.onerror = function () {
         console.error('Error en la conexión SSE');
+        document.getElementById('spConnBanner')?.classList.add('visible');
     };
 });
 

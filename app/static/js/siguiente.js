@@ -171,8 +171,13 @@ eventSource.onmessage = function (event) {
     }
 };
 
+eventSource.onopen = function () {
+    document.getElementById('spConnBanner')?.classList.remove('visible');
+};
+
 eventSource.onerror = function () {
     console.warn('siguiente.js: conexión SSE interrumpida, reintentando…');
+    document.getElementById('spConnBanner')?.classList.add('visible');
 };
 
 // Estado inicial vacío

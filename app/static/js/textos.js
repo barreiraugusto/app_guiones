@@ -223,7 +223,14 @@ function cancelarEdicion() {
     textoEditando = null;
 }
 
+// Evita que un doble-tap dispare dos requests superpuestos para la misma nota
+// (setTextoEmitido es un toggle: dos taps casi simultáneos pueden anularse
+// entre sí en el servidor mientras la UI ya muestra el primero).
+const notasEnProceso = new Set();
+
 async function setTextoActivo(id) {
+    if (notasEnProceso.has(`activo-${id}`)) return;
+    notasEnProceso.add(`activo-${id}`);
     try {
         // 1. Guardar posición del scroll
         const tablaContainer = document.querySelector('#tablaTextos tbody');
@@ -291,10 +298,14 @@ async function setTextoActivo(id) {
             text: error.message || 'No se pudo activar el texto',
             timer: 2000
         });
+    } finally {
+        notasEnProceso.delete(`activo-${id}`);
     }
 }
 
 async function setTextoEmitido(id) {
+    if (notasEnProceso.has(`emitido-${id}`)) return;
+    notasEnProceso.add(`emitido-${id}`);
     try {
         const filaActual = document.querySelector(`tr[data-texto-id="${id}"]`);
         let nuevoEstadoGraphs = 'emitido';
@@ -333,6 +344,8 @@ async function setTextoEmitido(id) {
             text: error.message || 'No se pudo marcar el texto como emitido',
             timer: 2000
         });
+    } finally {
+        notasEnProceso.delete(`emitido-${id}`);
     }
 }
 

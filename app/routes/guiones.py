@@ -283,7 +283,7 @@ def editar_guion(id):
 
 @guiones_bp.route('/listado_guiones')
 def listado_guiones():
-    guiones = Guion.query.all()
+    guiones = Guion.query.order_by(Guion.id.asc()).all()
     return render_template('listado_guiones.html', guiones=guiones)
 
 

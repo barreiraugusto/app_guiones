@@ -26,6 +26,11 @@
   --sp-success:   #2e7d32;
   --sp-muted:     #6c757d;
 
+  /* Superficies (antes hardcodeadas por página: #f0f0f0, #f8f9fa...) */
+  --sp-ink:     #212529;
+  --sp-canvas:  #f0f0f0;
+  --sp-surface: #f8f9fa;
+
   /* Colores de estado del guion */
   --sp-activo-bg:  #fff3cd;
   --sp-activo-bdr: #ffc107;
@@ -150,6 +155,13 @@ h1, h2, h3, h4, h5, h6 {
     white-space: normal;
     word-break: break-word;
   }
+}
+
+/* Cifras (número de nota, cronómetro, duración) con ancho fijo por
+   dígito: evitan que la fila "salte" al cambiar de valor. */
+#tablaTextos td:first-child,
+#cronometro {
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Scrollbar sutil ────────────────────────── */
@@ -584,4 +596,28 @@ h1, h2, h3, h4, h5, h6 {
 .no-select {
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* ── Aviso de conexión SSE perdida ──────────── */
+/* Los datos en pantalla dejan de actualizarse en vivo mientras esto
+   está visible: úsese en toda vista que dependa de un stream SSE. */
+.sp-conn-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  background: var(--sp-danger);
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.45rem 1rem;
+  letter-spacing: 0.02em;
+  box-shadow: var(--sp-shadow-sm);
+}
+
+.sp-conn-banner.visible {
+  display: block;
 }

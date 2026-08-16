@@ -239,6 +239,13 @@ function setupEventSource() {
             console.error('Error al analizar datos del SSE:', error);
         }
     };
+    eventSource.onopen = () => {
+        document.getElementById('spConnBanner')?.classList.remove('visible');
+    };
+    eventSource.onerror = () => {
+        console.error('control_live.js: conexión SSE interrumpida');
+        document.getElementById('spConnBanner')?.classList.add('visible');
+    };
 }
 
 function renderizarLienzo() {
