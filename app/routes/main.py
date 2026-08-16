@@ -29,4 +29,6 @@ def control_live(guion_id):
     return render_template('control_live.html', guion=guion)
 
 
-
+@main_bp.route('/grabacion')
+def grabacion():
+    return render_template('grabacion.html')
