@@ -7,7 +7,7 @@ async function cargarPlantillasSelect() {
         const response = await fetch('/api/plantillas');
         if (!response.ok) return;
         const plantillas = await response.json();
-        select.innerHTML = '';
+        select.innerHTML = '<option value="" disabled selected>Plantilla gráfica</option>';
         plantillas.forEach(p => {
             const option = document.createElement('option');
             option.value = p.id;

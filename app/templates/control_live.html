@@ -104,9 +104,14 @@
             <div class="card p-2" style="max-height: 80vh; overflow-y: auto;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h6 class="mb-0">{{ guion.nombre }}</h6>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="ExportarGraphsXML()" title="Exportar XML">
-                        <i class="fas fa-file-export"></i>
-                    </button>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="abrirModalAplicarPlantillaGuion()" title="Aplicar plantilla a todo el guion">
+                            <i class="fas fa-layer-group"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="ExportarGraphsXML()" title="Exportar XML">
+                            <i class="fas fa-file-export"></i>
+                        </button>
+                    </div>
                 </div>
                 <div id="lista-notas"></div>
             </div>
@@ -212,8 +217,8 @@
                                 <input type="text" class="form-control m-0" id="entrevistado"
                                        placeholder="Entrevistado">
                                 <div class="form-group m-0 mt-2">
-                                    <label for="plantilla_id" class="mb-0">Plantilla:</label>
                                     <select class="form-control" id="plantilla_id">
+                                        <option value="" disabled selected>Plantilla gráfica</option>
                                     </select>
                                 </div>
                             </div>

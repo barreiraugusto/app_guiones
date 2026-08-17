@@ -1772,6 +1772,55 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(cargarNotasYGraphs, 1000);
 });
 
+// Asigna una misma plantilla gráfica a todos los graphs de todas las
+// notas del guion, en vez de tener que editarlos uno por uno.
+async function abrirModalAplicarPlantillaGuion() {
+    let plantillas = [];
+    try {
+        const response = await fetch('/api/plantillas');
+        plantillas = await response.json();
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'No se pudieron cargar las plantillas' });
+        return;
+    }
+
+    if (!plantillas.length) {
+        Swal.fire({ icon: 'warning', title: 'No hay plantillas gráficas creadas' });
+        return;
+    }
+
+    const opciones = plantillas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+
+    const { value: plantillaId } = await Swal.fire({
+        title: 'Aplicar plantilla a todo el guion',
+        html: `
+            <p class="text-muted mb-2">Reemplaza la plantilla de todos los gráficos de este guion.</p>
+            <select id="swalPlantillaGuion" class="form-control">${opciones}</select>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Aplicar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => document.getElementById('swalPlantillaGuion').value
+    });
+
+    if (!plantillaId) return;
+
+    try {
+        const response = await fetch(`/graphs/aplicar_plantilla_guion/${guionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plantilla_id: plantillaId })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.mensaje || 'Error al aplicar la plantilla');
+
+        Swal.fire({ icon: 'success', title: data.mensaje, timer: 2000, showConfirmButton: false });
+        cargarNotasYGraphs();
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'No se pudo aplicar la plantilla', text: error.message });
+    }
+}
+
 let arrastreCapa = null;
 
 function iniciarArrastreCapa(e, capaId) {

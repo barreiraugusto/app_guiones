@@ -255,6 +255,31 @@ def obtener_graphs_por_texto(texto_id):
     return jsonify(graphs_data)
 
 
+@graphs_bp.route('/graphs/aplicar_plantilla_guion/<int:guion_id>', methods=['PUT'])
+def aplicar_plantilla_a_guion(guion_id):
+    """Asigna la misma plantilla a todos los graphs de todas las notas del guion."""
+    data = request.json or {}
+    plantilla_id = data.get('plantilla_id')
+    if not plantilla_id:
+        return jsonify({"mensaje": "Falta plantilla_id"}), 400
+
+    plantilla = Plantilla.query.get(plantilla_id)
+    if not plantilla:
+        return jsonify({"mensaje": "Plantilla no encontrada"}), 404
+
+    graphs = Graph.query.join(Texto).filter(Texto.guion_id == guion_id).all()
+    for graph in graphs:
+        graph.plantilla_id = plantilla_id
+    db.session.commit()
+
+    registrar('INFO',
+              f'Aplicó la plantilla "{plantilla.nombre}" a todos los gráficos del guion',
+              'guion', guion_id, None,
+              f'{len(graphs)} gráficos actualizados')
+
+    return jsonify({"mensaje": f"Plantilla aplicada a {len(graphs)} gráficos", "actualizados": len(graphs)})
+
+
 @graphs_bp.route('/stream_graphs')
 def stream_graphs():
     def event_stream():
