@@ -27,6 +27,10 @@ Diseñado para funcionar en red local de una emisora, múltiples operadores pued
 - **Exportación a PDF** — Generación de guiones impresos con WeasyPrint
 - **Cronómetro integrado** — Control de tiempos de emisión por nota y total del guión
 - **Clonación de notas** — Reutilización de contenido entre guiones
+- **Plantillas gráficas** — Editor visual de zócalos con capas (imagen/video/texto/forma), animaciones de entrada/salida y binding a datos del graph activo
+- **Control en vivo** — Panel central (`control_live`) con paneles de propiedades por widget: Ticker, Cronómetro, Marcador y Vivo, más rotación automática de bajadas
+- **Módulo de grabación** — Disparo y detención de grabaciones (ffmpeg vía proxy) por nota marcada como "Grabar"
+- **Auditoría** — Registro de acciones de usuarios (creación/edición/borrado) con nivel, IP y entidad afectada
 - **Responsive** — Optimizado para tabletas y celulares en el piso de grabación
 
 ---
@@ -51,22 +55,25 @@ Diseñado para funcionar en red local de una emisora, múltiples operadores pued
 app_guiones/
 ├── app/
 │   ├── __init__.py              # App factory y configuración de blueprints
-│   ├── models.py                # Modelos SQLAlchemy (Guion, Texto, Graph, etc.)
+│   ├── models.py                # Modelos SQLAlchemy (Guion, Texto, Graph, Plantilla, etc.)
+│   ├── audit.py                 # Registro de auditoría (registrar())
 │   ├── config_manager.py        # Gestión de configuración de display (JSON)
 │   ├── display_config.json      # Posiciones y configuración de overlays
 │   ├── routes/
-│   │   ├── main.py              # Rutas principales (index, pantalla, principal)
+│   │   ├── main.py              # Rutas principales (index, pantalla, principal, control_live, grabación)
 │   │   ├── guiones.py           # CRUD de guiones, exportación PDF, clonación
-│   │   ├── textos.py            # CRUD de notas, streams SSE
+│   │   ├── textos.py            # CRUD de notas, streams SSE, proxy del módulo de grabación
 │   │   ├── graphs.py            # CRUD de gráficos, generación XML, streams SSE
+│   │   ├── plantillas.py        # CRUD de plantillas gráficas (capas, animaciones)
+│   │   ├── auditoria.py         # Login y vista del registro de auditoría
 │   │   ├── reloj.py             # Cronómetro (iniciar/detener/restablecer)
 │   │   └── sobre.py             # Sobreimpresos
 │   ├── static/
-│   │   ├── css/sigpro.css       # Estilos globales del sistema
-│   │   └── js/                  # JavaScript por módulo
-│   └── templates/               # Plantillas Jinja2
+│   │   ├── css/sigpro.css       # Estilos globales del sistema (tokens --sp-*)
+│   │   └── js/                  # JavaScript por módulo (control_live.js, plantillas.js, grabacion.js, etc.)
+│   └── templates/               # Plantillas Jinja2 (incluye control_live.html, plantillas.html, grabacion.html, auditoria.html)
 ├── migrations/                  # Migraciones de base de datos (Flask-Migrate)
-├── config.py                    # Configuración de conexión a BD
+├── config.py                    # Configuración de conexión a BD y RECORDING_SERVER_URL
 ├── run.py                       # Punto de entrada
 └── crear_secciones_definitivo.py # Script de inicialización de secciones
 ```
@@ -80,18 +87,25 @@ Guion
   └── Texto (notas del guión)
         └── Graph (gráficos/overlays)
               ├── Bajada[] (lower-thirds, relación M:N)
-              └── Cita[]
-                    └── Entrevistado (relación M:N con Graph)
+              ├── Cita[]
+              │     └── Entrevistado (relación M:N con Graph)
+              └── Plantilla
+                    └── PlantillaCapa[] (imagen/video/texto/forma, animaciones)
+
+AuditLog (independiente, registra acciones sobre guion/texto/graph)
 ```
 
 | Modelo | Descripción |
 |--------|-------------|
 | `Guion` | Guión de emisión (nombre, descripción) |
 | `Texto` | Nota individual (título, contenido, duración, música, flags activo/emitido/grabar) |
-| `Graph` | Gráfico de pantalla (lugar, tema, estado activo) |
+| `Graph` | Gráfico de pantalla (lugar, tema, estado activo, plantilla asociada, rotación automática de bajadas) |
 | `Bajada` | Texto inferior del gráfico (lower-third) |
 | `Entrevistado` | Persona entrevistada |
 | `Cita` | Frase o dato atribuido a un entrevistado en un gráfico |
+| `Plantilla` | Plantilla gráfica reutilizable (ancho, alto, capas) |
+| `PlantillaCapa` | Capa de una plantilla (imagen/video/texto/forma), con posición, animación de entrada/salida y binding a datos (lugar/tema/entrevistado/bajada) |
+| `AuditLog` | Registro de acciones de usuarios (nivel, IP, entidad afectada) |
 
 ---
 
@@ -127,7 +141,8 @@ pip install Flask==3.1.0 \
             Flask-Migrate==4.0.7 \
             SQLAlchemy==2.0.36 \
             WeasyPrint \
-            psycopg2-binary
+            psycopg2-binary \
+            requests
 
 # 4. Configurar base de datos (ver sección Configuración)
 
@@ -273,6 +288,42 @@ GET    /detener                     → Detener cronómetro
 GET    /restablecer                 → Reiniciar a cero
 GET    /stream                      → SSE con valor actual cada 1s
 ```
+
+### Plantillas gráficas
+
+```
+GET    /plantillas                  → Vista del editor
+GET    /api/plantillas              → Listar plantillas
+GET    /api/plantillas/<id>         → Obtener plantilla con sus capas
+POST   /api/plantillas              → Crear plantilla
+PUT    /api/plantillas/<id>         → Actualizar plantilla y capas
+DELETE /api/plantillas/<id>         → Eliminar plantilla
+POST   /api/plantillas/<id>/duplicar → Duplicar plantilla
+POST   /plantillas/upload           → Subir archivo (imagen/video) para una capa
+```
+
+### Auditoría
+
+```
+GET/POST /auditoria/login           → Login al panel de auditoría
+GET      /auditoria/logout          → Cerrar sesión
+GET      /auditoria                 → Vista del registro de acciones
+GET      /auditoria/exportar        → Exportar el registro
+```
+
+### Control en vivo y grabación
+
+```
+GET  /control_live/<guion_id>       → Panel de control central (gráficos, widgets, plantilla activa)
+GET  /grabacion                     → Vista del módulo de grabación
+GET  /stream_display_config         → SSE con la configuración de overlays/widgets activos
+POST /proxy/iniciar_grabacion_control  → Inicia ffmpeg en el servidor de grabación
+POST /proxy/detener_grabacion_limpia   → Detención limpia (vía pipe de control)
+POST /proxy/detener_grabacion          → Detención por PID (fallback)
+GET  /proxy/estado_grabacion           → Estado actual de la grabación
+```
+
+> El módulo de grabación es un proxy hacia scripts PHP/ffmpeg en un servidor externo (`RECORDING_SERVER_URL` en `config.py`, default `http://192.168.2.62`), no forma parte de esta app.
 
 ---
 
