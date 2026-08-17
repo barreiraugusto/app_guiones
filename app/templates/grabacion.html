@@ -123,8 +123,11 @@
             <a class="navbar-brand" href="#">
                 <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
             </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContentGrabacion">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-            <div class="collapse navbar-collapse">
+            <div class="collapse navbar-collapse" id="navbarContentGrabacion">
                 <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
                     <button onclick="window.location.href='/principal'" class="mr-2 mb-2 mb-lg-0 btn btn-outline-light">
                         <i class="fas fa-arrow-left"></i> Volver a Control

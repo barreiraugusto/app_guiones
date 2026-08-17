@@ -197,7 +197,9 @@ async function cargarNotasParaGrabar(guionId) {
         console.log('Textos recibidos:', textos.length);
 
         // Filtrar solo los que tienen grabar=true
-        const textosParaGrabar = textos.filter(texto => texto.grabar === true);
+        const textosParaGrabar = textos
+            .filter(texto => texto.grabar === true)
+            .sort((a, b) => a.numero_de_nota - b.numero_de_nota);
         console.log('Textos para grabar:', textosParaGrabar.length);
 
         // Obtener el nombre del guion
@@ -542,6 +544,27 @@ function actualizarInterfazGrabacion(textoId, estado) {
             `;
             break;
     }
+
+    actualizarBloqueoBotones();
+}
+
+// Solo se puede grabar una nota a la vez: mientras alguna esté
+// grabando/deteniendo, deshabilita los botones REC/Regrabar del resto.
+function hayGrabacionEnCurso() {
+    return Object.values(window.estadosGrabacion).some(
+        estado => estado === 'grabando' || estado === 'deteniendo'
+    );
+}
+
+function actualizarBloqueoBotones() {
+    const bloquear = hayGrabacionEnCurso();
+    document.querySelectorAll('#listaGrabaciones tr[data-texto-id]').forEach(fila => {
+        const estado = window.estadosGrabacion[fila.dataset.textoId];
+        if (estado === 'espera' || estado === 'grabado') {
+            const boton = fila.querySelector('.acciones-grabacion button');
+            if (boton) boton.disabled = bloquear;
+        }
+    });
 }
 
 // ===== FUNCIONES AUXILIARES =====
