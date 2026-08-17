@@ -127,6 +127,7 @@ def actualizar_graph(id):
                         ))
 
         db.session.commit()
+        _sincronizar_mosca_si_activo(graph)
 
         registrar('WARNING',
                   f'Editó graph: {graph.lugar}',
@@ -272,6 +273,9 @@ def aplicar_plantilla_a_guion(guion_id):
         graph.plantilla_id = plantilla_id
     db.session.commit()
 
+    for graph in graphs:
+        _sincronizar_mosca_si_activo(graph)
+
     registrar('INFO',
               f'Aplicó la plantilla "{plantilla.nombre}" a todos los gráficos del guion',
               'guion', guion_id, None,
@@ -369,10 +373,7 @@ def setGraphsActivo(id):
 
     db.session.commit()
 
-    if graph.plantilla:
-        capa_mosca = next((c for c in graph.plantilla.capas if c.es_mosca), None)
-        if capa_mosca:
-            _actualizar_mosca_capa_id(capa_mosca.id)
+    _sincronizar_mosca_si_activo(graph)
 
     registrar('INFO',
               f'Activó graph: {graph.lugar}',
@@ -677,6 +678,19 @@ def _actualizar_mosca_capa_id(capa_id):
 
     with open(config_file, 'w') as f:
         json.dump(current_config, f, indent=4)
+
+
+def _sincronizar_mosca_si_activo(graph):
+    """Si este graph es el que está al aire, actualiza qué capa es la Mosca
+    según su plantilla actual (o la limpia si la plantilla no tiene mosca).
+    Sin esto, cambiar la plantilla de un graph activo deja la mosca de la
+    plantilla anterior en pantalla."""
+    if not graph.activo:
+        return
+    capa_mosca = None
+    if graph.plantilla:
+        capa_mosca = next((c for c in graph.plantilla.capas if c.es_mosca), None)
+    _actualizar_mosca_capa_id(capa_mosca.id if capa_mosca else None)
 
 
 def _bajada_activa_efectiva(graph):
