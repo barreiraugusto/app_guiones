@@ -140,8 +140,21 @@ function filtrarGuionesGrabacion() {
 }
 
 // Función para seleccionar guion
+function volverAControl() {
+    if (hayGrabacionEnCurso()) {
+        mostrarError('No se puede volver a Control hasta detener la grabación en curso');
+        return;
+    }
+    window.location.href = '/principal';
+}
+
 function seleccionarGuionParaGrabacion(guionId, guionNombre) {
     console.log('Seleccionando guion:', guionId, guionNombre);
+
+    if (hayGrabacionEnCurso()) {
+        mostrarError('No se puede cambiar de guión mientras hay una grabación en curso');
+        return;
+    }
 
     window.guionSeleccionadoId = guionId;
 
@@ -242,9 +255,23 @@ async function cargarNotasParaGrabar(guionId) {
 
             // Estado inicial: refleja lo que ya quedó grabado en el guión
             // (persistido en la BD), no se resetea al recargar la página.
-            const estadoInicial = texto.grabado ? 'grabado' : 'espera';
+            let estadoInicial = texto.grabado ? 'grabado' : 'espera';
+
+            // Si esta nota era la que estaba grabando cuando se salió de la
+            // página (recarga, atrás del navegador), restaurar ese estado
+            // en vez de dejarla como si no estuviera pasando nada.
+            if (String(texto.id) === localStorage.getItem('textoGrabandoId')) {
+                estadoInicial = 'grabando';
+            }
+
             window.estadosGrabacion[texto.id] = estadoInicial;
             actualizarInterfazGrabacion(texto.id, estadoInicial);
+
+            // Confirmar contra el servidor: si en realidad ya terminó
+            // mientras no estábamos mirando, esto la pasa a "grabado".
+            if (estadoInicial === 'grabando') {
+                verificarEstadoGrabacion(texto.id);
+            }
         });
 
     } catch (error) {
@@ -558,6 +585,19 @@ function hayGrabacionEnCurso() {
 
 function actualizarBloqueoBotones() {
     const bloquear = hayGrabacionEnCurso();
+
+    // Recordar qué nota está grabando para poder restaurar el estado
+    // si se recarga la página o se navega para atrás y se vuelve.
+    const idEnCurso = Object.keys(window.estadosGrabacion).find(id => {
+        const estado = window.estadosGrabacion[id];
+        return estado === 'grabando' || estado === 'deteniendo';
+    });
+    if (idEnCurso) {
+        localStorage.setItem('textoGrabandoId', idEnCurso);
+    } else {
+        localStorage.removeItem('textoGrabandoId');
+    }
+
     document.querySelectorAll('#listaGrabaciones tr[data-texto-id]').forEach(fila => {
         const estado = window.estadosGrabacion[fila.dataset.textoId];
         if (estado === 'espera' || estado === 'grabado') {
@@ -565,6 +605,19 @@ function actualizarBloqueoBotones() {
             if (boton) boton.disabled = bloquear;
         }
     });
+
+    // No se puede cambiar de guión ni salir de la vista mientras hay una grabación en curso
+    const dropdownGuion = document.getElementById('dropdownGuionGrabacion');
+    if (dropdownGuion) {
+        dropdownGuion.disabled = bloquear;
+        dropdownGuion.title = bloquear ? 'No disponible mientras hay una grabación en curso' : '';
+    }
+
+    const btnVolver = document.getElementById('btnVolverControl');
+    if (btnVolver) {
+        btnVolver.disabled = bloquear;
+        btnVolver.title = bloquear ? 'No disponible mientras hay una grabación en curso' : '';
+    }
 }
 
 // ===== FUNCIONES AUXILIARES =====
