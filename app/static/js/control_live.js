@@ -234,6 +234,9 @@ function setupEventSource() {
         try {
             const data = JSON.parse(e.data);
             plantillaActual = data.plantilla || null;
+            if (data.mosca) {
+                moscaState = { show: !!data.mosca.show, capa: data.mosca.capa || null };
+            }
             renderizarLienzo();
         } catch (error) {
             console.error('Error al analizar datos del SSE:', error);
