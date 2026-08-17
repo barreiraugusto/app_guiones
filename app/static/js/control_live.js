@@ -1559,7 +1559,10 @@ async function seleccionarGraph(id, numeroDeNota) {
         tema: graph.tema,
         bajadas: graph.bajadas_detalle,
         citas: graph.citas_detalle,
-        bajada_activa_id: graph.bajada_activa_id,
+        // Si no hay bajada activa guardada, arrancar mostrando la primera
+        // en vez de "Ninguna".
+        bajada_activa_id: graph.bajada_activa_id
+            || (graph.bajadas_detalle && graph.bajadas_detalle[0] ? graph.bajadas_detalle[0].id : null),
         cita_activa_id: graph.cita_activa_id,
         mostrar_lugar: graph.mostrar_lugar,
         mostrar_tema: graph.mostrar_tema,
