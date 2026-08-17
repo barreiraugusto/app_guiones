@@ -266,7 +266,8 @@ def textos_por_guion(guion_id):
         "musica": t.musica,
         "material": t.material,
         "grabar": t.grabar,
-        "grabado": t.grabado
+        "grabado": t.grabado,
+        "grabando": t.grabando
     } for t in textos])
 
 
@@ -450,6 +451,27 @@ def setTextoGrabado(id):
               f'Estado grabado: {texto.grabado}')
 
     return jsonify({"mensaje": "El texto se marcó como grabado", "grabado": texto.grabado})
+
+
+@textos_bp.route('/textos/grabando/<int:id>', methods=['PUT'])
+def setTextoGrabando(id):
+    """Estado compartido: qué nota está grabando ahora mismo, visible para
+    cualquiera que abra /grabacion (no depende del navegador de quien la inició)."""
+    texto = Texto.query.get(id)
+    if not texto:
+        return jsonify({"mensaje": "Texto no encontrado"}), 404
+
+    data = request.json or {}
+    nuevo_valor = bool(data.get('grabando', True))
+
+    if nuevo_valor:
+        # Solo puede haber una nota grabando a la vez
+        Texto.query.filter(Texto.id != id, Texto.grabando == True).update({Texto.grabando: False})
+
+    texto.grabando = nuevo_valor
+    db.session.commit()
+
+    return jsonify({"mensaje": "Estado de grabando actualizado", "grabando": texto.grabando})
 
 
 # ---------------------------------------------------------------------------

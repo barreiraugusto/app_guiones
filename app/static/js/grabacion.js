@@ -175,6 +175,48 @@ function seleccionarGuionParaGrabacion(guionId, guionNombre) {
 
     // Cargar las notas para grabar
     cargarNotasParaGrabar(guionId);
+    iniciarPollGrabacion(guionId);
+}
+
+// ===== SINCRONIZACIÓN ENTRE DISPOSITIVOS =====
+
+let pollGrabacionInterval = null;
+
+// Repite la consulta del guion cada pocos segundos para que si otra
+// persona (en otro dispositivo) inicia o detiene una grabación, esta
+// pantalla se entere sin necesidad de recargar.
+function iniciarPollGrabacion(guionId) {
+    if (pollGrabacionInterval) clearInterval(pollGrabacionInterval);
+    pollGrabacionInterval = setInterval(() => sincronizarEstadoGrabacion(guionId), 5000);
+}
+
+async function sincronizarEstadoGrabacion(guionId) {
+    if (!guionId) return;
+    try {
+        const response = await fetch(`/textos/por-guion/${guionId}`);
+        if (!response.ok) return;
+        const textos = await response.json();
+
+        textos.forEach(texto => {
+            const id = String(texto.id);
+            const estadoLocal = window.estadosGrabacion[id];
+
+            // No hay fila para esta nota (no está marcada para grabar) o
+            // está en medio de una transición propia: no tocar.
+            if (estadoLocal === undefined || estadoLocal === 'deteniendo') return;
+
+            if (texto.grabando && estadoLocal !== 'grabando') {
+                window.estadosGrabacion[id] = 'grabando';
+                actualizarInterfazGrabacion(id, 'grabando');
+            } else if (!texto.grabando && estadoLocal === 'grabando') {
+                const nuevoEstado = texto.grabado ? 'grabado' : 'espera';
+                window.estadosGrabacion[id] = nuevoEstado;
+                actualizarInterfazGrabacion(id, nuevoEstado);
+            }
+        });
+    } catch (error) {
+        console.log('No se pudo sincronizar estado de grabación:', error);
+    }
 }
 
 // ===== FUNCIONES DE GRABACIÓN =====
@@ -253,14 +295,11 @@ async function cargarNotasParaGrabar(guionId) {
 
             tbody.appendChild(fila);
 
-            // Estado inicial: refleja lo que ya quedó grabado en el guión
-            // (persistido en la BD), no se resetea al recargar la página.
+            // Estado inicial: viene del servidor (compartido entre
+            // cualquiera que abra esta página, no solo quien la inició),
+            // así que sobrevive recargas, volver atrás y otros dispositivos.
             let estadoInicial = texto.grabado ? 'grabado' : 'espera';
-
-            // Si esta nota era la que estaba grabando cuando se salió de la
-            // página (recarga, atrás del navegador), restaurar ese estado
-            // en vez de dejarla como si no estuviera pasando nada.
-            if (String(texto.id) === localStorage.getItem('textoGrabandoId')) {
+            if (texto.grabando) {
                 estadoInicial = 'grabando';
             }
 
@@ -375,6 +414,21 @@ async function marcarTextoGrabado(textoId) {
         });
     } catch (error) {
         console.error('No se pudo persistir el estado grabado:', error);
+    }
+}
+
+// Persiste en el servidor cuál nota está grabando ahora mismo, para que
+// cualquiera que abra /grabacion (otro dispositivo, otra persona) vea el
+// estado real y pueda frenarla, no solo quien la inició.
+async function marcarTextoGrabando(textoId, grabando) {
+    try {
+        await fetch(`/textos/grabando/${textoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ grabando })
+        });
+    } catch (error) {
+        console.error('No se pudo persistir el estado grabando:', error);
     }
 }
 
@@ -572,6 +626,14 @@ function actualizarInterfazGrabacion(textoId, estado) {
             break;
     }
 
+    // Persistir el estado "grabando ahora mismo" para que sea visible
+    // desde cualquier dispositivo, no solo el que hizo el cambio.
+    if (estado === 'grabando') {
+        marcarTextoGrabando(textoId, true);
+    } else if (estado === 'detenido' || estado === 'grabado' || estado === 'espera') {
+        marcarTextoGrabando(textoId, false);
+    }
+
     actualizarBloqueoBotones();
 }
 
@@ -585,18 +647,6 @@ function hayGrabacionEnCurso() {
 
 function actualizarBloqueoBotones() {
     const bloquear = hayGrabacionEnCurso();
-
-    // Recordar qué nota está grabando para poder restaurar el estado
-    // si se recarga la página o se navega para atrás y se vuelve.
-    const idEnCurso = Object.keys(window.estadosGrabacion).find(id => {
-        const estado = window.estadosGrabacion[id];
-        return estado === 'grabando' || estado === 'deteniendo';
-    });
-    if (idEnCurso) {
-        localStorage.setItem('textoGrabandoId', idEnCurso);
-    } else {
-        localStorage.removeItem('textoGrabandoId');
-    }
 
     document.querySelectorAll('#listaGrabaciones tr[data-texto-id]').forEach(fila => {
         const estado = window.estadosGrabacion[fila.dataset.textoId];

@@ -29,6 +29,7 @@ class Texto(db.Model):
     activo = db.Column(db.Boolean, default=False, nullable=False)
     grabar = db.Column(db.Boolean, default=False, nullable=False)
     grabado = db.Column(db.Boolean, default=False, nullable=False)
+    grabando = db.Column(db.Boolean, default=False, nullable=False)
     emitido = db.Column(db.Boolean, default=False, nullable=False)
     duracion = db.Column(db.String(10), default='00:00', nullable=False)
     guion_id = db.Column(db.Integer, db.ForeignKey('guion.id', ondelete="CASCADE"), nullable=False)
