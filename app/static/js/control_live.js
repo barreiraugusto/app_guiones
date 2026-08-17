@@ -640,7 +640,10 @@ function crearElementoLive() {
 }
 
 function crearElementoMosca() {
-    if (!moscaState.capa) return null;
+    // A diferencia de ticker/live/cronómetro/marcador, la mosca no se puede
+    // arrastrar ni redimensionar acá, así que no tiene sentido mantenerla
+    // atenuada cuando está apagada: se oculta del todo, igual que en /pantalla.
+    if (!moscaState.capa || !moscaState.show) return null;
 
     // Posición y tamaño vienen de la capa de la plantilla (sin arrastre/resize
     // propios acá) -- solo se controla Mostrar/Ocultar desde control_live.
@@ -648,7 +651,6 @@ function crearElementoMosca() {
     el.id = 'mosca-editor';
     el.classList.add('elemento-editable');
     if (elementoSeleccionado === 'mosca') el.classList.add('seleccionada');
-    if (!moscaState.show) el.style.opacity = '0.35';
 
     el.addEventListener('click', (e) => {
         e.stopPropagation();
