@@ -251,45 +251,75 @@ function setupEventSource() {
     };
 }
 
+let ultimaFirmaCapas = null;
+
 function renderizarLienzo() {
     const lienzo = document.getElementById('lienzo-control');
-    lienzo.innerHTML = '';
 
-    if (graphComposicionId && plantillaEnEdicion) {
-        const capasOrdenadas = plantillaEnEdicion.capas.slice().sort((a, b) => a.orden - b.orden);
-
-        // Valor resuelto de cada capa de texto (incluso vacío), para poder
-        // decidir si una capa "controlada por" ella debe ocultarse también.
-        const valorTextoPorCapaId = {};
-        capasOrdenadas.forEach(capa => {
-            if (capa.tipo === 'texto') {
-                valorTextoPorCapaId[capa.id] = resolverValorCapa(capa, composicion);
-            }
-        });
-
-        capasOrdenadas.forEach(capa => {
-            let valor = null;
-            if (capa.tipo === 'texto') {
-                valor = valorTextoPorCapaId[capa.id];
-                if (!valor) return;
-            }
-
-            if (capa.controlada_por_id) {
-                const valorControl = valorTextoPorCapaId[capa.controlada_por_id];
-                if (valorControl !== undefined && !valorControl) return;
-            }
-
-            const el = crearElementoPreviewCapa(capa, valor);
-            lienzo.appendChild(el);
-            if (capa.tipo === 'texto') ajustarTamanoTexto(el, capa.tamano_fuente);
-            agregarResizeHandle(el, capa.id);
-        });
-    } else if (plantillaActual) {
-        plantillaActual.capas
-            .slice()
-            .sort((a, b) => a.orden - b.orden)
-            .forEach(capa => lienzo.appendChild(crearElementoZocalo(capa)));
+    // Las capas de la plantilla (pueden incluir videos en loop) viven en un
+    // contenedor propio que solo se reconstruye si su contenido realmente
+    // cambió. Antes se tiraba abajo TODO el lienzo en cada tick del SSE
+    // (cada ~0.5s) aunque lo único distinto fuera el ticker o el cronómetro,
+    // reiniciando los videos y haciéndolos titilar.
+    let lienzoCapas = document.getElementById('lienzo-capas');
+    if (!lienzoCapas) {
+        lienzoCapas = document.createElement('div');
+        lienzoCapas.id = 'lienzo-capas';
+        lienzo.appendChild(lienzoCapas);
+        ultimaFirmaCapas = null;
     }
+
+    const enComposicion = !!(graphComposicionId && plantillaEnEdicion);
+    const firmaActual = JSON.stringify(
+        enComposicion ? { plantilla: plantillaEnEdicion, composicion } : { plantilla: plantillaActual }
+    );
+
+    if (firmaActual !== ultimaFirmaCapas) {
+        ultimaFirmaCapas = firmaActual;
+        lienzoCapas.innerHTML = '';
+
+        if (enComposicion) {
+            const capasOrdenadas = plantillaEnEdicion.capas.slice().sort((a, b) => a.orden - b.orden);
+
+            // Valor resuelto de cada capa de texto (incluso vacío), para poder
+            // decidir si una capa "controlada por" ella debe ocultarse también.
+            const valorTextoPorCapaId = {};
+            capasOrdenadas.forEach(capa => {
+                if (capa.tipo === 'texto') {
+                    valorTextoPorCapaId[capa.id] = resolverValorCapa(capa, composicion);
+                }
+            });
+
+            capasOrdenadas.forEach(capa => {
+                let valor = null;
+                if (capa.tipo === 'texto') {
+                    valor = valorTextoPorCapaId[capa.id];
+                    if (!valor) return;
+                }
+
+                if (capa.controlada_por_id) {
+                    const valorControl = valorTextoPorCapaId[capa.controlada_por_id];
+                    if (valorControl !== undefined && !valorControl) return;
+                }
+
+                const el = crearElementoPreviewCapa(capa, valor);
+                lienzoCapas.appendChild(el);
+                if (capa.tipo === 'texto') ajustarTamanoTexto(el, capa.tamano_fuente);
+                agregarResizeHandle(el, capa.id);
+            });
+        } else if (plantillaActual) {
+            plantillaActual.capas
+                .slice()
+                .sort((a, b) => a.orden - b.orden)
+                .forEach(capa => lienzoCapas.appendChild(crearElementoZocalo(capa)));
+        }
+    }
+
+    // Ticker/live/mosca/cronómetro/marcador son texto o formas simples: no
+    // hay problema en reconstruirlos en cada tick, así que se sacan por id
+    // en vez de depender de vaciar todo el lienzo.
+    ['ticker-editor', 'live-editor', 'mosca-editor', 'cronometro-editor', 'marcador-editor']
+        .forEach(id => document.getElementById(id)?.remove());
 
     lienzo.appendChild(crearElementoTicker());
     lienzo.appendChild(crearElementoLive());
