@@ -265,7 +265,8 @@ def textos_por_guion(guion_id):
         "contenido": t.contenido,
         "musica": t.musica,
         "material": t.material,
-        "grabar": t.grabar
+        "grabar": t.grabar,
+        "grabado": t.grabado
     } for t in textos])
 
 
@@ -430,6 +431,25 @@ def setTextoEmitido(id):
               f'Estado emitido: {texto.emitido}')
 
     return jsonify({"mensaje": "El texto se marcó como emitido", "emitido": texto.emitido})
+
+
+@textos_bp.route('/textos/grabado/<int:id>', methods=['PUT'])
+def setTextoGrabado(id):
+    texto = Texto.query.get(id)
+    if not texto:
+        return jsonify({"mensaje": "Texto no encontrado"}), 404
+
+    data = request.json or {}
+    texto.grabado = bool(data.get('grabado', True))
+    db.session.commit()
+
+    estado = 'grabado' if texto.grabado else 'no grabado'
+    registrar('INFO',
+              f'Marcó nota #{texto.numero_de_nota} como {estado}: {texto.titulo}',
+              'texto', id, texto.titulo,
+              f'Estado grabado: {texto.grabado}')
+
+    return jsonify({"mensaje": "El texto se marcó como grabado", "grabado": texto.grabado})
 
 
 # ---------------------------------------------------------------------------

@@ -226,26 +226,23 @@ async function cargarNotasParaGrabar(guionId) {
             fila.dataset.titulo = texto.titulo;
             fila.dataset.guionNombre = guionNombre;
 
-            // Estado inicial
-            window.estadosGrabacion[texto.id] = 'espera';
-
             fila.innerHTML = `
                 <td class="align-middle">${texto.numero_de_nota}</td>
                 <td class="align-middle">
                     <strong>${texto.titulo}</strong>
                     ${texto.material ? `<br><small class="text-muted">${texto.material}</small>` : ''}
                 </td>
-                <td class="align-middle estado-grabacion text-muted">
-                    <span class="status-indicator status-espera"></span>En espera
-                </td>
-                <td class="align-middle acciones-grabacion">
-                    <button class="btn btn-rec" onclick="iniciarGrabacionControl('${texto.id}', '${escaparParaJs(texto.titulo)}', '${escaparParaJs(guionNombre)}')">
-                        <i class="fas fa-circle"></i> REC
-                    </button>
-                </td>
+                <td class="align-middle estado-grabacion"></td>
+                <td class="align-middle acciones-grabacion"></td>
             `;
 
             tbody.appendChild(fila);
+
+            // Estado inicial: refleja lo que ya quedó grabado en el guión
+            // (persistido en la BD), no se resetea al recargar la página.
+            const estadoInicial = texto.grabado ? 'grabado' : 'espera';
+            window.estadosGrabacion[texto.id] = estadoInicial;
+            actualizarInterfazGrabacion(texto.id, estadoInicial);
         });
 
     } catch (error) {
@@ -339,6 +336,19 @@ async function iniciarGrabacionControl(textoId, titulo, guionNombre) {
     }
 }
 
+// Persiste en el guión que esta nota quedó grabada
+async function marcarTextoGrabado(textoId) {
+    try {
+        await fetch(`/textos/grabado/${textoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ grabado: true })
+        });
+    } catch (error) {
+        console.error('No se pudo persistir el estado grabado:', error);
+    }
+}
+
 // Función para verificar estado de la grabación
 async function verificarEstadoGrabacion(textoId) {
     try {
@@ -353,6 +363,7 @@ async function verificarEstadoGrabacion(textoId) {
             console.log('⚠ Grabación parece haber terminado, actualizando estado...');
             window.estadosGrabacion[textoId] = 'grabado';
             actualizarInterfazGrabacion(textoId, 'grabado');
+            marcarTextoGrabado(textoId);
         }
     } catch (error) {
         console.log('No se pudo verificar estado:', error);
@@ -413,6 +424,7 @@ async function detenerGrabacionControl(textoId, titulo) {
                 if (window.estadosGrabacion[textoId] === 'detenido') {
                     window.estadosGrabacion[textoId] = 'grabado';
                     actualizarInterfazGrabacion(textoId, 'grabado');
+                    marcarTextoGrabado(textoId);
                 }
             }, 3000);
 
@@ -524,8 +536,8 @@ function actualizarInterfazGrabacion(textoId, estado) {
             estadoCell.innerHTML = '<span class="status-indicator status-grabado"></span>Grabado';
             estadoCell.className = 'estado-grabacion text-success';
             botonCell.innerHTML = `
-                <button class="btn btn-outline-success" disabled>
-                    <i class="fas fa-check"></i> Completado
+                <button class="btn btn-outline-success" onclick="iniciarGrabacionControl('${textoId}', '${titulo}', '${guionNombre}')" title="Volver a grabar">
+                    <i class="fas fa-redo"></i> Regrabar
                 </button>
             `;
             break;
