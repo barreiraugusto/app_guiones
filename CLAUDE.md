@@ -6,8 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Ejecutar la app: `python run.py` (Flask dev server en `0.0.0.0:5000`).
 - Migraciones (Flask-Migrate/Alembic): `flask db migrate -m "mensaje"` y `flask db upgrade`. Migraciones en `migrations/versions/`.
-- No hay `requirements.txt`; instalar deps según README.md (Flask 3.1.0, Flask-SQLAlchemy 3.1.1, Flask-Migrate 4.0.7, WeasyPrint, psycopg2-binary). Hay dos carpetas de venv en el repo (`.venv` y `.env`, ambas gitignored); `.env` es la que tiene las dependencias instaladas.
+- La cadena de migraciones NO construye el esquema desde cero: `b149fa6291ea` ("estado inicial") tiene `upgrade()` vacío. Para inicializar una BD nueva: `db.create_all()` desde los modelos y luego `flask db stamp head`.
+- No hay `requirements.txt`; instalar deps según README.md (Flask 3.1.0, Flask-SQLAlchemy 3.1.1, Flask-Migrate 4.0.7, WeasyPrint, psycopg2-binary). El venv con las dependencias instaladas es `.venv/` (gitignored); usar `.venv/bin/python` / `.venv/bin/flask`.
 - No hay suite de tests ni linter configurado.
+- `config.py` tiene valores hardcodeados: PostgreSQL `guiones` en localhost (usuario `abarreira`), `SECRET_KEY` fijo, `MAX_CONTENT_LENGTH` 50MB (límite de subida de plantillas), pool con `statement_timeout` de 5s. Solo `RECORDING_SERVER_URL` sale de env.
+- `crear_secciones_definitivo.py` es un script one-off con SQL crudo (crea tabla `seccion`); no tiene modelo SQLAlchemy asociado.
 
 ## Arquitectura
 
@@ -29,12 +32,14 @@ Tiempo real: sin websockets, todo por Server-Sent Events (endpoints `/stream_*` 
 Vistas por rol (piso de producción):
 - `principal.html`/`guion.html` — redacción del guión.
 - `ver_guion.html` — emisión: activar nota / marcar emitido en vivo.
-- `siguiente.html` — monitor de "próxima nota" para el piso.
+- `siguiente.html` — monitor de "próxima nota" para el piso. Se renderiza con `body { zoom: 2 }` (se ve como navegador al 200%); por eso `.pn-page` usa `50vw`/`50dvh` en vez de `100`.
 - `control_live.html` + `control_live.js` (~1800 líneas) — control central: activar gráficos, paneles de propiedades por widget (Cronómetro, Marcador, Ticker, Vivo). Decisiones de diseño documentadas en `docs/superpowers/specs/`.
 - `pantalla.html`/`pantalla.js` — output real que renderiza las capas de la plantilla activa, incluye overlays de video WebM con canal alfa (ver `docs/videos-capas-plantillas.md` para el formato requerido).
 - `plantillas.html`/`plantillas.js` — editor visual de plantillas gráficas (capas, animaciones, colores, gradientes).
 
 `display_config.json` (cargado/guardado por `app/config_manager.py`) guarda posición de badges/overlays; es config, no dato de negocio en la BD.
+
+Módulo de grabación: la vista `/grabacion` (`grabacion.html`) y las rutas `/proxy/*_grabacion*` en `textos.py` son un proxy hacia un servidor PHP externo (`RECORDING_SERVER_URL`) que controla `ffmpeg`. La app no graba; solo dispara/consulta estado. El nombre del archivo se deriva del título de la nota o del `tema` del primer graph.
 
 `docs/superpowers/` tiene specs y planes de features ya implementadas — útil como historial de decisiones, no como trabajo pendiente.
 
