@@ -8,6 +8,9 @@ ORIGEN="/media/video"
 PATRON="*_9r.mp4"
 DESTINO_HOST="root@192.168.2.50"
 DESTINO_BASE="/media/storage/noticias"
+# Sin BatchMode, si falta la clave SSH el script queda esperando el prompt de
+# password: lanzado desde PHP no hay terminal y el proceso cuelga en silencio.
+SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=10"
 
 td=$(date +%Y/%m/%d)
 destino="$DESTINO_BASE/$td/REDES/"
@@ -31,9 +34,9 @@ done
 
 log "Subiendo: $ultimo_archivo -> $DESTINO_HOST:$destino"
 
-ssh "$DESTINO_HOST" "mkdir -p '$destino'" || { log "ERROR: no se pudo crear $destino"; exit 1; }
+ssh $SSH_OPTS "$DESTINO_HOST" "mkdir -p '$destino'" || { log "ERROR: no se pudo crear $destino"; exit 1; }
 
-if rsync -e ssh -av --partial "$ultimo_archivo" "$DESTINO_HOST:$destino"; then
+if rsync -e "ssh $SSH_OPTS" -av --partial "$ultimo_archivo" "$DESTINO_HOST:$destino"; then
     log "OK: $(basename "$ultimo_archivo")"
 else
     log "ERROR: rsync fallo para $(basename "$ultimo_archivo")"
