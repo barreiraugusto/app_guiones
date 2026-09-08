@@ -462,10 +462,6 @@ async function detenerGrabacionControl(textoId, titulo) {
         return;
     }
 
-    if (!confirm(`¿Detener grabación: "${titulo}"?\n\nSe intentará una detención limpia para preservar el archivo.`)) {
-        return;
-    }
-
     // Estado deteniendo
     window.estadosGrabacion[textoId] = 'deteniendo';
     actualizarInterfazGrabacion(textoId, 'deteniendo');
@@ -502,14 +498,8 @@ async function detenerGrabacionControl(textoId, titulo) {
 
             mostrarMensajeExito(mensaje);
 
-            // Después de 3 segundos, marcar como grabado
-            setTimeout(() => {
-                if (window.estadosGrabacion[textoId] === 'detenido') {
-                    window.estadosGrabacion[textoId] = 'grabado';
-                    actualizarInterfazGrabacion(textoId, 'grabado');
-                    marcarTextoGrabado(textoId);
-                }
-            }, 3000);
+            // El PHP ya confirmo el corte: liberar la fila enseguida.
+            liberarFilaGrabada(textoId);
 
         } else {
             // Si falla la detención limpia, intentar con método forzado
@@ -551,16 +541,31 @@ async function detenerGrabacionForzada(textoId, titulo) {
             window.estadosGrabacion[textoId] = 'detenido';
             actualizarInterfazGrabacion(textoId, 'detenido');
             mostrarMensajeExito(data.message || 'Grabación detenida (forzada)');
+            liberarFilaGrabada(textoId);
         } else {
             throw new Error('Error en respuesta del servidor');
         }
 
     } catch (error) {
         console.warn('Error en detención forzada:', error);
-        window.estadosGrabacion[textoId] = 'detenido';
-        actualizarInterfazGrabacion(textoId, 'detenido');
-        mostrarMensajeExito('Solicitud de detención enviada (modo forzado)');
+        // No sabemos si ffmpeg llego a cortar: dejar la fila en espera (REC
+        // activo) en vez de marcarla como grabada sin archivo confirmado.
+        window.estadosGrabacion[textoId] = 'espera';
+        actualizarInterfazGrabacion(textoId, 'espera');
+        mostrarError('No se pudo confirmar la detención: verificá el archivo antes de regrabar');
     }
+}
+
+// Pasa la fila de "detenido" (boton deshabilitado) a "grabado", que es el
+// unico estado desde el que el operador puede volver a grabar la nota.
+function liberarFilaGrabada(textoId) {
+    setTimeout(() => {
+        if (window.estadosGrabacion[textoId] === 'detenido') {
+            window.estadosGrabacion[textoId] = 'grabado';
+            actualizarInterfazGrabacion(textoId, 'grabado');
+            marcarTextoGrabado(textoId);
+        }
+    }, 500);
 }
 
 // Actualizar la función actualizarInterfazGrabacion para usar las nuevas funciones:

@@ -325,6 +325,39 @@ GET  /proxy/estado_grabacion           → Estado actual de la grabación
 
 > El módulo de grabación es un proxy hacia scripts PHP/ffmpeg en un servidor externo (`RECORDING_SERVER_URL` en `config.py`, default `http://192.168.2.62`), no forma parte de esta app.
 
+#### Sincronización al storage al finalizar la grabación
+
+Al detener la grabación, el servidor externo sube el último archivo grabado al storage
+(`root@192.168.2.50:/media/storage/noticias/AAAA/MM/DD/REDES/`). La copia versionada del
+script está en `scripts/sync_redes.sh`; debe instalarse en el servidor de grabación como
+`/opt/scripts/sync_redes.sh` y dispararse desde el PHP de detención:
+
+```php
+// Al final de detener_grabacion_limpio.php, despues de matar ffmpeg
+exec('/opt/scripts/sync_redes.sh >> /var/log/sync_redes.log 2>&1 &');
+```
+
+El `&` es obligatorio: sin él la respuesta a `/proxy/detener_grabacion_limpia` queda
+bloqueada hasta que termine la transferencia.
+
+Verificaciones en el servidor de grabación (`192.168.2.62`) antes de darlo por andando:
+
+1. `exec` no debe estar en `disable_functions`:
+   ```bash
+   php -i | grep disable_functions
+   ```
+2. El usuario de PHP (`www-data` o `apache`) debe poder ejecutar el script y escribir el log:
+   ```bash
+   chmod +x /opt/scripts/sync_redes.sh
+   touch /var/log/sync_redes.log && chown www-data /var/log/sync_redes.log
+   ```
+3. La clave SSH hacia `root@192.168.2.50` debe estar en el home de ese usuario, no en
+   `/root/.ssh`. Prueba directa:
+   ```bash
+   sudo -u www-data /opt/scripts/sync_redes.sh
+   ```
+   Si pide contraseña o responde `Permission denied (publickey)`, falta la clave.
+
 ---
 
 ## Despliegue en producción
