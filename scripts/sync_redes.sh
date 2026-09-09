@@ -17,7 +17,10 @@ destino="$DESTINO_BASE/$td/REDES/"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
-ultimo_archivo=$(ls -1t $ORIGEN/$PATRON 2>/dev/null | head -n 1)
+# Las grabaciones quedan en subcarpetas por guion (/media/video/<GUION>/),
+# asi que la busqueda tiene que ser recursiva y no un glob de la raiz.
+ultimo_archivo=$(find "$ORIGEN" -type f -name "$PATRON" -printf '%T@ %p\n' 2>/dev/null \
+    | sort -rn | head -n 1 | cut -d' ' -f2-)
 
 if [ -z "$ultimo_archivo" ]; then
     log "ERROR: no hay archivos $PATRON en $ORIGEN"
