@@ -110,6 +110,16 @@
             }
         }
 
+        /* Fila de la nota que está activa en emisión (la que sigue) */
+        #listaGrabaciones tr.fila-activa > td {
+            background-color: #fff3cd !important;
+            font-weight: 600;
+        }
+
+        #listaGrabaciones tr.fila-activa > td:first-child {
+            box-shadow: inset 6px 0 0 #ffc107;
+        }
+
         .empty-state {
             padding: 40px 20px;
             text-align: center;

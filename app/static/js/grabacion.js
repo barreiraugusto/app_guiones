@@ -178,6 +178,31 @@ function seleccionarGuionParaGrabacion(guionId, guionNombre) {
     iniciarPollGrabacion(guionId);
 }
 
+// ===== NOTA ACTIVA (la que sigue al aire) =====
+
+// Guarda el id de la nota activa aunque todavía no exista su fila, para
+// poder repintarla cada vez que se vuelve a armar la tabla.
+window.textoActivoId = null;
+
+function pintarNotaActiva(textoId) {
+    window.textoActivoId = (textoId === null || textoId === undefined) ? null : String(textoId);
+    document.querySelectorAll('#listaGrabaciones tr[data-texto-id]').forEach(fila => {
+        fila.classList.toggle('fila-activa', fila.dataset.textoId === window.textoActivoId);
+    });
+}
+
+// La nota activa la publica el mismo SSE que usa /siguiente, así que el
+// resaltado aparece al instante en que la activan desde emisión.
+const eventSourceTextoActivo = new EventSource('/stream_texto_activo');
+eventSourceTextoActivo.onmessage = function (event) {
+    try {
+        const data = JSON.parse(event.data);
+        pintarNotaActiva(data && data.id ? data.id : null);
+    } catch (error) {
+        console.log('No se pudo leer el texto activo:', error);
+    }
+};
+
 // ===== SINCRONIZACIÓN ENTRE DISPOSITIVOS =====
 
 let pollGrabacionInterval = null;
@@ -311,7 +336,13 @@ async function cargarNotasParaGrabar(guionId) {
             if (estadoInicial === 'grabando') {
                 verificarEstadoGrabacion(texto.id);
             }
+
+            if (texto.activo) {
+                window.textoActivoId = String(texto.id);
+            }
         });
+
+        pintarNotaActiva(window.textoActivoId);
 
     } catch (error) {
         console.error('Error cargando notas:', error);

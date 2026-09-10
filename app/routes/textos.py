@@ -267,7 +267,8 @@ def textos_por_guion(guion_id):
         "material": t.material,
         "grabar": t.grabar,
         "grabado": t.grabado,
-        "grabando": t.grabando
+        "grabando": t.grabando,
+        "activo": t.activo
     } for t in textos])
 
 
