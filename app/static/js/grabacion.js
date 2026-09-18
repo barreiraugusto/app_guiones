@@ -1,83 +1,55 @@
-// static/js/grabacion.js - VERSIÓN COMPLETA
+// static/js/grabacion.js — vista de grabaciones sobre la API de la Capturadora.
+//
+// El estado ya no se adivina: llega entero por SSE desde /stream_grabacion
+// (qué graba el equipo, duración, bytes escritos, envíos al storage) y esta
+// pantalla solo lo pinta. Las acciones son dos: GRABAR y DETENER.
 
-// Variables globales
-window.estadosGrabacion = {};
 window.guionSeleccionadoId = null;
+window.textoActivoId = null;
 
-// Escapa comillas simples y backslashes para poder interpolar un valor
-// dentro de un atributo onclick="...('valor')" sin romper el HTML.
-function escaparParaJs(str) {
-    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-}
+let ultimoSnapshot = null;
+let eventSourceGrabacion = null;
+let notaEnTransicion = null;   // id de nota con un POST en vuelo
+let logInterval = null;
+let logTextoId = null;
 
-// ===== FUNCIONES DE INICIALIZACIÓN =====
+// ===== ARRANQUE =====
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('grabacion.js cargado');
-
-    // Verificar si hay un guion seleccionado en localStorage
     const guionId = localStorage.getItem('guionSeleccionadoGrabacion');
     const guionNombre = localStorage.getItem('guionNombreGrabacion');
 
     if (guionId && guionNombre) {
-        console.log('Guion encontrado en localStorage:', guionId, guionNombre);
         seleccionarGuionParaGrabacion(guionId, guionNombre);
     } else {
-        console.log('No hay guion guardado en localStorage');
+        conectarStream(null);
     }
 
-    // Configurar eventos del modal
     if (typeof $ !== 'undefined') {
-        $('#seleccionarGuionModalGrabacion').on('shown.bs.modal', function () {
-            console.log('Modal mostrado, cargando guiones...');
-            cargarGuionesParaGrabacion();
-        });
-
+        $('#seleccionarGuionModalGrabacion').on('shown.bs.modal', cargarGuionesParaGrabacion);
         $('#seleccionarGuionModalGrabacion').on('hidden.bs.modal', function () {
-            // Limpiar búsqueda
-            const buscarInput = document.getElementById('buscarGuionGrabacion');
-            if (buscarInput) {
-                buscarInput.value = '';
+            const buscar = document.getElementById('buscarGuionGrabacion');
+            if (buscar) {
+                buscar.value = '';
                 filtrarGuionesGrabacion();
             }
         });
     }
 });
 
-// ===== FUNCIONES DE GESTIÓN DE GUIONES =====
+// ===== SELECCIÓN DE GUION =====
 
-// Función para guardar selección en localStorage
-function guardarSeleccionGrabacion(guionId, guionNombre) {
-    try {
-        localStorage.setItem('guionSeleccionadoGrabacion', guionId);
-        localStorage.setItem('guionNombreGrabacion', guionNombre);
-        console.log('Guion guardado en localStorage:', guionId, guionNombre);
-    } catch (e) {
-        console.error('Error guardando en localStorage:', e);
-    }
-}
-
-// Función para cargar guiones
 async function cargarGuionesParaGrabacion() {
-    console.log('Cargando guiones...');
+    const lista = document.getElementById('listaGuionesModalGrabacion');
+    if (!lista) return;
+
     try {
         const response = await fetch('/obtener_guiones');
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const guiones = await response.json();
-        console.log('Guiones recibidos:', guiones.length);
-
-        const lista = document.getElementById('listaGuionesModalGrabacion');
-        if (!lista) {
-            console.error('Elemento listaGuionesModalGrabacion no encontrado');
-            return;
-        }
 
         lista.innerHTML = '';
-
-        if (guiones.length === 0) {
+        if (!guiones.length) {
             lista.innerHTML = '<div class="list-group-item text-center text-muted">No hay guiones disponibles</div>';
             return;
         }
@@ -89,57 +61,51 @@ async function cargarGuionesParaGrabacion() {
             item.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-1">${guion.nombre}</h6>
-                        <small class="text-muted">${guion.descripcion || 'Sin descripción'}</small>
+                        <h6 class="mb-1"></h6>
+                        <small class="text-muted"></small>
                     </div>
-                    <span class="badge badge-primary">
-                        ${guion.notas_para_grabar || 0}/${guion.cantidad_notas || 0}
-                    </span>
-                </div>
-            `;
-
+                    <span class="badge badge-primary">${guion.notas_para_grabar || 0}/${guion.cantidad_notas || 0}</span>
+                </div>`;
+            item.querySelector('h6').textContent = guion.nombre;
+            item.querySelector('small').textContent = guion.descripcion || 'Sin descripción';
             item.onclick = function (e) {
                 e.preventDefault();
-                console.log('Guion seleccionado:', guion.id, guion.nombre);
                 seleccionarGuionParaGrabacion(guion.id, guion.nombre);
-                if (typeof $ !== 'undefined') {
-                    $('#seleccionarGuionModalGrabacion').modal('hide');
-                }
+                if (typeof $ !== 'undefined') $('#seleccionarGuionModalGrabacion').modal('hide');
             };
-
             lista.appendChild(item);
         });
-
     } catch (error) {
-        console.error('Error cargando guiones:', error);
-        mostrarError('Error al cargar los guiones: ' + error.message);
-
-        const lista = document.getElementById('listaGuionesModalGrabacion');
-        if (lista) {
-            lista.innerHTML = `
-                <div class="list-group-item text-center text-danger">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    Error al cargar guiones
-                </div>
-            `;
-        }
+        lista.innerHTML = `<div class="list-group-item text-center text-danger">
+            <i class="fas fa-exclamation-triangle mr-2"></i>Error al cargar guiones</div>`;
     }
 }
 
-// Función para filtrar guiones
 function filtrarGuionesGrabacion() {
-    const busqueda = document.getElementById('buscarGuionGrabacion')?.value.toLowerCase() || '';
-    const items = document.querySelectorAll('#listaGuionesModalGrabacion .list-group-item');
-
-    console.log('Filtrando con:', busqueda);
-
-    items.forEach(item => {
-        const texto = item.textContent.toLowerCase();
-        item.style.display = texto.includes(busqueda) ? 'block' : 'none';
+    const busqueda = (document.getElementById('buscarGuionGrabacion')?.value || '').toLowerCase();
+    document.querySelectorAll('#listaGuionesModalGrabacion .list-group-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(busqueda) ? 'block' : 'none';
     });
 }
 
-// Función para seleccionar guion
+function seleccionarGuionParaGrabacion(guionId, guionNombre) {
+    if (hayGrabacionEnCurso()) {
+        mostrarError('No se puede cambiar de guion mientras hay una grabación en curso');
+        return;
+    }
+
+    window.guionSeleccionadoId = guionId;
+    document.getElementById('guionActual').textContent = guionNombre;
+
+    try {
+        localStorage.setItem('guionSeleccionadoGrabacion', guionId);
+        localStorage.setItem('guionNombreGrabacion', guionNombre);
+    } catch (e) { /* modo privado */ }
+
+    document.getElementById('listaGrabaciones').dataset.firma = '';
+    conectarStream(guionId);
+}
+
 function volverAControl() {
     if (hayGrabacionEnCurso()) {
         mostrarError('No se puede volver a Control hasta detener la grabación en curso');
@@ -148,598 +114,600 @@ function volverAControl() {
     window.location.href = '/principal';
 }
 
-function seleccionarGuionParaGrabacion(guionId, guionNombre) {
-    console.log('Seleccionando guion:', guionId, guionNombre);
+// ===== ESTADO EN VIVO =====
 
-    if (hayGrabacionEnCurso()) {
-        mostrarError('No se puede cambiar de guión mientras hay una grabación en curso');
-        return;
-    }
-
-    window.guionSeleccionadoId = guionId;
-
-    const guionActualElement = document.getElementById('guionActual');
-    const estadoGlobalElement = document.getElementById('estadoGlobal');
-
-    if (guionActualElement) {
-        guionActualElement.textContent = guionNombre;
-    }
-
-    if (estadoGlobalElement) {
-        estadoGlobalElement.textContent = `Guion: ${guionNombre}`;
-        estadoGlobalElement.className = 'badge badge-success';
-    }
-
-    // Guardar en localStorage
-    guardarSeleccionGrabacion(guionId, guionNombre);
-
-    // Cargar las notas para grabar
-    cargarNotasParaGrabar(guionId);
-    iniciarPollGrabacion(guionId);
+function conectarStream(guionId) {
+    if (eventSourceGrabacion) eventSourceGrabacion.close();
+    const url = guionId ? `/stream_grabacion?guion_id=${guionId}` : '/stream_grabacion';
+    eventSourceGrabacion = new EventSource(url);
+    eventSourceGrabacion.onmessage = function (event) {
+        try {
+            pintarSnapshot(JSON.parse(event.data));
+        } catch (error) {
+            console.log('Snapshot ilegible:', error);
+        }
+    };
 }
 
-// ===== NOTA ACTIVA (la que sigue al aire) =====
-
-// Guarda el id de la nota activa aunque todavía no exista su fila, para
-// poder repintarla cada vez que se vuelve a armar la tabla.
-window.textoActivoId = null;
-
-function pintarNotaActiva(textoId) {
-    window.textoActivoId = (textoId === null || textoId === undefined) ? null : String(textoId);
-    document.querySelectorAll('#listaGrabaciones tr[data-texto-id]').forEach(fila => {
-        fila.classList.toggle('fila-activa', fila.dataset.textoId === window.textoActivoId);
-    });
-}
-
-// La nota activa la publica el mismo SSE que usa /siguiente, así que el
-// resaltado aparece al instante en que la activan desde emisión.
+// La nota activa en emisión llega por el mismo SSE que usa /siguiente.
 const eventSourceTextoActivo = new EventSource('/stream_texto_activo');
 eventSourceTextoActivo.onmessage = function (event) {
     try {
         const data = JSON.parse(event.data);
-        pintarNotaActiva(data && data.id ? data.id : null);
-    } catch (error) {
-        console.log('No se pudo leer el texto activo:', error);
-    }
+        window.textoActivoId = (data && data.id) ? String(data.id) : null;
+        document.querySelectorAll('.gr-fila[data-texto-id]').forEach(fila => {
+            fila.classList.toggle('fila-activa', fila.dataset.textoId === window.textoActivoId);
+        });
+    } catch (error) { /* sin nota activa */ }
 };
 
-// ===== SINCRONIZACIÓN ENTRE DISPOSITIVOS =====
+function pintarSnapshot(datos) {
+    ultimoSnapshot = datos;
 
-let pollGrabacionInterval = null;
+    pintarConexion(datos);
+    if (datos.perfil_aviso !== undefined) pintarAvisoPerfil(datos);
+    if (!datos.ok) return;
 
-// Repite la consulta del guion cada pocos segundos para que si otra
-// persona (en otro dispositivo) inicia o detiene una grabación, esta
-// pantalla se entere sin necesidad de recargar.
-function iniciarPollGrabacion(guionId) {
-    if (pollGrabacionInterval) clearInterval(pollGrabacionInterval);
-    pollGrabacionInterval = setInterval(() => sincronizarEstadoGrabacion(guionId), 5000);
+    pintarEquipo(datos.equipo);
+    pintarNotas(datos.notas || []);
+    pintarContadores(datos.notas || []);
+    pintarOtras(datos.otras || []);
+    pintarTareas(datos.tareas || []);
+    pintarPanelVivo(datos.notas || [], datos.otras || []);
+    if (datos.programaciones !== undefined) pintarProgramaciones(datos.programaciones);
 }
 
-async function sincronizarEstadoGrabacion(guionId) {
-    if (!guionId) return;
-    try {
-        const response = await fetch(`/textos/por-guion/${guionId}`);
-        if (!response.ok) return;
-        const textos = await response.json();
+function pintarConexion(datos) {
+    const chip = document.getElementById('chipConexion');
+    const aviso = document.getElementById('avisoConexion');
 
-        textos.forEach(texto => {
-            const id = String(texto.id);
-            const estadoLocal = window.estadosGrabacion[id];
-
-            // No hay fila para esta nota (no está marcada para grabar) o
-            // está en medio de una transición propia: no tocar.
-            if (estadoLocal === undefined || estadoLocal === 'deteniendo') return;
-
-            if (texto.grabando && estadoLocal !== 'grabando') {
-                window.estadosGrabacion[id] = 'grabando';
-                actualizarInterfazGrabacion(id, 'grabando');
-            } else if (!texto.grabando && estadoLocal === 'grabando') {
-                const nuevoEstado = texto.grabado ? 'grabado' : 'espera';
-                window.estadosGrabacion[id] = nuevoEstado;
-                actualizarInterfazGrabacion(id, nuevoEstado);
-            }
-        });
-    } catch (error) {
-        console.log('No se pudo sincronizar estado de grabación:', error);
+    if (datos.ok) {
+        chip.textContent = 'EN LÍNEA';
+        chip.style.background = '#1f3a30';
+        chip.style.color = '#8fd6b4';
+        aviso.style.display = 'none';
+    } else {
+        chip.textContent = 'SIN CONEXIÓN';
+        chip.style.background = '#3c1f1e';
+        chip.style.color = '#ef9a95';
+        aviso.style.display = 'block';
+        aviso.textContent = `No se puede hablar con la Capturadora: ${datos.error || 'sin detalle'}`;
     }
 }
 
-// ===== FUNCIONES DE GRABACIÓN =====
-
-// Función para cargar notas para grabar
-async function cargarNotasParaGrabar(guionId) {
-    console.log('Cargando notas para grabar del guion:', guionId);
-
-    try {
-        const tbody = document.getElementById('listaGrabaciones');
-        if (!tbody) {
-            console.error('Elemento listaGrabaciones no encontrado');
-            return;
-        }
-
-        // Mostrar loading
-        tbody.innerHTML = `
-            <tr id="loading">
-                <td colspan="4" class="text-center py-4">
-                    <div class="spinner-border text-danger" role="status"></div>
-                    <p class="mt-2">Cargando notas para grabar...</p>
-                </td>
-            </tr>
-        `;
-
-        // Obtener textos del guion
-        const response = await fetch(`/textos/por-guion/${guionId}`);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const textos = await response.json();
-        console.log('Textos recibidos:', textos.length);
-
-        // Filtrar solo los que tienen grabar=true
-        const textosParaGrabar = textos
-            .filter(texto => texto.grabar === true)
-            .sort((a, b) => a.numero_de_nota - b.numero_de_nota);
-        console.log('Textos para grabar:', textosParaGrabar.length);
-
-        // Obtener el nombre del guion
-        const guionNombre = document.getElementById('guionActual')?.textContent || 'Sin nombre';
-
-        // Actualizar tabla
-        tbody.innerHTML = '';
-
-        if (textosParaGrabar.length === 0) {
-            tbody.innerHTML = `
-                <tr id="sinDatos">
-                    <td colspan="4" class="empty-state">
-                        <i class="fas fa-times-circle"></i>
-                        <h5 class="mt-3">No hay notas para grabar</h5>
-                        <p class="text-muted">No hay notas marcadas con "Grabar" en este guion</p>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        // Agregar cada nota a la tabla
-        textosParaGrabar.forEach(texto => {
-            const fila = document.createElement('tr');
-            fila.dataset.textoId = texto.id;
-            fila.dataset.titulo = texto.titulo;
-            fila.dataset.guionNombre = guionNombre;
-
-            fila.innerHTML = `
-                <td class="align-middle">${texto.numero_de_nota}</td>
-                <td class="align-middle">
-                    <strong>${texto.titulo}</strong>
-                    ${texto.material ? `<br><small class="text-muted">${texto.material}</small>` : ''}
-                </td>
-                <td class="align-middle estado-grabacion"></td>
-                <td class="align-middle acciones-grabacion"></td>
-            `;
-
-            tbody.appendChild(fila);
-
-            // Estado inicial: viene del servidor (compartido entre
-            // cualquiera que abra esta página, no solo quien la inició),
-            // así que sobrevive recargas, volver atrás y otros dispositivos.
-            let estadoInicial = texto.grabado ? 'grabado' : 'espera';
-            if (texto.grabando) {
-                estadoInicial = 'grabando';
-            }
-
-            window.estadosGrabacion[texto.id] = estadoInicial;
-            actualizarInterfazGrabacion(texto.id, estadoInicial);
-
-            // Confirmar contra el servidor: si en realidad ya terminó
-            // mientras no estábamos mirando, esto la pasa a "grabado".
-            if (estadoInicial === 'grabando') {
-                verificarEstadoGrabacion(texto.id);
-            }
-
-            if (texto.activo) {
-                window.textoActivoId = String(texto.id);
-            }
-        });
-
-        pintarNotaActiva(window.textoActivoId);
-
-    } catch (error) {
-        console.error('Error cargando notas:', error);
-        mostrarError('Error al cargar las notas para grabar: ' + error.message);
-
-        const tbody = document.getElementById('listaGrabaciones');
-        if (tbody) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="text-center text-danger py-4">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p class="mt-2">Error al cargar las notas</p>
-                        <small>${error.message}</small>
-                    </td>
-                </tr>
-            `;
-        }
-    }
-}
-
-// Función para iniciar grabación CON CONTROL
-async function iniciarGrabacionControl(textoId, titulo, guionNombre) {
-    console.log('Iniciando grabación con control...', {textoId, titulo, guionNombre});
-
-    if (!window.guionSeleccionadoId) {
-        mostrarError('Primero selecciona un guion');
+function pintarAvisoPerfil(datos) {
+    const aviso = document.getElementById('avisoPerfil');
+    if (datos.perfil_ok || !datos.perfil_aviso) {
+        aviso.style.display = 'none';
         return;
     }
-
-    // Actualizar estado inmediatamente
-    window.estadosGrabacion[textoId] = 'grabando';
-    actualizarInterfazGrabacion(textoId, 'grabando');
-
-    // Mostrar indicador de carga
-    const fila = document.querySelector(`tr[data-texto-id="${textoId}"]`);
-    if (fila) {
-        const botonCell = fila.querySelector('.acciones-grabacion');
-        if (botonCell) {
-            botonCell.innerHTML = `
-                <button class="btn btn-warning" disabled>
-                    <i class="fas fa-spinner fa-spin"></i> Iniciando...
-                </button>
-            `;
-        }
-    }
-
-    try {
-        const response = await fetch('/proxy/iniciar_grabacion_control', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                texto_id: textoId,
-                titulo: titulo,
-                guion_nombre: guionNombre
-            })
-        });
-
-        const data = await response.json();
-        console.log('Respuesta del proxy (control):', data);
-
-        if (data.success) {
-            let mensaje = data.message || 'Grabación iniciada';
-            if (data.pid) {
-                mensaje += ` (PID: ${data.pid})`;
-            }
-            if (data.nombre_archivo) {
-                mensaje += ` [${data.nombre_archivo}]`;
-            }
-
-            mostrarMensajeExito(mensaje);
-
-            // Actualizar interfaz con botón STOP
-            actualizarInterfazGrabacion(textoId, 'grabando');
-
-            // Verificar estado después de 5 segundos
-            setTimeout(() => {
-                verificarEstadoGrabacion(textoId);
-            }, 5000);
-
-        } else {
-            throw new Error(data.message || 'Error desconocido al iniciar grabación');
-        }
-    } catch (error) {
-        console.error('Error iniciando grabación con control:', error);
-        mostrarError('Error al iniciar la grabación: ' + error.message);
-        window.estadosGrabacion[textoId] = 'espera';
-        actualizarInterfazGrabacion(textoId, 'espera');
-    }
+    aviso.style.display = 'block';
+    aviso.textContent = datos.perfil_aviso;
 }
 
-// Persiste en el guión que esta nota quedó grabada
-async function marcarTextoGrabado(textoId) {
-    try {
-        await fetch(`/textos/grabado/${textoId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grabado: true })
-        });
-    } catch (error) {
-        console.error('No se pudo persistir el estado grabado:', error);
-    }
-}
+function pintarEquipo(equipo) {
+    if (!equipo) return;
 
-// Persiste en el servidor cuál nota está grabando ahora mismo, para que
-// cualquiera que abra /grabacion (otro dispositivo, otra persona) vea el
-// estado real y pueda frenarla, no solo quien la inició.
-async function marcarTextoGrabando(textoId, grabando) {
-    try {
-        await fetch(`/textos/grabando/${textoId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grabando })
-        });
-    } catch (error) {
-        console.error('No se pudo persistir el estado grabando:', error);
-    }
-}
-
-// Función para verificar estado de la grabación
-async function verificarEstadoGrabacion(textoId) {
-    try {
-        const response = await fetch('/proxy/estado_grabacion');
-        const estado = await response.text();
-        console.log('Estado actual de grabación:', estado.substring(0, 200));
-
-        // Si el estado indica que no hay grabación activa pero nosotros creemos que sí,
-        // actualizar el estado
-        if (estado.includes('No hay procesos ffmpeg') &&
-            window.estadosGrabacion[textoId] === 'grabando') {
-            console.log('⚠ Grabación parece haber terminado, actualizando estado...');
-            window.estadosGrabacion[textoId] = 'grabado';
-            actualizarInterfazGrabacion(textoId, 'grabado');
-            marcarTextoGrabado(textoId);
-        }
-    } catch (error) {
-        console.log('No se pudo verificar estado:', error);
-    }
-}
-
-// Función para detener grabación CON CONTROL
-async function detenerGrabacionControl(textoId, titulo) {
-    console.log('Deteniendo grabación con control...', {textoId, titulo});
-
-    if (!window.estadosGrabacion[textoId] || window.estadosGrabacion[textoId] !== 'grabando') {
-        mostrarError('No hay grabación activa para detener');
-        return;
-    }
-
-    // Estado deteniendo
-    window.estadosGrabacion[textoId] = 'deteniendo';
-    actualizarInterfazGrabacion(textoId, 'deteniendo');
-
-    try {
-        const response = await fetch('/proxy/detener_grabacion_limpia', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                texto_id: textoId,
-                titulo: titulo
-            })
-        });
-
-        const data = await response.json();
-        console.log('Respuesta detención control:', data);
-
-        if (data.success) {
-            window.estadosGrabacion[textoId] = 'detenido';
-            actualizarInterfazGrabacion(textoId, 'detenido');
-
-            let mensaje = data.message || 'Grabación detenida';
-            if (data.tamano) {
-                mensaje += ` (${data.tamano})`;
-            }
-            if (data.duracion) {
-                mensaje += ` [${data.duracion}]`;
-            }
-            if (data.valido === false) {
-                mensaje += ' ⚠ Posible archivo corrupto';
-            }
-
-            mostrarMensajeExito(mensaje);
-
-            // El PHP ya confirmo el corte: liberar la fila enseguida.
-            liberarFilaGrabada(textoId);
-
-        } else {
-            // Si falla la detención limpia, intentar con método forzado
-            console.log('Detención limpia falló, intentando método forzado...');
-            await detenerGrabacionForzada(textoId, titulo);
-        }
-    } catch (error) {
-        console.error('Error deteniendo con control:', error);
-        mostrarError('Error al detener: ' + error.message);
-
-        // Intentar con método forzado como fallback
-        setTimeout(() => {
-            detenerGrabacionForzada(textoId, titulo);
-        }, 1000);
-    }
-}
-
-// Función de fallback forzada
-async function detenerGrabacionForzada(textoId, titulo) {
-    console.log('Usando detención forzada como fallback');
-
-    try {
-        // Usar el endpoint antiguo o directo
-        const response = await fetch('/proxy/detener_grabacion', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                texto_id: textoId,
-                titulo: titulo
-            })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Respuesta detención forzada:', data);
-
-            window.estadosGrabacion[textoId] = 'detenido';
-            actualizarInterfazGrabacion(textoId, 'detenido');
-            mostrarMensajeExito(data.message || 'Grabación detenida (forzada)');
-            liberarFilaGrabada(textoId);
-        } else {
-            throw new Error('Error en respuesta del servidor');
-        }
-
-    } catch (error) {
-        console.warn('Error en detención forzada:', error);
-        // No sabemos si ffmpeg llego a cortar: dejar la fila en espera (REC
-        // activo) en vez de marcarla como grabada sin archivo confirmado.
-        window.estadosGrabacion[textoId] = 'espera';
-        actualizarInterfazGrabacion(textoId, 'espera');
-        mostrarError('No se pudo confirmar la detención: verificá el archivo antes de regrabar');
-    }
-}
-
-// Pasa la fila de "detenido" (boton deshabilitado) a "grabado", que es el
-// unico estado desde el que el operador puede volver a grabar la nota.
-function liberarFilaGrabada(textoId) {
-    setTimeout(() => {
-        if (window.estadosGrabacion[textoId] === 'detenido') {
-            window.estadosGrabacion[textoId] = 'grabado';
-            actualizarInterfazGrabacion(textoId, 'grabado');
-            marcarTextoGrabado(textoId);
-        }
-    }, 500);
-}
-
-// Actualizar la función actualizarInterfazGrabacion para usar las nuevas funciones:
-function actualizarInterfazGrabacion(textoId, estado) {
-    const fila = document.querySelector(`tr[data-texto-id="${textoId}"]`);
-    if (!fila) return;
-
-    const estadoCell = fila.querySelector('.estado-grabacion');
-    const botonCell = fila.querySelector('.acciones-grabacion');
-
-    const titulo = escaparParaJs(fila.dataset.titulo);
-    const guionNombre = escaparParaJs(fila.dataset.guionNombre);
-
-    switch (estado) {
-        case 'espera':
-            estadoCell.innerHTML = '<span class="status-indicator status-espera"></span>En espera';
-            estadoCell.className = 'estado-grabacion text-muted';
-            botonCell.innerHTML = `
-                <button class="btn btn-rec" onclick="iniciarGrabacionControl('${textoId}', '${titulo}', '${guionNombre}')">
-                    <i class="fas fa-circle"></i> REC
-                </button>
-            `;
-            break;
-
-        case 'grabando':
-            estadoCell.innerHTML = '<span class="status-indicator status-grabando"></span>GRABANDO...';
-            estadoCell.className = 'estado-grabacion text-danger font-weight-bold';
-            botonCell.innerHTML = `
-                <button class="btn btn-stop" onclick="detenerGrabacionControl('${textoId}', '${titulo}')">
-                    <i class="fas fa-stop"></i> STOP
-                </button>
-            `;
-            break;
-
-        case 'deteniendo':
-            estadoCell.innerHTML = '<span class="status-indicator status-grabando"></span>DETENIENDO...';
-            estadoCell.className = 'estado-grabacion text-warning font-weight-bold';
-            botonCell.innerHTML = `
-                <button class="btn btn-warning" disabled>
-                    <i class="fas fa-spinner fa-spin"></i> Deteniendo...
-                </button>
-            `;
-            break;
-
-        case 'detenido':
-            estadoCell.innerHTML = '<span class="status-indicator" style="background-color: #ffc107;"></span>Detenido';
-            estadoCell.className = 'estado-grabacion text-warning';
-            botonCell.innerHTML = `
-                <button class="btn btn-outline-warning" disabled>
-                    <i class="fas fa-pause"></i> Detenido
-                </button>
-            `;
-            break;
-
-        case 'grabado':
-            estadoCell.innerHTML = '<span class="status-indicator status-grabado"></span>Grabado';
-            estadoCell.className = 'estado-grabacion text-success';
-            botonCell.innerHTML = `
-                <button class="btn btn-outline-success" onclick="iniciarGrabacionControl('${textoId}', '${titulo}', '${guionNombre}')" title="Volver a grabar">
-                    <i class="fas fa-redo"></i> Regrabar
-                </button>
-            `;
-            break;
-    }
-
-    // Persistir el estado "grabando ahora mismo" para que sea visible
-    // desde cualquier dispositivo, no solo el que hizo el cambio.
-    if (estado === 'grabando') {
-        marcarTextoGrabando(textoId, true);
-    } else if (estado === 'detenido' || estado === 'grabado' || estado === 'espera') {
-        marcarTextoGrabando(textoId, false);
-    }
-
-    actualizarBloqueoBotones();
-}
-
-// Solo se puede grabar una nota a la vez: mientras alguna esté
-// grabando/deteniendo, deshabilita los botones REC/Regrabar del resto.
-function hayGrabacionEnCurso() {
-    return Object.values(window.estadosGrabacion).some(
-        estado => estado === 'grabando' || estado === 'deteniendo'
-    );
-}
-
-function actualizarBloqueoBotones() {
-    const bloquear = hayGrabacionEnCurso();
-
-    document.querySelectorAll('#listaGrabaciones tr[data-texto-id]').forEach(fila => {
-        const estado = window.estadosGrabacion[fila.dataset.textoId];
-        if (estado === 'espera' || estado === 'grabado') {
-            const boton = fila.querySelector('.acciones-grabacion button');
-            if (boton) boton.disabled = bloquear;
-        }
+    const chips = document.getElementById('chipsEntradas');
+    const entradas = equipo.inputs || {};
+    chips.innerHTML = '';
+    Object.keys(entradas).forEach(clave => {
+        const entrada = entradas[clave];
+        const span = document.createElement('span');
+        span.className = 'gr-chip';
+        span.innerHTML = `<span class="punto ${entrada.busy ? 'punto-ocupado' : 'punto-libre'}"></span>
+            <span class="mono"></span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.6px;">${entrada.busy ? 'OCUPADA' : 'LIBRE'}</span>`;
+        span.querySelector('.mono').textContent = entrada.label || clave;
+        chips.appendChild(span);
     });
 
-    // No se puede cambiar de guión ni salir de la vista mientras hay una grabación en curso
-    const dropdownGuion = document.getElementById('dropdownGuionGrabacion');
-    if (dropdownGuion) {
-        dropdownGuion.disabled = bloquear;
-        dropdownGuion.title = bloquear ? 'No disponible mientras hay una grabación en curso' : '';
+    const disco = equipo.disk || {};
+    document.getElementById('chipDisco').textContent = formatearBytes(disco.free_bytes);
+    document.getElementById('chipDisco').style.color =
+        disco.free_bytes < 20 * 1e9 ? '#ff6b63' : (disco.free_bytes < 100 * 1e9 ? '#e0a44a' : '#f4f4f2');
+    document.getElementById('chipEnvios').textContent = equipo.envios_pendientes || 0;
+}
+
+function pintarContadores(notas) {
+    const cuenta = estado => notas.filter(n => n.estado === estado).length;
+    document.getElementById('contTotal').textContent = notas.length;
+    document.getElementById('contGrabadas').textContent = cuenta('grabada') + cuenta('enviando');
+    document.getElementById('contGrabando').textContent = cuenta('grabando') + cuenta('deteniendo');
+    document.getElementById('contError').textContent = cuenta('fallo') + cuenta('fallo_envio');
+}
+
+const ETIQUETAS = {
+    pendiente: ['PENDIENTE', ''],
+    grabando: ['GRABANDO', 'badge-grabando'],
+    deteniendo: ['DETENIENDO', 'badge-deteniendo'],
+    grabada: ['GRABADA', 'badge-grabada'],
+    enviando: ['ENVIANDO', 'badge-enviando'],
+    fallo: ['FALLÓ', 'badge-fallo'],
+    fallo_envio: ['NO SE ENVIÓ', 'badge-fallo'],
+};
+
+function pintarNotas(notas) {
+    const contenedor = document.getElementById('listaGrabaciones');
+
+    if (!window.guionSeleccionadoId) {
+        contenedor.innerHTML = `<div class="vacio"><i class="fas fa-film fa-2x"></i>
+            <h5 class="mt-3">No hay datos para mostrar</h5>
+            <p>Seleccioná un guion para ver las notas marcadas para grabar</p></div>`;
+        return;
+    }
+    if (!notas.length) {
+        contenedor.innerHTML = `<div class="vacio"><i class="fas fa-film fa-2x"></i>
+            <h5 class="mt-3">Este guion no tiene notas marcadas para grabar</h5></div>`;
+        return;
     }
 
-    const btnVolver = document.getElementById('btnVolverControl');
-    if (btnVolver) {
-        btnVolver.disabled = bloquear;
-        btnVolver.title = bloquear ? 'No disponible mientras hay una grabación en curso' : '';
+    const grabandoOtra = notas.some(n => n.estado === 'grabando' || n.estado === 'deteniendo');
+
+    // Rearmar la tabla en cada tick del SSE se come los clicks: el botón
+    // desaparece bajo el dedo. Solo se reconstruye si cambió algo estructural;
+    // duración y tamaño se actualizan en la fila que ya está.
+    const firma = notas.map(n => `${n.id}:${n.estado}:${n.recording_id || ''}`).join('|') +
+        `#${grabandoOtra}#${ultimoSnapshot ? ultimoSnapshot.perfil_ok : ''}`;
+
+    if (firma === contenedor.dataset.firma) {
+        notas.forEach(actualizarFila);
+        return;
+    }
+
+    contenedor.innerHTML = '';
+    notas.forEach(nota => {
+        contenedor.appendChild(construirFila(nota, grabandoOtra));
+    });
+    contenedor.dataset.firma = firma;
+    filtrarNotas();
+}
+
+function actualizarFila(nota) {
+    const fila = document.querySelector(`#listaGrabaciones .gr-fila[data-texto-id="${nota.id}"]`);
+    if (!fila) return;
+    const duracion = fila.querySelector('.celda-duracion');
+    const tamano = fila.querySelector('.celda-tamano');
+    if (duracion) {
+        duracion.textContent = nota.duration_seconds == null ? '—' : formatearDuracion(nota.duration_seconds);
+        duracion.classList.toggle('dato-vacio', nota.duration_seconds == null);
+    }
+    if (tamano) {
+        tamano.textContent = nota.size_bytes ? formatearBytes(nota.size_bytes) : '—';
+        tamano.classList.toggle('dato-vacio', !nota.size_bytes);
     }
 }
 
-// ===== FUNCIONES AUXILIARES =====
+function construirFila(nota, grabandoOtra) {
+    const fila = document.createElement('div');
+    fila.className = `gr-fila estado-${nota.estado}`;
+    fila.dataset.textoId = String(nota.id);
+    if (String(nota.id) === window.textoActivoId) fila.classList.add('fila-activa');
+
+    const [etiqueta, clase] = ETIQUETAS[nota.estado] || ETIQUETAS.pendiente;
+    const grabando = nota.estado === 'grabando' || nota.estado === 'deteniendo';
+    const enTransicion = notaEnTransicion === nota.id;
+
+    // Nº
+    const col1 = document.createElement('div');
+    col1.className = 'numero';
+    col1.textContent = String(nota.numero_de_nota).padStart(2, '0');
+    fila.appendChild(col1);
+
+    // Título + archivo / error
+    const col2 = document.createElement('div');
+    col2.style.minWidth = '0';
+    const titulo = document.createElement('div');
+    titulo.className = 'titulo';
+    titulo.textContent = nota.titulo;
+    if (String(nota.id) === window.textoActivoId) {
+        const aire = document.createElement('span');
+        aire.className = 'badge-aire ml-2';
+        aire.textContent = 'AL AIRE';
+        titulo.appendChild(aire);
+    }
+    col2.appendChild(titulo);
+
+    const detalle = document.createElement('div');
+    if (nota.error) {
+        detalle.style.cssText = 'font-size:12px;color:#a33a12;margin-top:3px;font-weight:500;';
+        detalle.textContent = nota.error;
+    } else if (nota.estado === 'fallo_envio' && nota.envio) {
+        detalle.style.cssText = 'font-size:12px;color:#a33a12;margin-top:3px;font-weight:500;';
+        detalle.textContent = `${nota.envio.nombre}: ${nota.envio.error || 'falló sin detalle'}`;
+    } else {
+        detalle.className = 'archivo';
+        detalle.textContent = nota.archivo || `se guardará como …-${normalizar(nota.nombre_archivo)}_9r.mp4`;
+    }
+    col2.appendChild(detalle);
+    fila.appendChild(col2);
+
+    // Estado
+    const col3 = document.createElement('div');
+    const badge = document.createElement('span');
+    badge.className = `badge-estado ${clase}`;
+    if (grabando) badge.innerHTML = '<span class="dot-rec"></span>';
+    badge.appendChild(document.createTextNode(etiqueta));
+    col3.appendChild(badge);
+    fila.appendChild(col3);
+
+    // Duración
+    const col4 = document.createElement('div');
+    col4.className = 'celda-duracion dato col-oculta' + (nota.duration_seconds == null ? ' dato-vacio' : '') + (grabando ? ' dato-fuerte' : '');
+    col4.textContent = nota.duration_seconds == null ? '—' : formatearDuracion(nota.duration_seconds);
+    fila.appendChild(col4);
+
+    // Tamaño
+    const col5 = document.createElement('div');
+    col5.className = 'celda-tamano dato col-oculta' + (nota.size_bytes ? '' : ' dato-vacio');
+    col5.textContent = nota.size_bytes ? formatearBytes(nota.size_bytes) : '—';
+    fila.appendChild(col5);
+
+    // Acciones
+    const col6 = document.createElement('div');
+    col6.className = 'acciones col-oculta';
+
+    if (grabando) {
+        const stop = document.createElement('button');
+        stop.type = 'button';
+        stop.className = 'btn-gr btn-stop-nuevo';
+        stop.innerHTML = '<i class="fas fa-stop"></i> DETENER';
+        stop.disabled = enTransicion || nota.estado === 'deteniendo';
+        stop.onclick = () => detenerNota(nota.id);
+        col6.appendChild(stop);
+    } else {
+        if (nota.recording_id) {
+            const log = document.createElement('button');
+            log.type = 'button';
+            log.className = 'btn-gr btn-neutro';
+            log.textContent = 'Log';
+            log.onclick = () => verLog(nota.id, nota.titulo);
+            col6.appendChild(log);
+        }
+        const rec = document.createElement('button');
+        rec.type = 'button';
+        rec.className = 'btn-gr btn-rec-nuevo';
+        rec.innerHTML = '<span class="dot-rec"></span> ' +
+            (nota.estado === 'fallo' ? 'REINTENTAR' : 'GRABAR');
+        rec.disabled = grabandoOtra || enTransicion ||
+            (ultimoSnapshot && ultimoSnapshot.perfil_ok === false);
+        rec.onclick = () => grabarNota(nota.id);
+        col6.appendChild(rec);
+    }
+
+    fila.appendChild(col6);
+    return fila;
+}
+
+function pintarOtras(otras) {
+    const contenedor = document.getElementById('listaOtras');
+    if (!otras.length) {
+        contenedor.innerHTML = '<div class="vacio" style="padding:18px;">Nada más corriendo ahora.</div>';
+        return;
+    }
+
+    contenedor.innerHTML = '';
+    otras.forEach(rec => {
+        const fila = document.createElement('div');
+        fila.className = 'gr-fila';
+        fila.style.gridTemplateColumns = 'minmax(0,1fr) 140px 100px 92px';
+        fila.innerHTML = `
+            <div style="min-width:0;">
+                <div class="titulo"></div>
+                <div class="archivo"></div>
+            </div>
+            <div><span class="badge-estado badge-grabando"><span class="dot-rec"></span>GRABANDO</span></div>
+            <div class="dato">${formatearDuracion(rec.duration_seconds)}</div>
+            <div class="dato">${formatearBytes(rec.size_bytes)}</div>`;
+        fila.querySelector('.titulo').textContent = rec.name || '(sin nombre)';
+        fila.querySelector('.archivo').textContent = `${rec.output || ''} · ${rec.input_key || ''} · ${rec.profile_key || ''}`;
+        contenedor.appendChild(fila);
+    });
+}
+
+const ESTADOS_TAREA = {
+    en_cola: ['en cola', '#a2a6ac', '#6b6f76'],
+    ejecutando: ['ejecutando', '#b06d12', '#8a5407'],
+    listo: ['listo', '#2e7d5b', '#1f6349'],
+    fallido: ['falló', '#c8322c', '#a52a24'],
+};
+
+function pintarTareas(tareas) {
+    const contenedor = document.getElementById('listaTareas');
+    const resumen = document.getElementById('resumenTareas');
+
+    const pendientes = tareas.filter(t => t.estado === 'en_cola' || t.estado === 'ejecutando').length;
+    resumen.textContent = pendientes ? `${pendientes} en cola` : '';
+
+    if (!tareas.length) {
+        contenedor.innerHTML = '<div class="vacio" style="padding:18px;">Sin envíos pendientes.</div>';
+        return;
+    }
+
+    contenedor.innerHTML = '';
+    tareas.forEach(tarea => {
+        const [texto, color, colorTexto] = ESTADOS_TAREA[tarea.estado] || ESTADOS_TAREA.en_cola;
+        const item = document.createElement('div');
+        item.className = 'item-tarea';
+        item.innerHTML = `
+            <span class="punto" style="background:${color};margin-top:5px;"></span>
+            <div style="min-width:0;">
+                <div class="t-nombre" style="font-size:14px;font-weight:600;"></div>
+                <div class="t-archivo archivo" style="margin-top:2px;"></div>
+                <div class="t-estado" style="font-size:12px;margin-top:3px;font-weight:600;color:${colorTexto};"></div>
+            </div>`;
+        item.querySelector('.t-nombre').textContent = tarea.nombre || 'Acción posterior';
+        item.querySelector('.t-archivo').textContent = tarea.archivo || '';
+        item.querySelector('.t-estado').textContent =
+            tarea.estado === 'fallido' ? `${texto} — ${tarea.error || 'sin detalle'}` : texto;
+        contenedor.appendChild(item);
+    });
+}
+
+function pintarPanelVivo(notas, otras) {
+    const panel = document.getElementById('panelVivo');
+    const enVivo = notas.find(n => n.estado === 'grabando' || n.estado === 'deteniendo');
+
+    if (!enVivo) {
+        detenerSeguimientoLog();
+        delete panel.dataset.ultimoTamano;
+        delete panel.dataset.lecturasQuietas;
+        const firmaVacia = `vacio:${otras.length ? otras[0].id : ''}`;
+        if (panel.dataset.firma === firmaVacia) {
+            const crono = panel.querySelector('.crono');
+            if (crono && otras.length) crono.textContent = formatearDuracion(otras[0].duration_seconds);
+            return;
+        }
+        panel.dataset.firma = firmaVacia;
+        const otra = otras[0];
+        panel.innerHTML = otra ? `
+            <div style="display:flex;align-items:center;gap:9px;">
+                <span class="punto punto-ocupado"></span>
+                <span style="font-size:12px;font-weight:700;letter-spacing:1px;">EL EQUIPO ESTÁ GRABANDO</span>
+            </div>
+            <div class="crono">${formatearDuracion(otra.duration_seconds)}</div>
+            <div style="font-size:15px;font-weight:600;" id="pvNombre"></div>
+            <div class="mono" style="font-size:12px;color:#9aa0a8;margin-top:4px;">no es una nota de este guion</div>` : `
+            <div style="display:flex;align-items:center;gap:9px;">
+                <span class="punto punto-gris"></span>
+                <span style="font-size:12px;font-weight:700;letter-spacing:1px;">NADA GRABANDO</span>
+            </div>
+            <div class="crono">00:00:00</div>
+            <div style="font-size:13px;color:#9aa0a8;">Elegí una nota y tocá GRABAR.</div>`;
+        if (otra) panel.querySelector('#pvNombre').textContent = otra.name || '(sin nombre)';
+        return;
+    }
+
+    // Aviso de captura muda: se levanta recién tras varias lecturas sin crecer,
+    // para no gritar por el redondeo de un tick.
+    const bytes = enVivo.size_bytes || 0;
+    const previo = Number(panel.dataset.ultimoTamano || 0);
+    let quietos = Number(panel.dataset.lecturasQuietas || 0);
+    quietos = (panel.dataset.ultimoTamano !== undefined && bytes <= previo) ? quietos + 1 : 0;
+    panel.dataset.lecturasQuietas = quietos;
+    const creciendo = quietos < 3;
+
+    const firma = `vivo:${enVivo.id}:${enVivo.estado}`;
+    if (panel.dataset.firma === firma) {
+        panel.querySelector('.crono').textContent = formatearDuracion(enVivo.duration_seconds);
+        panel.querySelector('.pv-bytes').textContent = formatearBytes(bytes);
+        panel.querySelector('.pv-barra').style.width = `${Math.min(100, (bytes / 2e9) * 100)}%`;
+        const salud = panel.querySelector('.pv-salud');
+        salud.textContent = creciendo ? 'el archivo crece' : 'el archivo NO crece — revisar la señal';
+        salud.style.color = creciendo ? '#8fd6b4' : '#ffb4ae';
+        panel.dataset.ultimoTamano = bytes;
+        return;
+    }
+    panel.dataset.firma = firma;
+
+    panel.innerHTML = `
+        <div style="display:flex;align-items:center;gap:9px;">
+            <span class="punto punto-ocupado"></span>
+            <span style="font-size:12px;font-weight:700;letter-spacing:1px;">
+                ${enVivo.estado === 'deteniendo' ? 'DETENIENDO' : 'GRABANDO AHORA'}</span>
+        </div>
+        <div class="crono">${formatearDuracion(enVivo.duration_seconds)}</div>
+        <div style="font-size:15px;font-weight:600;" id="pvNombre"></div>
+        <div class="mono" style="font-size:12px;color:#9aa0a8;margin-top:4px;" id="pvArchivo"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+            <div class="barra"><div class="pv-barra" style="width:${Math.min(100, (bytes / 2e9) * 100)}%;"></div></div>
+            <span class="pv-bytes mono" style="font-size:12px;color:#d9dade;">${formatearBytes(bytes)}</span>
+        </div>
+        <div class="pv-salud" style="font-size:12px;margin-top:8px;color:${creciendo ? '#8fd6b4' : '#ffb4ae'};">
+            ${creciendo ? 'el archivo crece' : 'el archivo NO crece — revisar la señal'}</div>
+        <div style="display:flex;gap:10px;margin-top:18px;">
+            <button type="button" id="pvStop" class="btn-gr"
+                    style="flex-grow:1;height:48px;background:#fff;color:#14161a;justify-content:center;">DETENER</button>
+        </div>`;
+    panel.querySelector('#pvNombre').textContent = `Nota ${enVivo.numero_de_nota} — ${enVivo.titulo}`;
+    panel.querySelector('#pvArchivo').textContent = enVivo.archivo || '';
+    panel.querySelector('#pvStop').onclick = () => detenerNota(enVivo.id);
+    panel.dataset.ultimoTamano = bytes;
+    panel.dataset.lecturasQuietas = quietos;
+
+    seguirLog(enVivo.id, enVivo.numero_de_nota);
+}
+
+function pintarProgramaciones(programaciones) {
+    const contenedor = document.getElementById('listaProgramaciones');
+    if (!programaciones || !programaciones.length) {
+        contenedor.innerHTML = '<div class="vacio" style="padding:18px;">Sin programaciones.</div>';
+        return;
+    }
+
+    contenedor.innerHTML = '';
+    programaciones.slice(0, 6).forEach(prog => {
+        const item = document.createElement('div');
+        item.className = 'item-tarea';
+        item.innerHTML = `
+            <span class="punto" style="background:${prog.enabled ? '#2f4d76' : '#a2a6ac'};margin-top:5px;"></span>
+            <div style="min-width:0;">
+                <div class="p-nombre" style="font-size:14px;font-weight:600;"></div>
+                <div class="p-detalle" style="font-size:12px;color:#6b6f76;margin-top:2px;"></div>
+            </div>`;
+        item.querySelector('.p-nombre').textContent = prog.name;
+        item.querySelector('.p-detalle').textContent =
+            (prog.description || `${prog.start} → ${prog.stop}`) + (prog.enabled ? '' : ' · pausada');
+        contenedor.appendChild(item);
+    });
+}
+
+// ===== LOG =====
+
+function seguirLog(textoId, numero) {
+    if (logTextoId === textoId) return;
+    detenerSeguimientoLog();
+    logTextoId = textoId;
+    document.getElementById('tituloLog').textContent = `LOG DE FFMPEG · NOTA ${numero}`;
+    document.getElementById('estadoLog').textContent = 'EN VIVO';
+    cargarLog(textoId);
+    logInterval = setInterval(() => cargarLog(textoId), 3000);
+}
+
+function detenerSeguimientoLog() {
+    if (logInterval) clearInterval(logInterval);
+    if (logTextoId !== null) {
+        document.getElementById('estadoLog').textContent = 'ÚLTIMAS LÍNEAS';
+    }
+    logInterval = null;
+    logTextoId = null;
+}
+
+async function cargarLog(textoId) {
+    try {
+        const response = await fetch(`/api/grabacion/log/${textoId}`);
+        const data = await response.json();
+        const caja = document.getElementById('cajaLog');
+        const lineas = data.log || [];
+        caja.textContent = lineas.length ? lineas.slice(-12).join('\n') : 'ffmpeg todavía no escribió nada.';
+        caja.scrollTop = caja.scrollHeight;
+    } catch (error) { /* el próximo tick reintenta */ }
+}
+
+async function verLog(textoId, titulo) {
+    detenerSeguimientoLog();
+    document.getElementById('tituloLog').textContent = `LOG · ${titulo}`;
+    document.getElementById('estadoLog').textContent = 'ÚLTIMAS LÍNEAS';
+    await cargarLog(textoId);
+}
+
+// ===== ACCIONES =====
+
+async function grabarNota(textoId) {
+    if (hayGrabacionEnCurso()) {
+        mostrarError('Ya hay una grabación en curso. Detenela antes de empezar otra.');
+        return;
+    }
+
+    notaEnTransicion = textoId;
+    pintarNotas(ultimoSnapshot ? ultimoSnapshot.notas : []);
+
+    try {
+        const response = await fetch('/api/grabacion/iniciar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({texto_id: textoId})
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        mostrarMensajeExito(`Grabando ${data.nombre_archivo}`);
+    } catch (error) {
+        mostrarError(error.message);
+    } finally {
+        notaEnTransicion = null;
+    }
+}
+
+async function detenerNota(textoId) {
+    notaEnTransicion = textoId;
+
+    try {
+        const response = await fetch('/api/grabacion/detener', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({texto_id: textoId})
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        mostrarMensajeExito('Grabación detenida. El envío al storage queda en la cola.');
+    } catch (error) {
+        mostrarError(error.message);
+    } finally {
+        notaEnTransicion = null;
+    }
+}
+
+async function detenerTodo() {
+    const confirmacion = await Swal.fire({
+        title: '¿Detener todas las grabaciones?',
+        text: 'Incluye lo que esté grabando el scheduler o la pantalla de redes.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#c8322c',
+        confirmButtonText: 'Detener todo',
+        cancelButtonText: 'Cancelar'
+    });
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+        const response = await fetch('/api/grabacion/detener-todo', {method: 'POST'});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        mostrarMensajeExito(`${data.detenidas} grabación(es) detenida(s)`);
+    } catch (error) {
+        mostrarError(error.message);
+    }
+}
+
+// ===== UTILIDADES =====
+
+function hayGrabacionEnCurso() {
+    if (!ultimoSnapshot || !ultimoSnapshot.notas) return false;
+    return ultimoSnapshot.notas.some(n => n.estado === 'grabando' || n.estado === 'deteniendo');
+}
+
+function filtrarNotas() {
+    const busqueda = (document.getElementById('filtroNotas')?.value || '').toLowerCase();
+    document.querySelectorAll('#listaGrabaciones .gr-fila').forEach(fila => {
+        fila.style.display = fila.textContent.toLowerCase().includes(busqueda) ? '' : 'none';
+    });
+}
+
+function formatearDuracion(segundos) {
+    if (segundos == null) return '—';
+    const h = String(Math.floor(segundos / 3600)).padStart(2, '0');
+    const m = String(Math.floor((segundos % 3600) / 60)).padStart(2, '0');
+    const s = String(Math.floor(segundos % 60)).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+}
+
+function formatearBytes(bytes) {
+    if (!bytes) return '0 B';
+    if (bytes >= 1e12) return `${(bytes / 1e12).toFixed(2)} TB`;
+    if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2)} GB`;
+    if (bytes >= 1e6) return `${Math.round(bytes / 1e6)} MB`;
+    return `${Math.round(bytes / 1e3)} kB`;
+}
+
+// Misma normalización que hace la Capturadora, solo para previsualizar el nombre.
+function normalizar(nombre) {
+    return String(nombre || '')
+        .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, '_').replace(/[^A-Za-z0-9._-]/g, '_')
+        .replace(/_+/g, '_').replace(/^[._-]+|[._-]+$/g, '')
+        .toUpperCase();
+}
 
 function mostrarMensajeExito(mensaje) {
-    console.log('Éxito:', mensaje);
     Swal.fire({
-        icon: 'success',
-        title: mensaje,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
+        toast: true, position: 'top-end', icon: 'success', title: mensaje,
+        showConfirmButton: false, timer: 2600, timerProgressBar: true
     });
 }
 
 function mostrarError(mensaje) {
-    console.error('Error:', mensaje);
     Swal.fire({
-        icon: 'error',
-        title: mensaje,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 5000,
-        timerProgressBar: true
+        toast: true, position: 'top-end', icon: 'error', title: mensaje,
+        showConfirmButton: false, timer: 5000, timerProgressBar: true
     });
 }
-
-// ===== EXPORTAR FUNCIONES PARA USO GLOBAL =====
-// Esto permite que las funciones sean llamadas desde onclick en HTML
-window.iniciarGrabacionControl = iniciarGrabacionControl;
-window.detenerGrabacionControl = detenerGrabacionControl;
-window.detenerGrabacionForzada = detenerGrabacionForzada;
-window.verificarEstadoGrabacion = verificarEstadoGrabacion;
-window.seleccionarGuionParaGrabacion = seleccionarGuionParaGrabacion;
-window.cargarGuionesParaGrabacion = cargarGuionesParaGrabacion;
-window.filtrarGuionesGrabacion = filtrarGuionesGrabacion;

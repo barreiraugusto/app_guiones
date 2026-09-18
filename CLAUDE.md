@@ -39,7 +39,7 @@ Vistas por rol (piso de producción):
 
 `display_config.json` (cargado/guardado por `app/config_manager.py`) guarda posición de badges/overlays; es config, no dato de negocio en la BD.
 
-Módulo de grabación: la vista `/grabacion` (`grabacion.html`) y las rutas `/proxy/*_grabacion*` en `textos.py` son un proxy hacia un servidor PHP externo (`RECORDING_SERVER_URL`) que controla `ffmpeg`. La app no graba; solo dispara/consulta estado. El nombre del archivo se deriva del título de la nota o del `tema` del primer graph.
+Módulo de grabación: la vista `/grabaciones` (alias `/grabacion`, `grabacion.html` + `grabacion.js`) consume la **API REST de la Capturadora v2** (`app/capturadora.py`, blueprint `app/routes/grabacion.py`). Cada nota guarda el `recording_id` del equipo (`texto.recording_id`) y el estado —duración, bytes, log de ffmpeg, envío al storage— se lee en vivo por SSE (`/stream_grabacion`). Todas las notas se graban con el perfil `redes`: sufijo `_9r` y envío automático a `REDES` del día en el storage `.50`. El nombre del archivo sale del `tema` del primer graph o del título de la nota. Detalle en `docs/capturadora-api.md`. Las rutas `/proxy/*_grabacion*` de `textos.py` apuntan al PHP viejo (`RECORDING_SERVER_URL`) y ya no se usan.
 
 `docs/superpowers/` tiene specs y planes de features ya implementadas — útil como historial de decisiones, no como trabajo pendiente.
 

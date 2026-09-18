@@ -6,203 +6,520 @@
 
 {% block extra_style %}
     <style>
+        /* Sin fuentes externas: el piso no siempre tiene salida a internet y
+           una @font-face que no resuelve bloquea el primer render. */
         body {
-            padding-top: 70px;
-            background-color: #f8f9fa;
+            padding-top: 0;
+            background: #f4f4f2;
+            color: #14161a;
+            font-family: 'IBM Plex Sans', system-ui, sans-serif;
         }
 
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
         }
 
-        .card-header {
-            border-radius: 10px 10px 0 0 !important;
-            font-weight: bold;
+        /* ---------- barra del equipo ---------- */
+        .gr-equipo {
+            height: 60px;
+            padding: 0 24px;
+            background: #14161a;
+            color: #f4f4f2;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
         }
 
-        .table {
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
+        .gr-equipo .sep {
+            width: 1px;
+            height: 26px;
+            background: #33363c;
+            flex-shrink: 0;
         }
 
-        .btn-rec {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-            font-weight: bold;
-            padding: 8px 20px;
-            transition: all 0.3s;
-            border-radius: 50px;
-            min-width: 100px;
+        .gr-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #d9dade;
+            white-space: nowrap;
         }
 
-        .btn-rec:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
-            transform: scale(1.05);
-        }
-
-        .btn-rec.recording {
-            background-color: #6c757d;
-            border-color: #6c757d;
-            animation: pulse 1.5s infinite;
-        }
-
-        .btn-stop {
-            background-color: #343a40;
-            border-color: #343a40;
-            color: white;
-            font-weight: bold;
-            padding: 8px 20px;
-            transition: all 0.3s;
-            border-radius: 50px;
-            min-width: 100px;
-        }
-
-        .btn-stop:hover {
-            background-color: #23272b;
-            border-color: #1d2124;
-            transform: scale(1.05);
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-            }
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
+        .punto {
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
-            margin-right: 8px;
+            display: inline-block;
+            flex-shrink: 0;
         }
 
-        .status-grabando {
-            background-color: #dc3545;
-            animation: blink 1s infinite;
+        .punto-libre { background: #4c9c78; }
+        .punto-ocupado { background: #c8322c; }
+        .punto-gris { background: #7e848c; }
+
+        /* ---------- barra del guion ---------- */
+        .gr-guion {
+            min-height: 78px;
+            padding: 12px 24px;
+            background: #fff;
+            border-bottom: 1px solid #e2e1dd;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        .status-espera {
-            background-color: #6c757d;
+        .gr-contador {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;
         }
 
-        .status-grabado {
-            background-color: #28a745;
-        }
-
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        /* Fila de la nota que está activa en emisión (la que sigue) */
-        #listaGrabaciones tr.fila-activa > td {
-            background-color: #fff3cd !important;
+        .gr-contador .valor {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 20px;
             font-weight: 600;
         }
 
-        #listaGrabaciones tr.fila-activa > td:first-child {
-            box-shadow: inset 6px 0 0 #ffc107;
+        .gr-contador .etiqueta {
+            font-size: 11px;
+            letter-spacing: .6px;
+            color: #6b6f76;
+            font-weight: 600;
         }
 
-        .empty-state {
-            padding: 40px 20px;
+        /* ---------- layout ---------- */
+        .gr-cuerpo {
+            padding: 22px 24px;
+            display: flex;
+            gap: 22px;
+            align-items: flex-start;
+        }
+
+        .gr-col-notas {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .gr-col-panel {
+            width: 350px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        @media (max-width: 1100px) {
+            .gr-cuerpo { flex-direction: column; }
+            .gr-col-panel { width: 100%; }
+        }
+
+        .gr-card {
+            background: #fff;
+            border: 1px solid #e2e1dd;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .gr-card-head {
+            padding: 12px 18px;
+            background: #fafaf8;
+            border-bottom: 1px solid #e2e1dd;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            color: #6b6f76;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        /* ---------- filas de notas ---------- */
+        .gr-fila {
+            display: grid;
+            grid-template-columns: 52px minmax(0, 1fr) 140px 100px 92px 210px;
+            gap: 14px;
+            align-items: center;
+            padding: 14px 18px;
+            border-bottom: 1px solid #efeeea;
+        }
+
+        .gr-fila:last-child { border-bottom: none; }
+
+        .gr-fila.cabecera {
+            padding: 12px 18px;
+            background: #fafaf8;
+            border-bottom: 1px solid #e2e1dd;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            color: #6b6f76;
+        }
+
+        @media (max-width: 900px) {
+            .gr-fila { grid-template-columns: 44px minmax(0, 1fr) 150px; }
+            .gr-fila .col-oculta { display: none; }
+        }
+
+        .gr-fila .numero {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b6f76;
+        }
+
+        .gr-fila .titulo {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .gr-fila .archivo {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: #6b6f76;
+            margin-top: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .gr-fila.estado-grabando {
+            background: #fdf1f0;
+            box-shadow: inset 5px 0 0 #c8322c;
+        }
+
+        .gr-fila.estado-grabando .numero,
+        .gr-fila.estado-grabando .dato-fuerte { color: #c8322c; }
+
+        .gr-fila.estado-fallo,
+        .gr-fila.estado-fallo_envio { background: #fdf3ef; }
+
+        .gr-fila.fila-activa {
+            background: #fdf8e9;
+            box-shadow: inset 5px 0 0 #d99b1c;
+        }
+
+        .gr-fila.estado-grabando.fila-activa {
+            background: #fdf1f0;
+            box-shadow: inset 5px 0 0 #c8322c;
+        }
+
+        .badge-estado {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .5px;
+            padding: 5px 9px;
+            border-radius: 5px;
+            background: #f0eeea;
+            color: #5c6067;
+            white-space: nowrap;
+        }
+
+        .badge-grabando { background: #c8322c; color: #fff; }
+        .badge-deteniendo { background: #3a3d43; color: #fff; }
+        .badge-grabada { background: #e6f2ec; color: #1f6349; }
+        .badge-enviando { background: #fbf0dd; color: #8a5407; }
+        .badge-fallo { background: #f7e0d6; color: #8f3210; }
+
+        .badge-aire {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .7px;
+            padding: 3px 7px;
+            border-radius: 4px;
+            background: #d99b1c;
+            color: #2a1f05;
+        }
+
+        .dato {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px;
+        }
+
+        .dato-vacio { color: #a2a6ac; }
+
+        .acciones {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn-gr {
+            height: 44px;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+
+        .btn-gr:disabled { opacity: .45; cursor: not-allowed; }
+
+        .btn-rec-nuevo { background: #c8322c; border-color: #c8322c; color: #fff; }
+        .btn-rec-nuevo:hover:enabled { background: #ad2822; }
+
+        .btn-stop-nuevo { background: #14161a; border-color: #14161a; color: #fff; }
+        .btn-stop-nuevo:hover:enabled { background: #000; }
+
+        .btn-neutro {
+            background: #fff;
+            border-color: #d5d3cd;
+            color: #14161a;
+            font-weight: 600;
+            padding: 0 14px;
+        }
+
+        .btn-neutro:hover:enabled { background: #f4f4f2; }
+
+        .dot-rec {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: #fff;
+            display: inline-block;
+        }
+
+        .gr-fila.estado-grabando .dot-rec { animation: latir 1.2s infinite; }
+
+        @keyframes latir {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .35; }
+        }
+
+        /* ---------- panel derecho ---------- */
+        .panel-vivo {
+            background: #14161a;
+            border-radius: 12px;
+            padding: 20px;
+            color: #f4f4f2;
+        }
+
+        .panel-vivo .crono {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 46px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin: 12px 0 2px;
+        }
+
+        .barra {
+            height: 6px;
+            border-radius: 3px;
+            background: #2a2d33;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        .barra > div {
+            height: 6px;
+            border-radius: 3px;
+            background: #ff4b43;
+            transition: width .4s;
+        }
+
+        .item-tarea {
+            padding: 12px 16px;
+            border-bottom: 1px solid #efeeea;
+            display: flex;
+            gap: 11px;
+            align-items: flex-start;
+        }
+
+        .item-tarea:last-child { border-bottom: none; }
+
+        .log-caja {
+            padding: 13px 16px;
+            background: #1b1d22;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            line-height: 1.75;
+            color: #c7cad0;
+            max-height: 190px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .vacio {
+            padding: 34px 20px;
             text-align: center;
-            color: #6c757d;
+            color: #6b6f76;
+        }
+
+        .aviso {
+            margin: 0;
+            border-radius: 0;
+            border: none;
+            border-bottom: 1px solid #e2e1dd;
+            padding: 12px 24px;
+            font-size: 14px;
         }
     </style>
 {% endblock extra_style %}
+
 {% block body %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
-            </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContentGrabacion">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <!-- ===== BARRA DE EQUIPO (en vivo desde /api/status) ===== -->
+    <div class="gr-equipo">
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="SIGPRO" style="height: 34px;">
+            <span style="font-size:15px;font-weight:600;letter-spacing:.4px;">GRABACIONES</span>
+        </div>
 
-            <div class="collapse navbar-collapse" id="navbarContentGrabacion">
-                <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
-                    <button id="btnVolverControl" onclick="volverAControl()" class="mr-2 mb-2 mb-lg-0 btn btn-outline-light">
-                        <i class="fas fa-arrow-left"></i> Volver a Control
-                    </button>
+        <div class="sep"></div>
 
-                    <div class="dropdown mr-2 mb-2 mb-lg-0">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownGuionGrabacion"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-folder-open"></i> <span id="guionActual">Seleccionar Guion</span>
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownGuionGrabacion">
-                            <a class="dropdown-item" href="#" data-toggle="modal"
-                               data-target="#seleccionarGuionModalGrabacion">
-                                <i class="fas fa-folder-open mr-1"></i> Seleccionar Guion
-                            </a>
-                        </div>
+        <div id="chipsEntradas" style="display:flex;gap:18px;flex-shrink:0;">
+            <span class="gr-chip"><span class="punto punto-gris"></span>Sin conexión con la Capturadora</span>
+        </div>
+
+        <div style="flex-grow:1;"></div>
+
+        <div class="gr-chip">
+            <i class="fas fa-hdd" style="color:#9aa0a8;"></i> Disco
+            <span id="chipDisco" class="mono" style="font-weight:600;color:#f4f4f2;">—</span>
+        </div>
+
+        <div class="gr-chip">
+            <i class="fas fa-cloud-upload-alt" style="color:#e0a44a;"></i> Envíos
+            <span id="chipEnvios" class="mono" style="font-weight:600;color:#f4f4f2;">0</span>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="gr-chip">
+            <span id="chipConexion" class="badge-estado" style="background:#3c1f1e;color:#ef9a95;">SIN CONEXIÓN</span>
+        </div>
+    </div>
+
+    <!-- avisos de configuración / conexión -->
+    <div id="avisoPerfil" class="alert alert-warning aviso" style="display:none;"></div>
+    <div id="avisoConexion" class="alert alert-danger aviso" style="display:none;"></div>
+
+    <!-- ===== BARRA DE GUION ===== -->
+    <div class="gr-guion">
+        <button type="button" class="btn-gr btn-neutro" data-toggle="modal"
+                data-target="#seleccionarGuionModalGrabacion" style="height:44px;">
+            <i class="fas fa-folder-open" style="color:#6b6f76;"></i>
+            <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;">
+                <span style="font-size:10px;letter-spacing:.7px;color:#6b6f76;font-weight:600;">GUION</span>
+                <span id="guionActual" style="font-size:15px;font-weight:600;">Seleccionar guion</span>
+            </span>
+            <i class="fas fa-chevron-down" style="color:#6b6f76;font-size:12px;"></i>
+        </button>
+
+        <div style="display:flex;align-items:center;gap:22px;">
+            <div class="gr-contador">
+                <span class="valor" id="contTotal">0</span>
+                <span class="etiqueta">PARA GRABAR</span>
+            </div>
+            <div class="gr-contador">
+                <span class="valor" id="contGrabadas" style="color:#2e7d5b;">0</span>
+                <span class="etiqueta">GRABADAS</span>
+            </div>
+            <div class="gr-contador">
+                <span class="valor" id="contGrabando" style="color:#c8322c;">0</span>
+                <span class="etiqueta">GRABANDO</span>
+            </div>
+            <div class="gr-contador">
+                <span class="valor" id="contError" style="color:#a33a12;">0</span>
+                <span class="etiqueta">CON ERROR</span>
+            </div>
+        </div>
+
+        <div style="flex-grow:1;"></div>
+
+        <input id="filtroNotas" type="text" placeholder="Nota, tema o archivo…" oninput="filtrarNotas()"
+               style="width:230px;height:44px;padding:0 12px;border:1px solid #d5d3cd;border-radius:8px;font-size:14px;">
+
+        <button type="button" class="btn-gr btn-neutro" onclick="volverAControl()" style="height:44px;">
+            <i class="fas fa-arrow-left"></i> Control
+        </button>
+
+        <button type="button" class="btn-gr btn-stop-nuevo" onclick="detenerTodo()">
+            <i class="fas fa-stop"></i> Detener todo
+        </button>
+    </div>
+
+    <!-- ===== CUERPO ===== -->
+    <div class="gr-cuerpo">
+
+        <div class="gr-col-notas">
+            <div class="gr-card">
+                <div class="gr-fila cabecera">
+                    <div>Nº</div>
+                    <div>NOTA · ARCHIVO EN EL STORAGE</div>
+                    <div>ESTADO</div>
+                    <div class="col-oculta">DURACIÓN</div>
+                    <div class="col-oculta">TAMAÑO</div>
+                    <div class="col-oculta" style="text-align:right;">ACCIONES</div>
+                </div>
+                <div id="listaGrabaciones">
+                    <div class="vacio">
+                        <i class="fas fa-film fa-2x"></i>
+                        <h5 class="mt-3">No hay datos para mostrar</h5>
+                        <p>Seleccioná un guion para ver las notas marcadas para grabar</p>
                     </div>
                 </div>
             </div>
+
+            <div class="gr-card">
+                <div class="gr-card-head">
+                    <span>TAMBIÉN EN EL EQUIPO</span>
+                    <span style="font-weight:400;letter-spacing:0;color:#8a8e95;text-transform:none;">
+                        del scheduler o de otra aplicación; no son notas de este guion</span>
+                </div>
+                <div id="listaOtras">
+                    <div class="vacio" style="padding:18px;">Nada más corriendo ahora.</div>
+                </div>
+            </div>
         </div>
-    </nav>
 
-    <div class="container-fluid mt-4">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header text-white bg-danger d-flex justify-content-between align-items-center">
-                        <h4 class="m-0">
-                            <i class="fas fa-video mr-2"></i> Módulo de Grabación
-                        </h4>
-                        <div>
-                            <span id="estadoGlobal" class="badge badge-light">Esperando selección de guion</span>
-                        </div>
-                    </div>
+        <div class="gr-col-panel">
+            <div id="panelVivo" class="panel-vivo">
+                <div style="display:flex;align-items:center;gap:9px;">
+                    <span class="punto punto-gris"></span>
+                    <span style="font-size:12px;font-weight:700;letter-spacing:1px;">NADA GRABANDO</span>
+                </div>
+                <div class="crono">00:00:00</div>
+                <div style="font-size:13px;color:#9aa0a8;">Elegí una nota y tocá GRABAR.</div>
+            </div>
 
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Esta vista muestra solo las notas marcadas para grabar del guion seleccionado.
-                            Cada grabación se guardará con el título de la nota como nombre de archivo.
-                        </div>
+            <div class="gr-card">
+                <div class="gr-card-head">
+                    <span>DESPUÉS DE GRABAR</span>
+                    <span id="resumenTareas" style="font-weight:600;letter-spacing:0;color:#8a5407;"></span>
+                </div>
+                <div id="listaTareas">
+                    <div class="vacio" style="padding:18px;">Sin envíos pendientes.</div>
+                </div>
+            </div>
 
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="tablaGrabacion">
-                                <thead class="thead-dark">
-                                <tr>
-                                    <th style="width: 10%">Nº</th>
-                                    <th style="width: 40%">Título / Descripción</th>
-                                    <th style="width: 30%">Estado</th>
-                                    <th style="width: 20%">Acciones</th>
-                                </tr>
-                                </thead>
-                                <tbody id="listaGrabaciones">
-                                <tr id="sinDatos">
-                                    <td colspan="4" class="empty-state">
-                                        <i class="fas fa-film"></i>
-                                        <h5 class="mt-3">No hay datos para mostrar</h5>
-                                        <p class="text-muted">Selecciona un guion para ver las notas marcadas para
-                                            grabar</p>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            <div class="gr-card">
+                <div class="gr-card-head">
+                    <span id="tituloLog">LOG DE FFMPEG</span>
+                    <span id="estadoLog" class="badge-estado" style="letter-spacing:.5px;">—</span>
+                </div>
+                <div id="cajaLog" class="log-caja">Sin grabación en curso.</div>
+            </div>
+
+            <div class="gr-card">
+                <div class="gr-card-head"><span>PROGRAMADO EN EL EQUIPO</span></div>
+                <div id="listaProgramaciones">
+                    <div class="vacio" style="padding:18px;">Sin programaciones.</div>
                 </div>
             </div>
         </div>
@@ -214,9 +531,9 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header text-white bg-danger">
-                    <h5 class="modal-title" id="seleccionarGuionModalGrabacionLabel">Seleccionar Guion para
-                        Grabación</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title" id="seleccionarGuionModalGrabacionLabel">Seleccionar guion para
+                        grabación</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -241,5 +558,4 @@
             </div>
         </div>
     </div>
-
 {% endblock body %}

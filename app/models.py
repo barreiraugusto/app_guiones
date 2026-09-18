@@ -30,6 +30,10 @@ class Texto(db.Model):
     grabar = db.Column(db.Boolean, default=False, nullable=False)
     grabado = db.Column(db.Boolean, default=False, nullable=False)
     grabando = db.Column(db.Boolean, default=False, nullable=False)
+    # Vínculo con la Capturadora: id de la grabación y archivo que generó.
+    # Con esto el estado real lo manda el equipo y no un booleano de la BD.
+    recording_id = db.Column(db.String(40), nullable=True)
+    archivo = db.Column(db.String(512), nullable=True)
     emitido = db.Column(db.Boolean, default=False, nullable=False)
     duracion = db.Column(db.String(10), default='00:00', nullable=False)
     guion_id = db.Column(db.Integer, db.ForeignKey('guion.id', ondelete="CASCADE"), nullable=False)
