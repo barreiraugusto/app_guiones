@@ -594,7 +594,7 @@ def reordenar_notas_despues_de_agregar(guion_id, numero_nota_nueva):
 @textos_bp.route('/obtener_guiones', methods=['GET'])
 def obtener_guiones():
     try:
-        guiones = Guion.query.all()
+        guiones = Guion.query.order_by(Guion.id.desc()).all()
         result = []
         for guion in guiones:
             # Contar notas para grabar

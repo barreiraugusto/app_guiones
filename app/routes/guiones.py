@@ -29,7 +29,7 @@ def guiones():
                   'guion', nuevo_guion.id, nuevo_guion.nombre)
         return jsonify({"mensaje": "Guion creado", "id": nuevo_guion.id}), 201
     else:
-        guiones = Guion.query.all()
+        guiones = Guion.query.order_by(Guion.id.desc()).all()
         return jsonify([{"id": g.id, "nombre": g.nombre, "descripcion": g.descripcion} for g in guiones])
 
 
@@ -116,7 +116,7 @@ def obtener_guiones():
     """Obtener todos los guiones excepto el actual"""
     try:
         guion_actual_id = request.args.get('excluir_actual', type=int)
-        guiones = Guion.query.all()
+        guiones = Guion.query.order_by(Guion.id.desc()).all()
 
         resultado = []
         for guion in guiones:
@@ -285,7 +285,7 @@ def editar_guion(id):
 
 @guiones_bp.route('/listado_guiones')
 def listado_guiones():
-    guiones = Guion.query.order_by(Guion.id.asc()).all()
+    guiones = Guion.query.order_by(Guion.id.desc()).all()
     return render_template('listado_guiones.html', guiones=guiones)
 
 
