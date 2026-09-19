@@ -270,10 +270,15 @@ function exportarAPDF() {
     fetch(`/exportar_pdf/${guionId}`)
         .then(response => {
             if (!response.ok) throw new Error('Error al generar el PDF');
-            const contentDisposition = response.headers.get('Content-Disposition');
+            const contentDisposition = response.headers.get('Content-Disposition') || '';
             let filename = 'guion.pdf';
-            if (contentDisposition && contentDisposition.includes('filename=')) {
-                filename = contentDisposition.split('filename=')[1].replace(/['"]/g, '');
+            // filename*=UTF-8'' trae el nombre real (con acentos); filename= es el respaldo ASCII.
+            const utf8 = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+            const simple = contentDisposition.match(/filename="?([^";]+)"?/i);
+            if (utf8) {
+                filename = decodeURIComponent(utf8[1]);
+            } else if (simple) {
+                filename = simple[1];
             }
             return response.blob().then(blob => ({ blob, filename }));
         })

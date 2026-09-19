@@ -1,4 +1,6 @@
+import unicodedata
 from collections import defaultdict
+from urllib.parse import quote
 
 from flask import Blueprint, jsonify, request, render_template, make_response
 from sqlalchemy.orm import joinedload, selectinload
@@ -351,21 +353,32 @@ def exportar_pdf(guion_id):
             joinedload(Guion.textos).joinedload(Texto.graphs).joinedload(Graph.citas).joinedload(Cita.entrevistado)
         ).get_or_404(guion_id)
 
-        # Ordenar textos por número_de_nota
-        guion.textos = sorted(guion.textos, key=lambda x: x.numero_de_nota or 0)
+        # Ordenar para el PDF sin tocar la relación: asignarle a guion.textos
+        # una lista nueva la marca como modificada y, con delete-orphan, el
+        # commit del registro de auditoría la escribiría de vuelta.
+        textos = sorted(guion.textos, key=lambda x: x.numero_de_nota or 0)
 
         # Obtener la fecha y hora actual
         ahora = datetime.now()
 
         # Renderizar el template HTML con los datos del guion
-        html = render_template('guion_pdf.html', guion=guion, ahora=ahora)
+        html = render_template('guion_pdf.html', guion=guion, textos=textos, ahora=ahora)
 
         # Crear un objeto HTML con WeasyPrint
         pdf = HTML(string=html).write_pdf()
 
-        # Limpiar el nombre del guion para usarlo como nombre de archivo
-        nombre_archivo = guion.nombre.replace("/", "_").replace("\\", "_").replace(":", "_")
-        nombre_archivo = nombre_archivo.replace(" ", "_")
+        # Nombre del archivo. Los headers HTTP viajan en latin-1: un guion
+        # llamado "Mediodía — 18/09" reventaba el envío con UnicodeEncodeError
+        # y el navegador se quedaba esperando un PDF que ya estaba hecho.
+        # Por eso van los dos: un nombre ASCII de respaldo y el real en UTF-8
+        # (RFC 6266), que es el que usan los navegadores actuales.
+        nombre_archivo = guion.nombre
+        for caracter in '/\\:*?"<>|':
+            nombre_archivo = nombre_archivo.replace(caracter, '_')
+        nombre_archivo = nombre_archivo.strip().replace(' ', '_') or 'guion'
+
+        respaldo_ascii = (unicodedata.normalize('NFKD', nombre_archivo)
+                          .encode('ascii', 'ignore').decode('ascii')) or 'guion'
 
         # Crear una respuesta con el PDF
         registrar('INFO', f'Exportó PDF: {guion.nombre}',
@@ -373,7 +386,10 @@ def exportar_pdf(guion_id):
 
         response = make_response(pdf)
         response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'attachment; filename={nombre_archivo}.pdf'
+        response.headers['Content-Disposition'] = (
+            f'attachment; filename="{respaldo_ascii}.pdf"; '
+            f"filename*=UTF-8''{quote(nombre_archivo + '.pdf')}"
+        )
 
         return response
     except Exception as e:
