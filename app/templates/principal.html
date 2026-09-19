@@ -28,11 +28,102 @@
             }
         }
 
-        @media (max-width: 768px) {
-            #tablaTextos {
+        /* Celular: cada nota es una tarjeta. Las celdas las arma textos.js;
+           acá solo se apilan: número con título, código, música y duración,
+           y los cuatro botones repartidos en el ancho. */
+        @media (max-width: 767px) {
+            #cronometro { font-size: 18px !important; letter-spacing: 0 !important; }
+
+            /* Los anchos vienen inline desde guiones.js: hay que pisarlos. */
+            #tablaTextos,
+            #tablaTextos thead,
+            #tablaTextos tbody,
+            #tablaTextos tr,
+            #tablaTextos th,
+            #tablaTextos td {
                 display: block;
-                overflow-x: auto;
-                white-space: nowrap;
+                width: 100% !important;
+            }
+
+            #tablaTextos thead tr:last-child { display: none; }
+            #tablaTextos thead th { border: none; padding: 0 0 10px; }
+
+            #tablaTextos tbody tr {
+                padding: 12px 12px 10px;
+                margin-bottom: 10px;
+                border: 1px solid var(--sp-borde);
+                border-radius: var(--sp-radius-sm);
+            }
+
+            #tablaTextos tbody td {
+                border: none;
+                padding: 0;
+                background: transparent !important;
+                color: inherit !important;
+            }
+
+            #tablaTextos tbody td:first-child {
+                display: inline-block;
+                width: auto !important;
+                min-width: 40px;
+                margin: 0 10px 8px 0;
+                padding: 2px 10px;
+                border-radius: 6px;
+                background: #14161a !important;
+                color: #fff !important;
+            }
+
+            #tablaTextos tbody td:first-child h3 { margin: 0; font-size: 20px; }
+
+            #tablaTextos tbody td:nth-child(2) {
+                display: inline;
+                width: auto !important;
+                font-size: 16px;
+            }
+
+            #tablaTextos tbody td:nth-child(3) { margin: 6px 0; }
+
+            #tablaTextos tbody td:nth-child(4),
+            #tablaTextos tbody td:nth-child(5) {
+                display: inline-block;
+                width: auto !important;
+                margin-right: 14px;
+                font-size: 13px;
+                color: var(--sp-muted) !important;
+            }
+
+            #tablaTextos tbody td:nth-child(4):not(:empty)::before { content: "Música: "; }
+            #tablaTextos tbody td:nth-child(5):not(:empty)::before { content: "Duración: "; }
+
+            #tablaTextos tbody td:last-child { margin-top: 8px; }
+            #tablaTextos tbody td:last-child .btn-group { display: flex; width: 100%; }
+            #tablaTextos tbody td:last-child .btn-group .btn { flex: 1 1 0; }
+
+            #tablaTextos tbody tr.bg-warning { border-color: var(--sp-aire); box-shadow: inset 5px 0 0 var(--sp-aire); }
+
+            /* Graphs de la nota: pegados a su tarjeta, sin las celdas vacías
+               que en escritorio solo alinean la columna. */
+            #tablaTextos tbody tr.graph-asociado {
+                margin: 0 0 10px;
+                padding: 0 12px 10px;
+                border-top: none;
+                border-radius: 0 0 var(--sp-radius-sm) var(--sp-radius-sm);
+            }
+            #tablaTextos tbody tr.graph-asociado + tr.graph-asociado { margin-top: -10px; }
+            #tablaTextos tbody tr.graph-asociado td:not([colspan]) { display: none; }
+            #tablaTextos tbody tr.graph-asociado td[colspan] {
+                background: var(--sp-primary-bg) !important;
+                border-radius: var(--sp-radius-sm);
+                padding: 6px 10px;
+            }
+            #tablaTextos tbody tr.graph-asociado details,
+            #tablaTextos tbody tr.graph-asociado summary { background: transparent !important; }
+            #tablaTextos tbody tr.texto-principal:has(+ tr.graph-asociado) {
+                margin-bottom: 0;
+                padding-bottom: 6px;
+                border-bottom: none;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
             }
         }
 
@@ -355,7 +446,7 @@
         <div id="guionEnBarra" style="font-size: 18px; font-weight: 700;">Ninguno seleccionado</div>
     </div>
 
-    <div style="flex-grow: 1;"></div>
+    <div class="sp-espacio"></div>
 
     <button type="button" class="sp-btn sp-btn-sm" data-toggle="modal" data-target="#seleccionarGuionModal">
         <i class="fas fa-folder-open"></i> Abrir guion

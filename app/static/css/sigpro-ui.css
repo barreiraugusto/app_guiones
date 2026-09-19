@@ -133,6 +133,14 @@ body {
     flex-shrink: 0;
 }
 
+.sp-espacio { flex-grow: 1; }
+
+.sp-estado {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
 .sp-chip {
     display: flex;
     align-items: center;
@@ -240,8 +248,77 @@ body {
     .sp-col-lateral { width: 100%; }
 }
 
+/* ── Celular ──────────────────────────────────────────────────
+   La barra negra pasa a dos filas: marca, estado y Monitores arriba; las
+   secciones abajo, en una fila que se desplaza con el dedo. El estado es lo
+   único de la primera fila que puede desplazarse: nunca empuja a Monitores
+   fuera de la pantalla. La sub-barra corta entre el título y las acciones,
+   y las acciones se reparten el ancho. */
 @media (max-width: 767px) {
     :root { --sp-gutter: 16px; }
+
+    .sp-topbar {
+        flex-wrap: wrap;
+        gap: 0 12px;
+    }
+
+    .sp-topbar .sp-marca {
+        height: var(--sp-nav-h);
+        padding-right: 0;
+    }
+
+    /* El logo ya dice SIGPRO: la palabra se va para dejarle lugar al estado. */
+    .sp-topbar .sp-marca img { height: 28px !important; }
+    .sp-topbar .sp-marca span { display: none; }
+
+    /* Base 0 y crecimiento: nunca manda a Monitores a otra fila, por larga
+       que sea la lista de chips; lo que no entra se desplaza. */
+    .sp-topbar .sp-espacio { display: none; }
+
+    .sp-estado {
+        flex: 1 1 0;
+        min-width: 0;
+        gap: 12px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .sp-estado::-webkit-scrollbar { display: none; }
+
+    .sp-nav {
+        order: 10;
+        flex: 0 0 calc(100% + 2 * var(--sp-gutter));
+        height: 44px;
+        margin: 0 calc(-1 * var(--sp-gutter));
+        padding: 0 calc(var(--sp-gutter) - 12px);
+        border-top: 1px solid #26292e;
+    }
+
+    .sp-nav a {
+        padding: 0 12px;
+        font-size: 13px;
+    }
+
+    .sp-solo-escritorio { display: none; }
+
+    .sp-subbar {
+        min-height: 0;
+        padding: 12px var(--sp-gutter);
+        gap: 10px 8px;
+    }
+
+    /* El espaciador ocupa toda la fila: corta entre título y acciones. */
+    .sp-subbar .sp-espacio {
+        flex-basis: 100%;
+        height: 0;
+    }
+
+    .sp-subbar > .sp-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    .sp-cuerpo { padding: 16px var(--sp-gutter); }
 }
 
 /* ── Tarjetas ─────────────────────────────────────────────── */

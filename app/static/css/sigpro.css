@@ -416,40 +416,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* =============================================
    PÁGINA: ver_guion.html
+   (el apilado móvil vive en la propia vista)
    ============================================= */
-
-@media (max-width: 767px) {
-  /* Tabla con scroll horizontal en mobile */
-  .ver-guion-tabla-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: var(--sp-radius-sm);
-  }
-
-  /* Columna de número + botones nunca se achica */
-  #tablaTextos td:first-child,
-  #tablaTextos th:first-child {
-    min-width: 90px;
-    position: sticky;
-    left: 0;
-    background: inherit;
-    z-index: 1;
-  }
-
-  /* Botones de nota más grandes */
-  #tablaTextos .btn-group .btn {
-    padding: 0.45rem 0.6rem;
-  }
-
-  /* Texto en celdas no se rompe de forma extraña */
-  #tablaTextos td {
-    min-width: 120px;
-  }
-
-  #tablaTextos td:first-child {
-    min-width: 90px;
-  }
-}
 
 /* Separadores entre notas */
 .linea-separadora td {

@@ -70,47 +70,77 @@
         .btn-group  { display: none; }
     }
 
-    /* ── Mobile ────────────────────────────────── */
+    /* ── Celular: cada nota es una tarjeta ──────────
+       Las filas las arma ver_guion.js con rowspan; acá solo se apilan las
+       celdas: número y botones arriba, sección, copete, código y debajo los
+       graphs. La cabecera de la tabla sobra: cada bloque se explica solo. */
     @media (max-width: 767px) {
-        .ver-guion-tabla-wrap {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        #tablaTextos,
+        #tablaTextos tbody,
+        #tablaTextos tr,
+        #tablaTextos td {
+            display: block;
+            width: 100%;
         }
 
-        #tablaTextos { table-layout: auto; font-size: 0.88rem; }
+        #tablaTextos { border-spacing: 0; border: none; font-size: 15px; }
+        #tablaTextos thead { display: none; }
 
-        /* Sticky SOLO para la cabecera y las filas de texto principal.
-           La celda con rowspan abarca visualmente las filas de graphs,
-           por lo que las celdas de .graph-row y .linea-separadora
-           NO deben ser sticky (de lo contrario tapan la celda principal). */
-        #tablaTextos thead th:first-child,
+        #tablaTextos tr[data-texto-id] {
+            padding: 14px 16px 10px;
+            border-top: 1px solid var(--sp-borde);
+        }
+
+        /* Más específico que los anchos por columna del escritorio. */
+        #tablaTextos tr[data-texto-id] td {
+            width: 100%;
+            border: none !important;
+            padding: 0;
+        }
+
         #tablaTextos tr[data-texto-id] td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 3;
-            min-width: 88px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
         }
 
-        /* Color explícito por estado (background: inherit no es suficiente
-           en todos los navegadores móviles) */
-        #tablaTextos tr[data-texto-id].bg-warning  td:first-child { background-color: var(--sp-activo-bg) !important; }
-        #tablaTextos tr[data-texto-id].bg-secondary td:first-child { background-color: var(--sp-emitido-bg) !important; }
-        #tablaTextos tr[data-texto-id].bg-light    td:first-child { background-color: var(--sp-surface) !important; }
-        /* Color por defecto cuando no hay clase de estado */
-        #tablaTextos tr[data-texto-id] td:first-child { background-color: #fff; }
-
-        /* Las filas de graphs y separadores: primer td estático */
-        #tablaTextos tr.graph-row td:first-child,
-        #tablaTextos tr.linea-separadora td {
-            position: static !important;
-            z-index: auto !important;
+        #tablaTextos tr[data-texto-id] td:first-child h3 {
+            margin: 0;
+            font-size: 26px;
         }
 
-        /* Botones de nota más grandes al tocar */
-        #tablaTextos .btn-group .btn {
-            padding: 0.45rem 0.6rem;
-            min-width: 42px;
+        #tablaTextos tr[data-texto-id] td:first-child .btn-group .btn {
+            min-width: 52px;
+            min-height: 44px;
         }
+
+        #tablaTextos tr[data-texto-id] td:nth-child(2) { margin-bottom: 6px; }
+
+        #tablaTextos tr[data-texto-id] td:nth-child(3) { line-height: 1.5; }
+
+        #tablaTextos tr[data-texto-id] td:nth-child(4):not(:empty) {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: var(--sp-surface-alt);
+            border-radius: var(--sp-radius-sm);
+            font-family: var(--sp-mono);
+            font-size: 13px;
+        }
+
+        #tablaTextos tr.graph-row { padding: 0 16px 12px; }
+        #tablaTextos tr.graph-row td:first-child { display: none; }
+        #tablaTextos tr.graph-row td {
+            width: 100%;
+            border: none !important;
+            padding: 10px 12px !important;
+            background: var(--sp-primary-bg);
+            border-radius: var(--sp-radius-sm);
+            font-size: 14px;
+        }
+
+        #tablaTextos tr.linea-separadora td { height: 0 !important; }
     }
 
     /* ── Loader ────────────────────────────────── */
@@ -159,7 +189,7 @@
         <div style="font-size: 13px; color: var(--sp-muted);">{{ guion.descripcion }}</div>
         {% endif %}
     </div>
-    <div style="flex-grow: 1;"></div>
+    <div class="sp-espacio"></div>
     <button class="sp-btn sp-btn-sm" onclick="exportarAPDF()"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
     <button class="sp-btn sp-btn-sm" onclick="exportarTexto()"><i class="fas fa-file-alt"></i> Descargar texto</button>
     <a href="{{ url_for('main.control_live', guion_id=guion.id) }}" class="sp-btn sp-btn-sm sp-btn-rec">

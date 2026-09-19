@@ -379,9 +379,18 @@
             .gr-contadores { gap: 14px; }
         }
 
-        @media (max-width: 700px) {
-            .gr-contadores { gap: 12px; }
-            .gr-contadores .sp-contador .valor { font-size: 17px; }
+        @media (max-width: 767px) {
+            .gr-grupo-guion { flex-wrap: wrap; gap: 12px; width: 100%; }
+            .gr-grupo-guion > .sp-btn { width: 100%; justify-content: flex-start; }
+            .gr-grupo-guion > .sp-btn > span { flex-grow: 1; }
+            .gr-contadores {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                width: 100%;
+            }
+            .gr-contadores .sp-contador .valor { font-size: 18px; }
+            .gr-contadores .sp-contador .etiqueta { font-size: 10px; }
         }
 
         .aviso {

@@ -64,14 +64,16 @@
         <a href="/plantillas"{% if seccion == 'plantillas' %} class="activo" aria-current="page"{% endif %}>Plantillas</a>
     </nav>
 
-    <div style="flex-grow: 1;"></div>
+    <div class="sp-espacio"></div>
 
-    {% block topbar_estado %}{% endblock %}
+    {# Estado del sistema de la vista (cronómetro, chips de la capturadora).
+       En el celular es la única parte de la barra que puede desplazarse. #}
+    <div class="sp-estado">{% block topbar_estado %}{% endblock %}</div>
 
     <div class="dropdown">
         <button class="sp-btn sp-btn-sm dropdown-toggle" type="button" id="menuMonitores"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fas fa-desktop"></i> Monitores
+            <i class="fas fa-desktop"></i><span class="sp-solo-escritorio"> Monitores</span>
         </button>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="menuMonitores">
             <a class="dropdown-item" href="/siguiente" target="_blank">

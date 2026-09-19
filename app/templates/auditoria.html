@@ -60,6 +60,11 @@ tr.row-DANGER  > td { background: #fff5f6 !important; }
 @media (max-width: 767px) {
     body { padding-top: 0; }
     .hide-mobile { display: none !important; }
+    .form-row > .col-auto { flex: 1 1 45%; max-width: none; }
+    .form-row > .col-auto input,
+    .form-row > .col-auto select { width: 100% !important; }
+    .form-row > .col-auto .btn { min-height: 44px; }
+    .ua-cell { max-width: 110px; }
 }
 </style>
 {% endblock %}
