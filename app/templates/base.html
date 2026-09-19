@@ -89,7 +89,13 @@
 </div>
 {% endblock topbar %}
 
-{% block subbar %}{% endblock %}
+{# Se arma una sola vez y solo si la vista la usa: sin envoltorio, su
+   contenido quedaba suelto en el body, pegado al borde. #}
+{% set contenido_subbar = self.subbar()|trim %}
+{% if contenido_subbar %}<div class="sp-subbar">{{ contenido_subbar }}</div>{% endif %}
+{# El bloque se declara en tiempo de compilación; dentro de un if falso queda
+   disponible para las vistas sin emitir nada acá. #}
+{% if false %}{% block subbar %}{% endblock %}{% endif %}
 
 {% block body %}
 

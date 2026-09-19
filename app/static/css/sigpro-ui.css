@@ -46,6 +46,9 @@
     --sp-shadow-lg: 0 10px 30px rgba(20, 22, 26, .18);
 
     --sp-nav-h: 60px;
+    /* Un solo margen lateral para barras y contenido: así el título de la
+       barra de contexto queda a plomo con las tarjetas de abajo. */
+    --sp-gutter: 28px;
 }
 
 body {
@@ -63,7 +66,7 @@ body {
 /* ── Barra superior negra ─────────────────────────────────── */
 .sp-topbar {
     min-height: var(--sp-nav-h);
-    padding: 0 24px;
+    padding: 0 var(--sp-gutter);
     background: #14161a;
     color: #f4f4f2;
     display: flex;
@@ -169,7 +172,7 @@ body {
 /* ── Segunda barra (contexto de la vista) ─────────────────── */
 .sp-subbar {
     min-height: 68px;
-    padding: 12px 24px;
+    padding: 14px var(--sp-gutter);
     background: var(--sp-surface);
     border-bottom: 1px solid var(--sp-borde);
     display: flex;
@@ -206,8 +209,9 @@ body {
 
 /* ── Cuerpo ───────────────────────────────────────────────── */
 .sp-cuerpo {
-    padding: 22px 24px;
+    padding: 22px var(--sp-gutter);
 }
+
 
 .sp-cuerpo-split {
     display: flex;
@@ -237,7 +241,7 @@ body {
 }
 
 @media (max-width: 767px) {
-    .sp-topbar, .sp-subbar, .sp-cuerpo { padding-left: 14px; padding-right: 14px; }
+    :root { --sp-gutter: 16px; }
 }
 
 /* ── Tarjetas ─────────────────────────────────────────────── */
