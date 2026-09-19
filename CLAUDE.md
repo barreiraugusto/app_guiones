@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - La cadena de migraciones NO construye el esquema desde cero: `b149fa6291ea` ("estado inicial") tiene `upgrade()` vacío. Para inicializar una BD nueva: `db.create_all()` desde los modelos y luego `flask db stamp head`.
 - No hay `requirements.txt`; instalar deps según README.md (Flask 3.1.0, Flask-SQLAlchemy 3.1.1, Flask-Migrate 4.0.7, WeasyPrint, psycopg2-binary). El venv con las dependencias instaladas es `.venv/` (gitignored); usar `.venv/bin/python` / `.venv/bin/flask`.
 - No hay suite de tests ni linter configurado.
-- `config.py` tiene valores hardcodeados: PostgreSQL `guiones` en localhost (usuario `abarreira`), `SECRET_KEY` fijo, `MAX_CONTENT_LENGTH` 50MB (límite de subida de plantillas), pool con `statement_timeout` de 5s. Solo `RECORDING_SERVER_URL` sale de env.
+- `config.py` **no está versionado** (cada máquina tiene el suyo): se copia de `config.example.py`. Define la URI de PostgreSQL, `SECRET_KEY`, `MAX_CONTENT_LENGTH` 50MB (límite de subida de plantillas), `RECORDING_SERVER_URL` y las `CAPTURADORA_*`; todo puede venir de variables de entorno. El pool trae `statement_timeout` de 5s: al migrar hay que parar la app, o el `ALTER TABLE` muere esperando el lock.
 - `crear_secciones_definitivo.py` es un script one-off con SQL crudo (crea tabla `seccion`); no tiene modelo SQLAlchemy asociado.
 
 ## Arquitectura

@@ -73,7 +73,7 @@ app_guiones/
 │   │   └── js/                  # JavaScript por módulo (control_live.js, plantillas.js, grabacion.js, etc.)
 │   └── templates/               # Plantillas Jinja2 (incluye control_live.html, plantillas.html, grabacion.html, auditoria.html)
 ├── migrations/                  # Migraciones de base de datos (Flask-Migrate)
-├── config.py                    # Configuración de conexión a BD y RECORDING_SERVER_URL
+├── config.example.py            # Plantilla: se copia a config.py (no versionado)
 ├── run.py                       # Punto de entrada
 └── crear_secciones_definitivo.py # Script de inicialización de secciones
 ```
@@ -161,7 +161,7 @@ La aplicación quedará disponible en `http://localhost:5000`.
 
 ### Base de datos
 
-Editar `config.py` con los datos de conexión a PostgreSQL:
+Copiar la plantilla (`cp config.example.py config.py`) y editar los datos de conexión a PostgreSQL:
 
 ```python
 class Config:

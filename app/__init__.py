@@ -16,7 +16,13 @@ MUSICA_OPCIONES = [
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('config.Config')
+    try:
+        app.config.from_object('config.Config')
+    except ImportError:
+        raise SystemExit(
+            "Falta config.py. Se copia de la plantilla y se editan los valores:\n"
+            "    cp config.example.py config.py"
+        )
 
     db.init_app(app)
     migrate.init_app(app, db)
