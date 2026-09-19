@@ -25,8 +25,8 @@
     .bajada-item {
         margin-bottom: 15px;
         padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        border: 1px solid var(--sp-borde);
+        border-radius: var(--sp-radius-sm);
         cursor: pointer;
         transition: all 0.3s;
     }
@@ -35,8 +35,8 @@
         transform: translateY(-2px);
     }
     .bajada-active {
-        background-color: #e7f5ff;
-        border-color: #4dabf7;
+        background-color: var(--sp-aire-bg);
+        border-color: var(--sp-aire);
     }
     .bajada-text {
         font-size: 1.2rem;
@@ -51,12 +51,11 @@
 {% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <h2>Control de Sobreimpresos</h2>
+<div class="sp-cuerpo">
     
     <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="m-0">Bajadas Disponibles</h4>
+        <div class="card-header">
+            <h4 class="m-0" style="font-size:15px;">Bajadas disponibles</h4>
         </div>
         <div class="card-body">
             <div id="bajadas-list">
@@ -70,8 +69,8 @@
     </div>
 
     <div class="card">
-        <div class="card-header bg-info text-white">
-            <h4 class="m-0">Controles</h4>
+        <div class="card-header">
+            <h4 class="m-0" style="font-size:15px;">Controles</h4>
         </div>
         <div class="card-body control-panel">
             <div class="row">

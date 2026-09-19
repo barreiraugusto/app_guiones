@@ -11,6 +11,9 @@
 {% block extra_script %}
     <script src="{{ url_for('static', filename='js/reloj.js') }}"></script>
 {% endblock extra_script %}
+{# Sin navegación: esta pantalla es una salida, no una vista de trabajo. #}
+{% block topbar %}{% endblock %}
+
 {% block body %}
     <div class="jumbotron  text-center bg-dark p-0 mr-lg-5 ml-lg-5">
         <div id="reloj" class="bg-info text-light p-0 mb-2" style="font-size: 12rem;"></div>

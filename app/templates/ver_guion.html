@@ -3,7 +3,6 @@
 
 {% block extra_style %}
 <style>
-    body { padding-top: calc(var(--sp-nav-h) + 6px); }
 
     /* ── Tabla ─────────────────────────────────── */
     #tablaTextos {
@@ -27,8 +26,36 @@
     }
 
     /* ── Estados ───────────────────────────────── */
-    #tablaTextos tbody tr[data-texto-id] { background-color: white; }
-    #tablaTextos tbody tr.graph-row     { background-color: white; }
+    #tablaTextos tbody tr[data-texto-id] { background-color: #fff; }
+    #tablaTextos tbody tr.graph-row     { background-color: #fff; }
+
+    /* Nota activa y nota emitida, con el mismo código visual que /grabaciones */
+    #tablaTextos tbody tr[data-texto-id].bg-warning {
+        background-color: var(--sp-aire-bg) !important;
+        box-shadow: inset 5px 0 0 var(--sp-aire);
+    }
+
+    #tablaTextos tbody tr[data-texto-id].bg-secondary {
+        background-color: var(--sp-surface-alt) !important;
+        color: var(--sp-muted);
+    }
+
+    #tablaTextos th {
+        background: var(--sp-surface-alt);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+        color: var(--sp-muted);
+        border-color: var(--sp-borde) !important;
+    }
+
+    #tablaTextos td { border-color: var(--sp-borde-suave) !important; }
+
+    #tablaTextos td:first-child {
+        font-family: var(--sp-mono);
+        font-weight: 600;
+    }
 
     /* ── Separadores entre notas ───────────────── */
     #tablaTextos {
@@ -45,8 +72,6 @@
 
     /* ── Mobile ────────────────────────────────── */
     @media (max-width: 767px) {
-        body { padding-top: var(--sp-nav-h); }
-
         .ver-guion-tabla-wrap {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -127,50 +152,27 @@
 <script src="{{ url_for('static', filename='js/textos.js') }}"></script>
 {% endblock extra_script %}
 
+{% block subbar %}
+    <div>
+        <div style="font-size: 18px; font-weight: 700;">{{ guion.nombre }}</div>
+        {% if guion.descripcion %}
+        <div style="font-size: 13px; color: var(--sp-muted);">{{ guion.descripcion }}</div>
+        {% endif %}
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <button class="sp-btn sp-btn-sm" onclick="exportarAPDF()"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+    <button class="sp-btn sp-btn-sm" onclick="exportarTexto()"><i class="fas fa-file-alt"></i> Descargar texto</button>
+    <a href="{{ url_for('main.control_live', guion_id=guion.id) }}" class="sp-btn sp-btn-sm sp-btn-rec">
+        <i class="fas fa-broadcast-tower"></i> Salir al aire
+    </a>
+{% endblock subbar %}
+
 {% block body %}
 <div id="spConnBanner" class="sp-conn-banner">
     <i class="fas fa-plug"></i> Conexión perdida — reconectando… los datos en pantalla pueden estar desactualizados
 </div>
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">
-            <i class="fas fa-scroll mr-2"></i>Guion
-        </a>
-        <div class="d-flex flex-wrap" style="gap:0.35rem;">
-            <button class="btn btn-warning btn-sm" onclick="exportarAPDF()">
-                <i class="fas fa-file-pdf mr-1"></i>
-                <span class="d-none d-sm-inline">PDF</span>
-            </button>
-            <button class="btn btn-info btn-sm" onclick="exportarTexto()">
-                <i class="fas fa-file-alt mr-1"></i>
-                <span class="d-none d-sm-inline">Texto</span>
-            </button>
-            <a href="/listado_guiones">
-                <button class="btn btn-primary btn-sm">
-                    <i class="fas fa-list mr-1"></i>
-                    <span class="d-none d-sm-inline">Guiones</span>
-                </button>
-            </a>
-            <a href="/">
-                <button class="btn btn-success btn-sm">
-                    <i class="fas fa-home mr-1"></i>
-                    <span class="d-none d-sm-inline">Menú</span>
-                </button>
-            </a>
-        </div>
-    </div>
-</nav>
-
-<!-- Contenido principal -->
-<div class="card shadow m-2 rounded">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">{{ guion.nombre }}</h5>
-        {% if guion.descripcion %}
-        <small class="text-white-50">{{ guion.descripcion }}</small>
-        {% endif %}
-    </div>
-
+<div class="sp-cuerpo">
+<div class="sp-card">
     <div id="guion-data" data-guion-id="{{ guion.id }}"></div>
 
     <!-- Tabla con wrapper scrollable en mobile -->
@@ -190,13 +192,12 @@
         </table>
     </div>
 
-    <div class="card-footer d-flex align-items-center" style="gap:0.5rem;">
-        <a href="/listado_guiones">
-            <button class="btn btn-outline-primary btn-sm">
-                <i class="fas fa-arrow-left mr-1"></i>Volver
-            </button>
+    <div style="padding: 14px 18px; border-top: 1px solid var(--sp-borde);">
+        <a href="/listado_guiones" class="sp-btn sp-btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver
         </a>
     </div>
+</div>
 </div>
 
 <!-- Loader PDF -->

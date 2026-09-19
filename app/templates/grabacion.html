@@ -361,6 +361,29 @@
             color: #6b6f76;
         }
 
+        /* ---------- barra de guion ---------- */
+        .gr-grupo-guion {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: nowrap;
+        }
+
+        .gr-contadores {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .gr-contadores { gap: 14px; }
+        }
+
+        @media (max-width: 700px) {
+            .gr-contadores { gap: 12px; }
+            .gr-contadores .sp-contador .valor { font-size: 17px; }
+        }
+
         .aviso {
             margin: 0;
             border-radius: 0;
@@ -372,87 +395,64 @@
     </style>
 {% endblock extra_style %}
 
-{% block body %}
-    <!-- ===== BARRA DE EQUIPO (en vivo desde /api/status) ===== -->
-    <div class="gr-equipo">
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="SIGPRO" style="height: 34px;">
-            <span style="font-size:15px;font-weight:600;letter-spacing:.4px;">GRABACIONES</span>
-        </div>
-
-        <div class="sep"></div>
-
-        <div id="chipsEntradas" style="display:flex;gap:18px;flex-shrink:0;">
-            <span class="gr-chip"><span class="punto punto-gris"></span>Sin conexión con la Capturadora</span>
-        </div>
-
-        <div style="flex-grow:1;"></div>
-
-        <div class="gr-chip">
-            <i class="fas fa-hdd" style="color:#9aa0a8;"></i> Disco
-            <span id="chipDisco" class="mono" style="font-weight:600;color:#f4f4f2;">—</span>
-        </div>
-
-        <div class="gr-chip">
-            <i class="fas fa-cloud-upload-alt" style="color:#e0a44a;"></i> Envíos
-            <span id="chipEnvios" class="mono" style="font-weight:600;color:#f4f4f2;">0</span>
-        </div>
-
-        <div class="sep"></div>
-
-        <div class="gr-chip">
-            <span id="chipConexion" class="badge-estado" style="background:#3c1f1e;color:#ef9a95;">SIN CONEXIÓN</span>
-        </div>
+{% block topbar_estado %}
+    <div id="chipsEntradas" style="display:flex; gap:16px;">
+        <span class="sp-chip"><span class="sp-punto"></span>Sin conexión con la Capturadora</span>
     </div>
 
-    <!-- avisos de configuración / conexión -->
-    <div id="avisoPerfil" class="alert alert-warning aviso" style="display:none;"></div>
-    <div id="avisoConexion" class="alert alert-danger aviso" style="display:none;"></div>
+    <div class="sp-chip">
+        <i class="fas fa-hdd" style="color:#9aa0a8;"></i> Disco
+        <span id="chipDisco" class="mono" style="font-weight:600;color:#f4f4f2;">—</span>
+    </div>
 
-    <!-- ===== BARRA DE GUION ===== -->
-    <div class="gr-guion">
-        <button type="button" class="btn-gr btn-neutro" data-toggle="modal"
-                data-target="#seleccionarGuionModalGrabacion" style="height:44px;">
+    <div class="sp-chip">
+        <i class="fas fa-cloud-upload-alt" style="color:#e0a44a;"></i> Envíos
+        <span id="chipEnvios" class="mono" style="font-weight:600;color:#f4f4f2;">0</span>
+    </div>
+
+    <span id="chipConexion" class="sp-badge" style="background:#3c1f1e;color:#ef9a95;">Sin conexión</span>
+{% endblock topbar_estado %}
+
+{% block subbar %}
+    {# Dos grupos que no se parten por dentro: el guion con sus números, y las
+       acciones. En pantalla angosta el corte cae entre los dos, nunca en medio
+       de los contadores. #}
+    <div class="gr-grupo-guion">
+        <button type="button" class="sp-btn" data-toggle="modal" data-target="#seleccionarGuionModalGrabacion">
             <i class="fas fa-folder-open" style="color:#6b6f76;"></i>
             <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;">
-                <span style="font-size:10px;letter-spacing:.7px;color:#6b6f76;font-weight:600;">GUION</span>
+                <span style="font-size:12px;color:var(--sp-muted);font-weight:500;">Guion</span>
                 <span id="guionActual" style="font-size:15px;font-weight:600;">Seleccionar guion</span>
             </span>
             <i class="fas fa-chevron-down" style="color:#6b6f76;font-size:12px;"></i>
         </button>
 
-        <div style="display:flex;align-items:center;gap:22px;">
-            <div class="gr-contador">
+        <div class="gr-contadores">
+            <div class="sp-contador">
                 <span class="valor" id="contTotal">0</span>
-                <span class="etiqueta">PARA GRABAR</span>
+                <span class="etiqueta">Para grabar</span>
             </div>
-            <div class="gr-contador">
+            <div class="sp-contador">
                 <span class="valor" id="contGrabadas" style="color:#2e7d5b;">0</span>
-                <span class="etiqueta">GRABADAS</span>
+                <span class="etiqueta">Grabadas</span>
             </div>
-            <div class="gr-contador">
+            <div class="sp-contador">
                 <span class="valor" id="contGrabando" style="color:#c8322c;">0</span>
-                <span class="etiqueta">GRABANDO</span>
+                <span class="etiqueta">Grabando</span>
             </div>
-            <div class="gr-contador">
+            <div class="sp-contador">
                 <span class="valor" id="contError" style="color:#a33a12;">0</span>
-                <span class="etiqueta">CON ERROR</span>
+                <span class="etiqueta">Con error</span>
             </div>
         </div>
-
-        <div style="flex-grow:1;"></div>
-
-        <input id="filtroNotas" type="text" placeholder="Nota, tema o archivo…" oninput="filtrarNotas()"
-               style="width:230px;height:44px;padding:0 12px;border:1px solid #d5d3cd;border-radius:8px;font-size:14px;">
-
-        <button type="button" class="btn-gr btn-neutro" onclick="volverAControl()" style="height:44px;">
-            <i class="fas fa-arrow-left"></i> Control
-        </button>
-
-        <button type="button" class="btn-gr btn-stop-nuevo" onclick="detenerTodo()">
-            <i class="fas fa-stop"></i> Detener todo
-        </button>
     </div>
+
+{% endblock subbar %}
+
+{% block body %}
+    <!-- avisos de configuración / conexión -->
+    <div id="avisoPerfil" class="sp-aviso sp-aviso-warn" style="display:none;"></div>
+    <div id="avisoConexion" class="sp-aviso sp-aviso-error" style="display:none;"></div>
 
     <!-- ===== CUERPO ===== -->
     <div class="gr-cuerpo">

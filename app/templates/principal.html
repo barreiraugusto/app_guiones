@@ -3,7 +3,7 @@
 {% block extra_style %}
     <style>
         body {
-            padding-top: calc(var(--sp-nav-h) + 10px);
+            padding-top: 0;
         }
 
         /* Cards */
@@ -336,70 +336,42 @@
 
 
 {% endblock extra_script %}
-{% block body %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-        <div class="container-fluid">
-            <!-- Logo -->
-            <a class="navbar-brand" href="#">
-                <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
-            </a>
-
-            <!-- Botón hamburguesa -->
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Contenido colapsable (todo a la derecha) -->
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
-                    <!-- Cronómetro (ahora dentro del grupo derecho) -->
-                    <div class="d-flex btn border-info mr-2 mb-2 mb-lg-0">
-                        <button id="inicio" class="btn btn-primary btn-sm mr-2">Inicio</button>
-                        <button id="detener" class="btn btn-danger btn-sm mr-2">Detener</button>
-                        <div id="cronometro" class="h3 p-0 ml-2 mb-0 text-white">00:00:00</div>
-                    </div>
-                    <button type="button" class="btn btn-info mr-2 mb-2 mb-lg-0" data-toggle="modal"
-                            data-target="#modalClonarNotas">
-                        <i class="fas fa-copy"></i> Clonar Notas
-                    </button>
-
-                    <!-- Dropdown para Guiones -->
-                    <div class="dropdown mr-2 mb-2 mb-lg-0">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownGuion"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Guion
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownGuion">
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGuionModal">
-                                <i class="fas fa-plus mr-1"></i> Nuevo
-                            </a>
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#seleccionarGuionModal">
-                                <i class="fas fa-folder-open mr-1"></i> Seleccionar
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Dropdown para Agregar -->
-                    <div class="dropdown mr-2 mb-2 mb-lg-0">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownAgregar"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Agregar
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownAgregar">
-                            {#                            <a class="dropdown-item" href="#" id="dropdownAgregarNota">#}
-                            {#                                <i class="fas fa-sticky-note mr-1"></i> Nota#}
-                            {#                            </a>#}
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#formularioGraphModal">
-                                <i class="fas fa-chart-bar mr-1"></i> Graph
-                            </a>
-                        </div>
-                    </div>
-
-                    <button onclick="window.location.href='/'" class="mr-2 mb-2 mb-lg-0 btn btn-success">Menu</button>
-                </div>
-            </div>
+{% block topbar_estado %}
+    {# El cronómetro es estado del sistema, no una acción: vive en la barra negra. #}
+    <div style="display:flex; align-items:center; gap:10px;">
+        <button id="inicio" class="sp-btn sp-btn-sm sp-btn-ok" title="Iniciar cronómetro"
+                aria-label="Iniciar cronómetro"><i class="fas fa-play"></i></button>
+        <button id="detener" class="sp-btn sp-btn-sm sp-btn-rec" title="Detener cronómetro"
+                aria-label="Detener cronómetro"><i class="fas fa-stop"></i></button>
+        <div id="cronometro" class="mono" style="font-size:24px; font-weight:600; letter-spacing:1px; color:#f4f4f2;">
+            00:00:00
         </div>
-    </nav>
+    </div>
+{% endblock topbar_estado %}
+
+{% block subbar %}
+    <div>
+        <div style="font-size: 13px; color: var(--sp-muted);">Guion en edición</div>
+        <div id="guionEnBarra" style="font-size: 18px; font-weight: 700;">Ninguno seleccionado</div>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <button type="button" class="sp-btn sp-btn-sm" data-toggle="modal" data-target="#seleccionarGuionModal">
+        <i class="fas fa-folder-open"></i> Abrir guion
+    </button>
+    <button type="button" class="sp-btn sp-btn-sm" data-toggle="modal" data-target="#formularioGuionModal">
+        <i class="fas fa-plus"></i> Nuevo guion
+    </button>
+    <button type="button" class="sp-btn sp-btn-sm" data-toggle="modal" data-target="#formularioGraphModal">
+        <i class="fas fa-chart-bar"></i> Agregar graph
+    </button>
+    <button type="button" class="sp-btn sp-btn-sm" data-toggle="modal" data-target="#modalClonarNotas">
+        <i class="fas fa-copy"></i> Clonar notas
+    </button>
+{% endblock subbar %}
+
+{% block body %}
     <div class="row">
         <div class="col-lg-6 col-12 mt-lg-2 mt-4 pr-0">
             <div class="card shadow rounded w-100" style="display: none;">

@@ -3,7 +3,7 @@
 
 {% block extra_style %}
 <style>
-    body { padding-top: 70px; }
+    body { padding-top: 0; }
 
     #lienzo-wrapper {
         background: repeating-conic-gradient(#ccc 0% 25%, #eee 0% 50%) 50% / 20px 20px;
@@ -77,25 +77,6 @@
 <div id="spConnBanner" class="sp-conn-banner">
     <i class="fas fa-plug"></i> Conexión perdida — reconectando… los datos en pantalla pueden estar desactualizados
 </div>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <img src="{{ url_for('static', filename='img/sigpro-2.png') }}" alt="Guiones" style="height: 50px;">
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarContent">
-            <div class="d-flex flex-column flex-lg-row ml-lg-auto align-items-start align-items-lg-center">
-                <a href="/principal" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Control de Guiones</a>
-                <a href="/siguiente" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Próxima Nota</a>
-                <a href="/listado_guiones" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Guiones</a>
-                <a href="/plantillas" class="btn btn-outline-light mr-2 mb-2 mb-lg-0">Plantillas de Gráfica</a>
-                <button onclick="window.location.href='/'" class="btn btn-success mb-2 mb-lg-0">Menu</button>
-            </div>
-        </div>
-    </div>
-</nav>
 <div class="container-fluid mt-4">
     <h2>Control en vivo</h2>
     <div id="guion-data" data-guion-id="{{ guion.id }}"></div>

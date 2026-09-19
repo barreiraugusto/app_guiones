@@ -4,7 +4,7 @@
 {% block extra_style %}
 <style>
 body {
-    background: #1a1a2e;
+    background: #14161a;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -14,9 +14,9 @@ body {
 }
 
 .login-card {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    background: var(--sp-surface);
+    border-radius: var(--sp-radius-lg);
+    box-shadow: var(--sp-shadow-lg);
     padding: 2.5rem 2.8rem;
     width: 100%;
     max-width: 380px;
@@ -24,30 +24,30 @@ body {
 
 .login-icon {
     font-size: 2.8rem;
-    color: #1565c0;
+    color: var(--sp-danger);
     margin-bottom: 0.4rem;
 }
 
 .login-title {
     font-size: 1.3rem;
     font-weight: 800;
-    color: #1a1a2e;
+    color: var(--sp-ink);
     margin-bottom: 0.2rem;
 }
 
 .login-sub {
     font-size: 0.82rem;
-    color: #8a9ab0;
+    color: var(--sp-muted);
     margin-bottom: 1.8rem;
 }
 
 .form-control:focus {
-    border-color: #1565c0;
-    box-shadow: 0 0 0 3px rgba(21,101,192,0.15);
+    border-color: var(--sp-ink);
+    box-shadow: none;
 }
 
 .btn-ingresar {
-    background: #1565c0;
+    background: var(--sp-ink);
     border: none;
     color: #fff;
     font-weight: 700;
@@ -59,12 +59,12 @@ body {
     transition: background 0.2s;
 }
 
-.btn-ingresar:hover { background: #0d47a1; }
+.btn-ingresar:hover { background: #000; }
 
 .error-msg {
-    background: #fff0f0;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
+    background: #f7e0d6;
+    border: none;
+    color: #8f3210;
     border-radius: 7px;
     padding: 0.6rem 0.9rem;
     font-size: 0.88rem;
@@ -75,6 +75,9 @@ body {
 }
 </style>
 {% endblock %}
+
+{# Sin navegación: esta pantalla es una salida, no una vista de trabajo. #}
+{% block topbar %}{% endblock %}
 
 {% block body %}
 <div class="login-card text-center">

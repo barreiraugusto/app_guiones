@@ -294,6 +294,9 @@ body {
 <script src="{{ url_for('static', filename='js/siguiente.js') }}"></script>
 {% endblock extra_script %}
 
+{# Sin navegación: esta pantalla es una salida, no una vista de trabajo. #}
+{% block topbar %}{% endblock %}
+
 {% block body %}
 <div id="spConnBanner" class="sp-conn-banner">
     <i class="fas fa-plug"></i> Conexión perdida — reconectando… los datos en pantalla pueden estar desactualizados

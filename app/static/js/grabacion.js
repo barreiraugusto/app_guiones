@@ -162,12 +162,12 @@ function pintarConexion(datos) {
     const aviso = document.getElementById('avisoConexion');
 
     if (datos.ok) {
-        chip.textContent = 'EN LÍNEA';
+        chip.textContent = 'En línea';
         chip.style.background = '#1f3a30';
         chip.style.color = '#8fd6b4';
         aviso.style.display = 'none';
     } else {
-        chip.textContent = 'SIN CONEXIÓN';
+        chip.textContent = 'Sin conexión';
         chip.style.background = '#3c1f1e';
         chip.style.color = '#ef9a95';
         aviso.style.display = 'block';
@@ -194,10 +194,10 @@ function pintarEquipo(equipo) {
     Object.keys(entradas).forEach(clave => {
         const entrada = entradas[clave];
         const span = document.createElement('span');
-        span.className = 'gr-chip';
-        span.innerHTML = `<span class="punto ${entrada.busy ? 'punto-ocupado' : 'punto-libre'}"></span>
+        span.className = 'sp-chip';
+        span.innerHTML = `<span class="sp-punto ${entrada.busy ? 'sp-punto-rec' : 'sp-punto-ok'}"></span>
             <span class="mono"></span>
-            <span style="font-size:11px;font-weight:600;letter-spacing:.6px;">${entrada.busy ? 'OCUPADA' : 'LIBRE'}</span>`;
+            <span style="font-size:12px;font-weight:600;">${entrada.busy ? 'Ocupada' : 'Libre'}</span>`;
         span.querySelector('.mono').textContent = entrada.label || clave;
         chips.appendChild(span);
     });
@@ -260,7 +260,6 @@ function pintarNotas(notas) {
         contenedor.appendChild(construirFila(nota, grabandoOtra));
     });
     contenedor.dataset.firma = firma;
-    filtrarNotas();
 }
 
 function actualizarFila(nota) {
@@ -637,40 +636,11 @@ async function detenerNota(textoId) {
     }
 }
 
-async function detenerTodo() {
-    const confirmacion = await Swal.fire({
-        title: '¿Detener todas las grabaciones?',
-        text: 'Incluye lo que esté grabando el scheduler o la pantalla de redes.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#c8322c',
-        confirmButtonText: 'Detener todo',
-        cancelButtonText: 'Cancelar'
-    });
-    if (!confirmacion.isConfirmed) return;
-
-    try {
-        const response = await fetch('/api/grabacion/detener-todo', {method: 'POST'});
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-        mostrarMensajeExito(`${data.detenidas} grabación(es) detenida(s)`);
-    } catch (error) {
-        mostrarError(error.message);
-    }
-}
-
 // ===== UTILIDADES =====
 
 function hayGrabacionEnCurso() {
     if (!ultimoSnapshot || !ultimoSnapshot.notas) return false;
     return ultimoSnapshot.notas.some(n => n.estado === 'grabando' || n.estado === 'deteniendo');
-}
-
-function filtrarNotas() {
-    const busqueda = (document.getElementById('filtroNotas')?.value || '').toLowerCase();
-    document.querySelectorAll('#listaGrabaciones .gr-fila').forEach(fila => {
-        fila.style.display = fila.textContent.toLowerCase().includes(busqueda) ? '' : 'none';
-    });
 }
 
 function formatearDuracion(segundos) {

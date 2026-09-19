@@ -2,143 +2,127 @@
 {% block title %}SIGPRO{% endblock %}
 {% block extra_style %}
     <style>
-        /* Estilos para desktop (por defecto) */
-        .menu-container {
-            position: fixed;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 1000;
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+            max-width: 1100px;
+        }
+
+        .menu-item {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+            align-items: center;
+            gap: 16px;
+            padding: 22px;
+            background: var(--sp-surface);
+            border: 1px solid var(--sp-borde);
+            border-radius: var(--sp-radius);
+            color: var(--sp-ink);
+            transition: border-color .15s ease, transform .15s ease;
         }
 
-        .menu-card {
-            border-radius: 15px 0 0 15px;
-            box-shadow: -5px 5px 15px rgba(0, 0, 0, 0.1);
-            border-right: none;
-            width: 15rem;
-            background-color: rgba(255, 255, 255, 0.9); /* Fondo semitransparente */
+        .menu-item:hover {
+            text-decoration: none;
+            color: var(--sp-ink);
+            border-color: var(--sp-ink);
+            transform: translateY(-2px);
         }
 
-        .menu-card .btn {
-            border-radius: 12px 0 0 12px !important;
-            border-right: none;
-            text-align: left;
-            padding-left: 25px;
-            transition: all 0.2s ease;
+        .menu-item .icono {
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: var(--sp-surface-alt);
+            border: 1px solid var(--sp-borde);
+            color: var(--sp-muted);
         }
 
-        .menu-card .btn:hover {
-            transform: translateX(-5px);
+        .menu-item .nombre {
+            font-size: 17px;
+            font-weight: 600;
+            line-height: 1.25;
         }
 
-        .menu-card .btn-lg {
-            padding: 0.8rem 1.5rem;
-            font-size: 1.1rem;
+        .menu-item .detalle {
+            font-size: 13px;
+            color: var(--sp-muted);
+            margin-top: 3px;
         }
 
-        .logo-container {
-            display: none; /* Oculto en desktop por defecto */
+        .menu-item.destacado .icono {
+            background: var(--sp-danger-bg);
+            border-color: #f2ccc9;
+            color: var(--sp-danger);
         }
 
-        body {
-            background: url('{{ url_for('static', filename='img/sigpro-back-ca.png') }}') no-repeat center center fixed;
-            background-color: var(--sp-canvas);
-            background-size: 50% auto;
-            min-height: 100vh;
-        }
-
-        /* Estilos para móviles */
-        @media only screen and (max-width: 768px) {
-            .menu-container {
-                position: relative;
-                top: auto;
-                right: auto;
-                transform: none;
-                width: 100%;
-                align-items: center;
-                margin-top: 20px;
-                padding: 0 15px;
-            }
-
-            .menu-card {
-                border-radius: 15px;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-                width: 100%;
-                max-width: 300px;
-                margin-top: 10px;
-            }
-
-            .menu-card .btn {
-                border-radius: 12px !important;
-                text-align: center;
-                padding: 0.8rem 1.5rem;
-            }
-
-            .logo-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                width: 100%;
-                margin: 20px 0;
-                padding: 0 15px;
-            }
-
-            .logo-container img {
-                max-width: 200px;
-                height: auto;
-                object-fit: contain;
-            }
-
-            body {
-                background-size: contain;
-                background-position: top center;
-                padding-top: 20px;
-                background-image: none; /* Ocultamos el fondo en móviles si es necesario */
-            }
-
-            /* Opcional: agregar un fondo sólido en móviles */
-            @media only screen and (max-width: 480px) {
-                body {
-                    background-color: var(--sp-surface);
-                }
-            }
+        .menu-marca {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 26px;
         }
     </style>
 {% endblock extra_style %}
 {% block body %}
-    <!-- Logo visible solo en móviles -->
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='img/sigpro-back-ca.png') }}" alt="SIGPRO Logo" class="img-fluid">
-    </div>
+        <div class="sp-cuerpo">
+        <div class="menu-marca">
+            <img src="{{ url_for('static', filename='img/sigpro-back-ca.png') }}" alt=""
+                 style="max-height: 78px; width: auto;">
+        </div>
 
-    <!-- Contenedor del menú -->
-    <div class="menu-container">
-        <div class="card menu-card pb-4 pl-4 pt-4 pr-4">
-            <div class="card-body p-0">
-                <button class="btn btn-outline-primary btn-block btn-lg mb-3"
-                        onclick="window.location.href='/principal'">
-                    Control de Guiones
-                </button>
-                <button class="btn btn-outline-primary btn-block btn-lg mb-3"
-                        onclick="window.location.href='/siguiente'">
-                    Próxima Nota
-                </button>
-                <button class="btn btn-outline-primary btn-block btn-lg mb-3"
-                        onclick="window.location.href='/listado_guiones'">
-                    Guiones
-                </button>
-                <button class="btn btn-outline-primary btn-block btn-lg mb-3"
-                        onclick="window.location.href='/plantillas'">
-                    Plantillas de Gráfica
-                </button>
-                <button class="btn btn-outline-primary btn-block btn-lg"
-                        onclick="window.location.href='/grabacion'">
-                    Grabacion
-                </button>
-            </div>
+        <div class="menu-grid">
+            <a href="/principal" class="menu-item">
+                <span class="icono"><i class="fas fa-sliders-h"></i></span>
+                <span>
+                    <span class="nombre">Control de guiones</span>
+                    <span class="detalle">Redacción, notas, gráficos y tiempos</span>
+                </span>
+            </a>
+
+            <a href="/listado_guiones" class="menu-item">
+                <span class="icono"><i class="fas fa-scroll"></i></span>
+                <span>
+                    <span class="nombre">Guiones</span>
+                    <span class="detalle">Listado y salida a emisión</span>
+                </span>
+            </a>
+
+            <a href="/grabaciones" class="menu-item destacado">
+                <span class="icono"><i class="fas fa-video"></i></span>
+                <span>
+                    <span class="nombre">Grabaciones</span>
+                    <span class="detalle">Grabar las notas del guion</span>
+                </span>
+            </a>
+
+            <a href="/siguiente" class="menu-item">
+                <span class="icono"><i class="fas fa-forward"></i></span>
+                <span>
+                    <span class="nombre">Próxima nota</span>
+                    <span class="detalle">Monitor para el piso</span>
+                </span>
+            </a>
+
+            <a href="/plantillas" class="menu-item">
+                <span class="icono"><i class="fas fa-layer-group"></i></span>
+                <span>
+                    <span class="nombre">Plantillas de gráfica</span>
+                    <span class="detalle">Capas, animaciones y colores</span>
+                </span>
+            </a>
+
+            <a href="/pantalla" class="menu-item" target="_blank">
+                <span class="icono"><i class="fas fa-tv"></i></span>
+                <span>
+                    <span class="nombre">Pantalla</span>
+                    <span class="detalle">Salida gráfica al aire</span>
+                </span>
+            </a>
         </div>
     </div>
 {% endblock body %}
