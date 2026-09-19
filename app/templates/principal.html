@@ -898,20 +898,29 @@
         const inicioBoton = document.getElementById('inicio');
         const detenerBoton = document.getElementById('detener');
 
-        // Evento para el botón "Inicio"
+        // El botón es un ícono: el estado vive en data-modo, no en su texto.
+        // Tras detener, el mismo botón pasa a restablecer.
+        function ponerModoInicio(modo) {
+            inicioBoton.dataset.modo = modo;
+            const reset = modo === 'reset';
+            inicioBoton.innerHTML = reset ? '<i class="fas fa-undo"></i>' : '<i class="fas fa-play"></i>';
+            inicioBoton.title = reset ? 'Restablecer cronómetro' : 'Iniciar cronómetro';
+            inicioBoton.setAttribute('aria-label', inicioBoton.title);
+        }
+        ponerModoInicio('inicio');
+
         inicioBoton.addEventListener('click', () => {
-            if (inicioBoton.textContent === "Inicio") {
-                enviarSolicitud('/iniciar');
-            } else if (inicioBoton.textContent === "Rest.") {
+            if (inicioBoton.dataset.modo === 'reset') {
                 enviarSolicitud('/restablecer');
-                inicioBoton.textContent = "Inicio"; // Cambiar a "Inicio" después de restablecer
+                ponerModoInicio('inicio');
+            } else {
+                enviarSolicitud('/iniciar');
             }
         });
 
-        // Evento para el botón "Detener"
         detenerBoton.addEventListener('click', () => {
             enviarSolicitud('/detener');
-            inicioBoton.textContent = "Rest."; // Cambiar a "Restablecer" después de detener
+            ponerModoInicio('reset');
         });
 
         // Conectar al stream de eventos (SSE)
