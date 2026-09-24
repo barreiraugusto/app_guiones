@@ -106,17 +106,18 @@ def historial(limite=20):
 # Escritura
 # ---------------------------------------------------------------------------
 
-def iniciar(nombre):
+def iniciar(nombre, subdir=None):
     """Arranca una grabación con el perfil de redes y devuelve su ficha.
 
-    No se manda `input` ni `subdir`: van los del equipo. El sufijo _9r y el
-    envío a REDES del día los pone el perfil, del lado de la Capturadora.
+    No se manda `input`: va el del equipo. `subdir` es la carpeta (dentro del
+    storage del equipo) donde queda el archivo; sin ella se usa la
+    `default_subdir` del equipo. El sufijo _9r y el envío a REDES del día los
+    pone el perfil, del lado de la Capturadora.
     """
-    return _pedir('POST', '/api/recordings', timeout=20, json={
-        'name': nombre,
-        'profile': perfil(),
-        'mode': 'continuous',
-    })
+    cuerpo = {'name': nombre, 'profile': perfil(), 'mode': 'continuous'}
+    if subdir:
+        cuerpo['subdir'] = subdir
+    return _pedir('POST', '/api/recordings', timeout=20, json=cuerpo)
 
 
 def detener(recording_id):

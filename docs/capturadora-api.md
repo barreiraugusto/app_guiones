@@ -79,7 +79,8 @@ Capturadora hacia `root@192.168.2.50` (ver la nota del server `.62`).
 | "Programado en el equipo" | `GET /api/schedules` |
 | Validación del perfil | `GET /api/config` |
 
-No se mandan `input` ni `subdir`: van los del equipo. El nombre del archivo lo
+No se manda `input`: va el del equipo. `subdir` es el nombre del guion (sin `/`),
+así cada guion queda en su propia carpeta del storage del equipo. El nombre del archivo lo
 normaliza la Capturadora (`AAAA-MM-DD_HHMMSS-NOMBRE_9r.mp4`); SIGPRO solo elige
 el nombre, que sale del `tema` del primer graph de la nota o, si no tiene, del
 título.

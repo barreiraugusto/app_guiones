@@ -47,6 +47,13 @@ def _nombre_para_grabacion(texto):
     return texto.titulo
 
 
+def _carpeta_del_guion(texto):
+    """Subcarpeta con el nombre del guion; sin '/' ni puntos al inicio para que
+    la Capturadora no la interprete como ruta."""
+    nombre = (texto.guion.nombre if texto.guion else '').replace('/', '-').replace('\\', '-')
+    return nombre.strip().lstrip('.').strip() or None
+
+
 def _perfil_configurado(opciones):
     """Avisa si el perfil de redes no está como corresponde en el equipo.
 
@@ -267,7 +274,7 @@ def iniciar_grabacion():
     nombre = _nombre_para_grabacion(texto)
 
     try:
-        ficha = capturadora.iniciar(nombre)
+        ficha = capturadora.iniciar(nombre, _carpeta_del_guion(texto))
     except CapturadoraError as exc:
         return jsonify({'error': str(exc)}), 502
 
