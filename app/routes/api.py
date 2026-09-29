@@ -18,7 +18,7 @@ from . import reloj
 from .grabacion import _snapshot
 from .graphs import _resolver_mosca
 
-api_bp = Blueprint('api', __name__)
+api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
 LIMIT_DEFAULT = 100
 LIMIT_MAX = 1000
@@ -39,7 +39,7 @@ def _verificar_token():
 def _error_http(e):
     # A nivel app para cubrir también las URLs de /api/v1 que no existen
     # (esas no llegan a los handlers del blueprint). El resto, como siempre.
-    if not request.path.startswith('/api/v1'):
+    if not request.path.startswith(api_bp.url_prefix + '/') and request.path != api_bp.url_prefix:
         return e
     return jsonify({'error': e.description}), e.code
 
@@ -259,7 +259,9 @@ def grabaciones():
     guion_id = request.args.get('guion_id', type=int)
     if guion_id:
         db.get_or_404(Guion, guion_id, description=f'Guion {guion_id} no encontrado')
-    return jsonify(_snapshot(guion_id, todas=True))
+    # Sin contexto: perfil y programaciones cuestan dos llamadas más al equipo
+    # por pedido y la doc no los promete.
+    return jsonify(_snapshot(guion_id, incluir_contexto=False, todas=True))
 
 
 def _fecha(nombre):
@@ -267,7 +269,9 @@ def _fecha(nombre):
     if not valor:
         return None
     try:
-        return datetime.fromisoformat(valor)
+        # AuditLog.timestamp es hora local sin zona: una zona en el filtro
+        # correría la ventana según el TimeZone de la sesión de Postgres.
+        return datetime.fromisoformat(valor).replace(tzinfo=None)
     except ValueError:
         abort(400, f"'{nombre}' no es una fecha ISO válida: {valor}")
 

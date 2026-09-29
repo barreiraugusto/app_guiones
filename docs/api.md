@@ -43,7 +43,9 @@ coincide, 401.
 | Opciones fijas (música) | `api $API/opciones` |
 
 Notas:
-- `hasta` con solo fecha (`2026-09-29`) incluye todo ese día.
+- `hasta` con solo fecha (`2026-09-29`) incluye todo ese día. Las fechas son
+  hora local del server, sin zona; si se manda una zona (`-03:00`, `Z`) se
+  ignora.
 - `/grabaciones` con la Capturadora caída responde 200 con `"ok": false` y el
   error; sin `guion_id` trae solo el equipo, las tareas y las grabaciones
   ajenas al guion (`otras`).
