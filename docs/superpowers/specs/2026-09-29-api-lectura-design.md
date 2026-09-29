@@ -58,7 +58,7 @@ ningún endpoint modifica la BD, `display_config.json` ni la Capturadora.
 | `/plantillas` | — | `id, nombre, ancho, alto, cantidad_capas` |
 | `/plantillas/<id>` | — | Plantilla + `capas[]` con todas las columnas de `PlantillaCapa` |
 | `/en-vivo` | — | Estado del aire (ver abajo) |
-| `/grabaciones` | `guion_id` (opcional) | Salida de `_snapshot(guion_id, todas=guion_id is None)` |
+| `/grabaciones` | `guion_id` (opcional) | Salida de `_snapshot(guion_id, todas=True)`: con `guion_id`, el estado de todas sus notas; sin él, solo equipo, tareas y `otras` |
 | `/auditoria` | `desde`, `hasta` (ISO date/datetime), `nivel`, `entidad`, `ip`, `q` (en accion/nombre_entidad/detalle), paginación | Registros de `AuditLog` |
 | `/opciones` | — | `{"musica": MUSICA_OPCIONES}` |
 
