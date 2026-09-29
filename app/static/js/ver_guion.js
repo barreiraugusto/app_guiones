@@ -293,12 +293,15 @@ function formatearDuracion(segundos) {
 }
 
 function pintarGrabacion() {
+    // La Capturadora no graba dos cosas a la vez: mientras una nota graba, el resto no puede arrancar.
+    const hayGrabacion = Object.keys(grabandoAhora).length > 0;
     document.querySelectorAll('#tablaTextos tr[data-texto-id]').forEach(fila => {
         const rec = grabandoAhora[fila.getAttribute('data-texto-id')];
         const boton = fila.querySelector('.btn-rec');
         const tiempo = fila.querySelector('.rec-tiempo');
         if (!boton) return;
         boton.classList.toggle('active', !!rec);
+        boton.disabled = hayGrabacion && !rec;
         boton.title = rec ? 'Detener grabación' : 'Grabar nota';
         boton.querySelector('i').className = rec ? 'fas fa-stop' : 'fas fa-circle';
         tiempo.textContent = rec ? formatearDuracion(rec.segundos + (Date.now() - rec.recibido) / 1000) : '';
