@@ -36,6 +36,7 @@ def create_app():
     from .routes.auditoria import auditoria_bp
     from .routes.plantillas import plantillas_bp
     from .routes.grabacion import grabacion_bp
+    from .routes.api import api_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(guiones_bp)
@@ -46,5 +47,6 @@ def create_app():
     app.register_blueprint(auditoria_bp)
     app.register_blueprint(plantillas_bp)
     app.register_blueprint(grabacion_bp)
+    app.register_blueprint(api_bp, url_prefix='/api/v1')
 
     return app

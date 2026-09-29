@@ -38,6 +38,10 @@ class Config:
     # sufijo _9r y dispara el envío a REDES del día en el storage .50.
     CAPTURADORA_PERFIL = os.environ.get('CAPTURADORA_PERFIL', 'redes')
 
+    # Token de la API de lectura /api/v1 (ver docs/api.md). Vacío = API
+    # desactivada. Es un secreto: pasarlo por variable de entorno.
+    API_TOKEN = os.environ.get('API_TOKEN', '')
+
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 5,
         'max_overflow': 10,
