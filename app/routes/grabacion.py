@@ -137,7 +137,7 @@ def _estado_de_nota(texto, activas, terminadas, tareas_por_id):
     return base
 
 
-def _snapshot(guion_id, incluir_contexto=True):
+def _snapshot(guion_id, incluir_contexto=True, todas=False):
     """Todo lo que la vista necesita en un tick."""
     datos = {
         'ok': True,
@@ -173,10 +173,10 @@ def _snapshot(guion_id, incluir_contexto=True):
 
     notas = []
     if guion_id:
-        notas = (Texto.query
-                 .filter_by(guion_id=guion_id, grabar=True)
-                 .order_by(Texto.numero_de_nota)
-                 .all())
+        consulta = Texto.query.filter_by(guion_id=guion_id)
+        if not todas:
+            consulta = consulta.filter_by(grabar=True)
+        notas = consulta.order_by(Texto.numero_de_nota).all()
 
     # Las grabaciones que la API ya no tiene entre las activas se piden de a una:
     # es la única forma de saber si terminaron bien o con error.
@@ -224,13 +224,15 @@ def stream_grabacion():
     """Estado del equipo en vivo. La Capturadora tiene WebSocket, pero acá
     alcanza con seguir el patrón SSE que ya usa el resto de la app."""
     guion_id = request.args.get('guion_id', type=int)
+    # /ver_guion graba cualquier nota, no solo las marcadas para grabar.
+    todas = request.args.get('todas') == '1'
 
     def event_stream():
         tick = 0
         while True:
             try:
                 # El perfil y las programaciones cambian poco: cada 30 s.
-                datos = _snapshot(guion_id, incluir_contexto=(tick % 15 == 0))
+                datos = _snapshot(guion_id, incluir_contexto=(not todas and tick % 15 == 0), todas=todas)
                 yield f"data: {json.dumps(datos)}\n\n"
             except Exception as e:
                 current_app.logger.error(f"Error en stream_grabacion: {str(e)}")

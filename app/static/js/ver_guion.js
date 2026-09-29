@@ -96,7 +96,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button type="button" class="btn btn-outline-success" onclick="setTextoEmitido(${t.id})" title="Marcar como emitido">
                             <i class="fas fa-check"></i>
                         </button>
+                        <button type="button" class="btn btn-outline-danger btn-rec" onclick="alternarGrabacion(${t.id})" title="Grabar nota">
+                            <i class="fas fa-circle"></i>
+                        </button>
                     </div>
+                    <div class="rec-tiempo text-danger small font-weight-bold"></div>
                 </td>
                 <td>
                     <strong>${t.titulo}</strong>
@@ -256,7 +260,68 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error en la conexión SSE');
         document.getElementById('spConnBanner')?.classList.add('visible');
     };
+
+    // ------------------------------------------------------------------
+    // Grabación: estado de la Capturadora para todas las notas del guion
+    // ------------------------------------------------------------------
+
+    const grabacionSource = new EventSource(`/stream_grabacion?guion_id=${guionId}&todas=1`);
+
+    grabacionSource.onmessage = function (event) {
+        const datos = JSON.parse(event.data);
+        if (!datos.ok) return;
+        grabandoAhora = {};
+        datos.notas.forEach(n => {
+            if (n.estado === 'grabando' || n.estado === 'deteniendo') {
+                grabandoAhora[n.id] = { segundos: n.duration_seconds || 0, recibido: Date.now() };
+            }
+        });
+        pintarGrabacion();
+    };
+
+    setInterval(pintarGrabacion, 1000);
 });
+
+let grabandoAhora = {};
+
+function formatearDuracion(segundos) {
+    const s = Math.floor(segundos);
+    const h = Math.floor(s / 3600);
+    const m = String(Math.floor(s / 60) % 60).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    return h ? `${h}:${m}:${ss}` : `${m}:${ss}`;
+}
+
+function pintarGrabacion() {
+    document.querySelectorAll('#tablaTextos tr[data-texto-id]').forEach(fila => {
+        const rec = grabandoAhora[fila.getAttribute('data-texto-id')];
+        const boton = fila.querySelector('.btn-rec');
+        const tiempo = fila.querySelector('.rec-tiempo');
+        if (!boton) return;
+        boton.classList.toggle('active', !!rec);
+        boton.title = rec ? 'Detener grabación' : 'Grabar nota';
+        boton.querySelector('i').className = rec ? 'fas fa-stop' : 'fas fa-circle';
+        tiempo.textContent = rec ? formatearDuracion(rec.segundos + (Date.now() - rec.recibido) / 1000) : '';
+    });
+}
+
+async function alternarGrabacion(textoId) {
+    const grabando = !!grabandoAhora[textoId];
+    try {
+        const response = await fetch(grabando ? '/api/grabacion/detener' : '/api/grabacion/iniciar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texto_id: textoId })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Error en la grabación');
+        if (grabando) delete grabandoAhora[textoId];
+        else grabandoAhora[textoId] = { segundos: 0, recibido: Date.now() };
+        pintarGrabacion();
+    } catch (error) {
+        alert(error.message);
+    }
+}
 
 
 // ------------------------------------------------------------------
