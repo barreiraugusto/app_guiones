@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Arquitectura
 
-App factory Flask en `app/__init__.py`. Blueprints: `main`, `guiones`, `textos`, `graphs`, `reloj`, `sobreimpresos` (prefix `/sobreimpresos`), `auditoria`, `plantillas`.
+App factory Flask en `app/__init__.py`. Blueprints: `main`, `guiones`, `textos`, `graphs`, `reloj`, `sobreimpresos` (prefix `/sobreimpresos`), `auditoria`, `plantillas`, `grabacion`, `api` (prefix `/api/v1`).
 
 Modelo de datos (`app/models.py`):
 ```
@@ -26,6 +26,7 @@ Guion → Texto (notas) → Graph (gráfico por nota)
 - `Graph.bajada_activa_id`/`cita_activa_id` fijan qué bajada/cita se muestra; `bajadas_auto_*` controla la rotación automática (temporizador basado en `bajadas_auto_epoch_inicio`).
 - `PlantillaCapa` es el sistema de plantillas gráficas: cada capa tiene posición, animación de entrada/salida, y `campo_dato` (bindea la capa a lugar/tema/entrevistado/bajada_N) o `texto_fijo`; puede estar `controlada_por` otra capa (visibilidad condicional). `es_mosca` marca la capa de logo, controlada aparte desde `control_live` (independiente del graph activo).
 - `AuditLog` registra acciones (INFO/WARNING/DANGER) vía `app/audit.py::registrar()`, llamado desde las rutas de escritura.
+- API de lectura para scripts (`app/routes/api.py`, prefix `/api/v1`): token Bearer en `API_TOKEN`, solo GET. Detalle en `docs/api.md`. No confundir con las rutas `/api/*` de los otros blueprints, que usa el frontend sin token.
 
 Tiempo real: sin websockets, todo por Server-Sent Events (endpoints `/stream_*` en `textos.py`, `graphs.py`, `reloj.py`) consumidos con `EventSource` en el cliente. En producción con Gunicorn hace falta worker `gevent`/`eventlet` (sticky sessions si no).
 

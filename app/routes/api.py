@@ -6,12 +6,17 @@ token y no se tocan.
 """
 
 import hmac
+import json
+from datetime import datetime, timedelta
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, abort, current_app, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 from .. import db, MUSICA_OPCIONES
-from ..models import Bajada, Entrevistado, Graph, Guion, Plantilla, PlantillaCapa, Texto
+from ..models import AuditLog, Bajada, Entrevistado, Graph, Guion, Plantilla, PlantillaCapa, Texto
+from . import reloj
+from .grabacion import _snapshot
+from .graphs import _resolver_mosca
 
 api_bp = Blueprint('api', __name__)
 
@@ -216,3 +221,84 @@ def plantilla(id):
     p = db.get_or_404(Plantilla, id, description=f'Plantilla {id} no encontrada')
     return jsonify({'id': p.id, 'nombre': p.nombre, 'ancho': p.ancho, 'alto': p.alto,
                     'capas': [_capa(c) for c in p.capas]})
+
+
+def _leer_display():
+    # Misma ruta relativa que usa graphs.get_display_config, sin su caché.
+    try:
+        with open('display_config.json') as f:
+            config = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    config['mosca'] = _resolver_mosca(config.get('mosca', {}))
+    return config
+
+
+@api_bp.route('/en-vivo')
+def en_vivo():
+    """Nota y graph activos, cronómetro y config de widgets del aire."""
+    nota_activa = Texto.query.filter_by(activo=True).first()
+    graph_activo = Graph.query.filter_by(activo=True).first()
+    nota = None
+    if nota_activa:
+        nota = _nota_resumen(nota_activa)
+        nota['guion'] = {'id': nota_activa.guion.id, 'nombre': nota_activa.guion.nombre}
+    with reloj._lock:
+        cronometro = {'segundos': reloj.tiempo, 'activo': reloj.cronometro_activo}
+    return jsonify({
+        'nota_activa': nota,
+        'graph_activo': _graph(graph_activo) if graph_activo else None,
+        'cronometro': cronometro,
+        'display': _leer_display(),
+    })
+
+
+@api_bp.route('/grabaciones')
+def grabaciones():
+    """Estado de la Capturadora y de las notas de un guion (guion_id opcional)."""
+    guion_id = request.args.get('guion_id', type=int)
+    if guion_id:
+        db.get_or_404(Guion, guion_id, description=f'Guion {guion_id} no encontrado')
+    return jsonify(_snapshot(guion_id, todas=True))
+
+
+def _fecha(nombre):
+    valor = request.args.get(nombre)
+    if not valor:
+        return None
+    try:
+        return datetime.fromisoformat(valor)
+    except ValueError:
+        abort(400, f"'{nombre}' no es una fecha ISO válida: {valor}")
+
+
+@api_bp.route('/auditoria')
+def auditoria():
+    """Log de auditoría (filtros desde, hasta, nivel, entidad, ip, q; paginado)."""
+    q = AuditLog.query.order_by(AuditLog.timestamp.desc())
+    desde = _fecha('desde')
+    hasta = _fecha('hasta')
+    if desde:
+        q = q.filter(AuditLog.timestamp >= desde)
+    if hasta:
+        # Solo fecha (YYYY-MM-DD): incluye el día entero.
+        if len(request.args['hasta']) == 10:
+            q = q.filter(AuditLog.timestamp < hasta + timedelta(days=1))
+        else:
+            q = q.filter(AuditLog.timestamp <= hasta)
+    if request.args.get('nivel'):
+        q = q.filter_by(nivel=request.args['nivel'])
+    if request.args.get('entidad'):
+        q = q.filter_by(tipo_entidad=request.args['entidad'])
+    if request.args.get('ip'):
+        q = q.filter(AuditLog.ip.like(f"%{request.args['ip']}%"))
+    if request.args.get('q'):
+        patron = f"%{request.args['q']}%"
+        q = q.filter(db.or_(AuditLog.accion.ilike(patron),
+                            AuditLog.nombre_entidad.ilike(patron),
+                            AuditLog.detalle.ilike(patron)))
+    return _paginar(q, lambda a: {
+        'id': a.id, 'timestamp': a.timestamp.isoformat(), 'nivel': a.nivel, 'ip': a.ip,
+        'user_agent': a.user_agent, 'accion': a.accion, 'tipo_entidad': a.tipo_entidad,
+        'id_entidad': a.id_entidad, 'nombre_entidad': a.nombre_entidad, 'detalle': a.detalle,
+    })
